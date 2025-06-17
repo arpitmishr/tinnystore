@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tinny Fashion Store - Complete Business Manager</title>
-
-    <!-- Google API & Identity Services Scripts -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-    
+    <!-- Google Fonts for Material Design -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -26,6 +22,8 @@
             --success-green: #4CAF50;
             --danger-red: #f44336;
         }
+
+        /* General Body Styles */
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background-color: var(--background-light);
@@ -33,34 +31,54 @@
             margin: 0;
             padding: 20px;
         }
-        /* --- NEW: Loading Overlay --- */
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5em;
-            color: var(--text-dark);
-            font-weight: 500;
-            display: none; /* Hidden by default */
-        }
+
+        /* Header */
         header {
             background-color: var(--primary-yellow);
             color: var(--text-dark);
             padding: 20px;
-            text-align: center;
             border-radius: 8px;
             margin-bottom: 30px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         header h1 { margin: 0; font-weight: 700; }
         header p { margin: 5px 0 0; font-weight: 400; }
+
+        /* --- NEW: Google Drive Sync Styles --- */
+        #sync-container {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        #sync-container .btn-google {
+            background-color: #fff;
+            color: #444;
+            border: 1px solid var(--divider-color);
+            padding: 10px 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #sync-container .btn-google:hover {
+            background-color: #f8f8f8;
+        }
+        #sync-status {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        #signout-button, #sync-button, #load-button {
+            display: none; /* Initially hidden */
+        }
+        /* --- END NEW STYLES --- */
+
+        /* Tab Navigation */
         .tab-nav { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 25px; position: relative; }
         .tab-button {
             padding: 15px 25px; cursor: pointer; border: none; background-color: transparent; font-size: 16px;
@@ -72,11 +90,16 @@
             background-color: var(--primary-dark); transform: scaleX(0); transition: transform 0.3s ease;
         }
         .tab-button.active::after { transform: scaleX(1); }
+
+        /* Tab Content */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+       
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; } /* NEW: .credit-layout */
+
+
         .card {
             background-color: var(--card-white); border-radius: 8px; padding: 25px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 3px 6px rgba(0,0,0,0.1); margin-bottom: 25px;
@@ -85,42 +108,54 @@
             color: var(--text-dark); font-weight: 500; margin-top: 0;
             border-bottom: 1px solid var(--divider-color); padding-bottom: 15px; margin-bottom: 20px;
         }
+
+        /* Form Styles */
         .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        /* NEW: Cosmetic Credit form grid */
         .cosmetic-credit-form-grid { display: grid; grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+
         input[type="text"], input[type="number"], input[type="file"], input[type="date"] {
             width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
             box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        input:focus, input:focus, input:focus {
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
             border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none;
         }
         input[type="file"] { background-color: #fafafa; cursor: pointer; }
         #settings .card input[type="file"] { margin-top: 15px; }
+       
+        /* Control Section styles */
         .controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: flex-end; }
         .controls-grid label, .form-row label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
-        .controls-grid .btn { margin-top: 0; }
+        .controls-grid .btn { margin-top: 0; } /* Align buttons with inputs */
+
+
+        /* Button Styles */
         .btn {
             width: 100%; padding: 12px 20px; border-radius: 5px; border: none; font-size: 15px;
             font-weight: 500; text-transform: uppercase; cursor: pointer;
             transition: background-color 0.3s ease, box-shadow 0.2s ease; margin-top: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
-        .btn:disabled { background-color: #BDBDBD; cursor: not-allowed; box-shadow: none; }
-        .btn:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .btn:active:not(:disabled) { box-shadow: 0 1px 2px rgba(0,0,0,0.15); transform: translateY(1px); }
+        .btn:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn:active { box-shadow: 0 1px 2px rgba(0,0,0,0.15); transform: translateY(1px); }
         .btn-primary { background-color: var(--primary-yellow); color: var(--text-dark); }
-        .btn-primary:hover:not(:disabled) { background-color: var(--primary-dark); }
+        .btn-primary:hover { background-color: var(--primary-dark); }
         .btn-secondary { background-color: #E0E0E0; color: var(--text-dark); }
-        .btn-secondary:hover:not(:disabled) { background-color: #BDBDBD; }
+        .btn-secondary:hover { background-color: #BDBDBD; }
         .btn-success { background-color: var(--success-green); color: white; }
-        .btn-success:hover:not(:disabled) { background-color: #43A047; }
+        .btn-success:hover { background-color: #43A047; }
         .btn-danger { background-color: var(--danger-red); color: white; }
-        .btn-danger:hover:not(:disabled) { background-color: #D32F2F; }
+        .btn-danger:hover { background-color: #D32F2F; }
         .btn-small { padding: 6px 12px; font-size: 12px; margin-top: 0; width: auto; }
         .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+       
+        /* Table Styles */
         .table-container { max-height: 400px; overflow-y: auto; }
         .styled-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         .styled-table th, .styled-table td { border-bottom: 1px solid var(--divider-color); padding: 14px; text-align: left; font-size: 14px; vertical-align: middle; }
@@ -129,12 +164,17 @@
         .styled-table td ul { margin: 0; padding-left: 20px; }
         .profit-col { font-weight: 500; color: var(--success-green); }
         .credit-label { font-size: 11px; font-weight: bold; color: var(--danger-red); display: block; margin-top: 4px; }
+
+
+        /* Styles for Inline Editing */
         .inventory-actions { display: flex; gap: 8px; }
         .edit-input { padding: 8px; font-size: 14px; max-width: 100px; }
         tr.edit-mode .display-value { display: none; }
         tr:not(.edit-mode) .edit-field { display: none; }
         tr.edit-mode .edit-btn, tr.edit-mode .delete-btn { display: none; }
         tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
+
+        /* Analytics Section */
         .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
         .metric-card { background-color: #fafafa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--divider-color); }
         .metric-card h3 { margin: 0 0 10px; color: var(--text-secondary); font-size: 16px; font-weight: 400; }
@@ -143,17 +183,45 @@
         #low-stock-items li { padding: 8px; border-bottom: 1px solid var(--divider-color); }
         #low-stock-items li:last-child { border-bottom: none; }
         #low-stock-items li .low-stock-qty { color: var(--danger-red); font-weight: 500; }
-        @media (max-width: 900px) { .main-columns, .cosmetic-form-grid, .cosmetic-credit-form-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 800px) { body { padding: 10px; } .analytics-grid, .sales-actions, .form-row, .form-grid, .controls-grid { grid-template-columns: 1fr; } .tab-button { padding: 15px 10px; font-size: 14px; } }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-columns, .cosmetic-form-grid, .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 800px) {
+            body { padding: 10px; }
+            .analytics-grid, .sales-actions, .form-row { grid-template-columns: 1fr; }
+            .tab-button { padding: 15px 10px; font-size: 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    
-    <div id="loading-overlay">Loading...</div>
 
     <header>
         <h1>Tinny Fashion Store</h1>
         <p>Run by Rekha ChandraShekhar Mishra since 2022</p>
+
+        <!-- ======================================================= -->
+        <!-- ============ NEW: GOOGLE DRIVE SYNC AREA ============ -->
+        <!-- ======================================================= -->
+        <div id="sync-container">
+            <span id="sync-status">Login with Google to sync your data.</span>
+            
+            <button id="authorize-button" class="btn btn-google">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" class="abc-icon"><g><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><g></g></g></svg>
+                <span>Login with Google</span>
+            </button>
+
+            <button id="sync-button" class="btn btn-secondary">Sync to Drive</button>
+            <button id="load-button" class="btn btn-success">Load from Drive</button>
+            <button id="signout-button" class="btn btn-danger">Logout</button>
+        </div>
+        <!-- ======================================================= -->
+        <!-- =================== END NEW AREA ====================== -->
+        <!-- ======================================================= -->
+
     </header>
 
     <nav class="tab-nav">
@@ -206,7 +274,7 @@
             </div>
         </div>
 
-        <!-- Credit Tab -->
+        <!-- NEW: Credit Tab -->
         <div id="credit" class="tab-content">
             <div class="credit-layout">
                  <section class="card">
@@ -227,6 +295,7 @@
                         <button type="submit" class="btn btn-primary">Record Credit Sale</button>
                     </form>
                 </section>
+
                 <section class="card">
                     <h2>Cosmetics Sales on Credit</h2>
                     <p>Record credit sales for items not tracked in inventory, like cosmetics.</p>
@@ -254,7 +323,7 @@
                 <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
                 <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
             </div></section>
-            <section class="card"><h2>Low Stock Items (5 or less)</h2><div id="low-stock-items" class="metric-card"><ul><li>Please sign in to load your data.</li></ul></div></section>
+            <section class="card"><h2>Low Stock Items (5 or less)</h2><div id="low-stock-items" class="metric-card"><ul><li>No low stock items.</li></ul></div></section>
         </div>
 
         <!-- Profit Tab -->
@@ -263,8 +332,19 @@
                 <h2>Item-wise Profit Details</h2>
                 <div class="table-container">
                     <table class="styled-table" id="profit-details-table">
-                        <thead><tr><th>Date</th><th>Particulars</th><th>Qty</th><th>Sell Rate</th><th>Cost Rate</th><th>Profit</th></tr></thead>
-                        <tbody><tr><td colspan="6" style="text-align:center;">Please sign in to load your data.</td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Particulars</th>
+                                <th>Qty</th>
+                                <th>Sell Rate</th>
+                                <th>Cost Rate</th>
+                                <th>Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
@@ -275,251 +355,84 @@
             <section class="card">
                 <h2>Controls</h2>
                 <div class="controls-grid">
-                    <div><label for="start-date">Start Date</label><input type="date" id="start-date"></div>
-                    <div><label for="end-date">End Date</label><input type="date" id="end-date"></div>
+                    <div>
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div>
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date">
+                    </div>
                     <button class="btn btn-primary" id="filter-btn">Filter</button>
                     <button class="btn btn-secondary" id="reset-filter-btn">Reset</button>
                     <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
                 </div>
             </section>
-            <section class="card"><h2>Sales History</h2><div class="table-container"><table class="styled-table" id="sales-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">Please sign in to load your data.</td></tr></tbody></table></div></section>
-            <section class="card"><h2>Purchase History</h2><div class="table-container"><table class="styled-table" id="purchase-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead><tbody><tr><td colspan="3" style="text-align:center;">Please sign in to load your data.</td></tr></tbody></table></div></section>
+            <section class="card"><h2>Sales History</h2><div class="table-container">
+                <table class="styled-table" id="sales-history-table">
+                    <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
+                    <tbody><tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr></tbody>
+                </table>
+            </div></section>
+            <section class="card"><h2>Purchase History</h2><div class="table-container">
+                <table class="styled-table" id="purchase-history-table">
+                    <thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead>
+                    <tbody><tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr></tbody>
+                </table>
+            </div></section>
         </div>
        
         <!-- Settings Tab -->
         <div id="settings" class="tab-content">
             <section class="card">
-                <h2>Data Management & Cloud Sync</h2>
-                <p>Load your existing inventory from an Excel file. This will replace your current data and save it to the cloud.</p>
+                <h2>Data Management</h2>
+                <p>Load your existing inventory from an Excel file. The file must contain 'particulars', 'quantity', and 'rate' columns.</p>
                 <input type="file" id="excel-file" accept=".xlsx, .xls">
-                <h3 style="margin-top: 30px; border-top: 1px solid var(--divider-color); padding-top: 20px;">Google Drive Sync</h3>
-                <p>Sign in to automatically save and load your business data to your personal Google Drive. Data is stored securely in a hidden application folder.</p>
-                <div id="auth-container">
-                    <button id="authorize_button" class="btn btn-primary" style="display: none;">Sign In with Google</button>
-                    <button id="signout_button" class="btn btn-secondary" style="display: none;">Sign Out</button>
-                </div>
-                <div id="drive-status" style="margin-top: 15px; font-weight: 500; color: var(--text-secondary);">Connecting to Google...</div>
             </section>
         </div>
 
         <!-- Inventory Display Section (Shared) -->
-        <section class="card"><h2>Current Inventory</h2><div class="table-container"><table class="styled-table" id="inventory-table"><thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">Please sign in to load your data.</td></tr></tbody></table></div></section>
+        <section class="card"><h2>Current Inventory</h2><div class="table-container">
+            <table class="styled-table" id="inventory-table">
+                <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></section>
     </main>
 
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- ======================================================= -->
+    <!-- ========= NEW: GOOGLE API SCRIPT (MUST BE LAST) ========= -->
+    <!-- ======================================================= -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
+
 
     <!-- Embedded JavaScript -->
     <script>
-    /*
-        SECURITY WARNING:
-        The API Key and Client ID are exposed in this file.
-        Do NOT share this file publicly or commit it to a public repository.
-        For production apps, these keys should be handled by a backend server.
-    */
-
-    // --- GOOGLE DRIVE API CONFIGURATION ---
+    // --- NEW: Google API Configuration ---
+    // WARNING: Do not share these credentials. Regenerate them from Google Cloud Console.
     const API_KEY = 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg';
     const CLIENT_ID = '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
-    const DRIVE_FILENAME = 'tinnyFashionStoreData.json';
-
-    let tokenClient;
-    let driveFileId = null;
-
-    // --- GLOBAL APP STATE & DOM ---
-    let inventory = [];
-    let transactions = [];
-    let totalProfit = 0;
-    let totalRevenue = 0;
-    let ui; // Will be populated on DOMContentLoaded
-    
-    // --- ROBUST API INITIALIZATION (FIXES "STUCK" BUG) ---
-    // Create promises that will resolve when each respective Google library is ready.
-    let resolveGapiReady;
-    const gapiReady = new Promise(resolve => { resolveGapiReady = resolve; });
-    let resolveGisReady;
-    const gisReady = new Promise(resolve => { resolveGisReady = resolve; });
-
-    function gapiLoaded() { gapi.load('client', resolveGapiReady); }
-    function gisLoaded() { gis.load('client', resolveGisReady); }
-
-    /** Debounce function to limit the rate at which a function gets called. */
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => { clearTimeout(timeout); func(...args); };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-    
-    // --- GOOGLE API & AUTHENTICATION FLOW ---
-
-    /** The main entry point for authentication after both GAPI and GIS are ready. */
-    async function initializeAuthFlow() {
-        // 1. Initialize the GAPI client
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: DISCOVERY_DOCS,
-        });
-        
-        // 2. Initialize the GIS token client
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: handleTokenResponse, // A single callback for all auth responses
-        });
-
-        // 3. Attempt a silent sign-in for returning users
-        ui.driveStatus.textContent = "Attempting automatic sign-in...";
-        tokenClient.requestAccessToken({ prompt: 'none' });
-    }
-
-    /** Handles the response from all token requests (silent or manual). */
-    async function handleTokenResponse(resp) {
-        if (resp.error) {
-            // This usually means silent sign-in failed. Let the user sign in manually.
-            ui.driveStatus.textContent = "Please sign in to load your data.";
-            updateSigninStatus(false);
-            return;
-        }
-        // Sign-in was successful
-        updateSigninStatus(true);
-        await loadDataFromDrive();
-    }
-
-    /** Updates the UI buttons and status based on sign-in state. */
-    function updateSigninStatus(isSignedIn) {
-        if (isSignedIn) {
-            ui.auth.authorizeBtn.style.display = 'none';
-            ui.auth.signoutBtn.style.display = 'block';
-            setAppEnabled(true);
-        } else {
-            ui.auth.authorizeBtn.style.display = 'block';
-            ui.auth.signoutBtn.style.display = 'none';
-            setAppEnabled(false);
-            // Clear all data on sign out and re-render
-            inventory = [];
-            transactions = [];
-            recalculateAndRenderAll();
-        }
-    }
-
-    /** Sign in the user upon button click. */
-    function handleAuthClick() {
-        // Prompt the user to select a Google Account and ask for consent.
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    /** Sign out the user upon button click. */
-    function handleSignoutClick() {
-        const token = gapi.client.getToken();
-        if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token);
-            gapi.client.setToken('');
-            driveFileId = null;
-            updateSigninStatus(false);
-        }
-    }
-
-    // --- GOOGLE DRIVE DATA OPERATIONS ---
-
-    /** Shows/hides a loading overlay and enables/disables the app UI. */
-    function setLoading(isLoading, message = "Loading...") {
-        if (isLoading) {
-            ui.loadingOverlay.textContent = message;
-            ui.loadingOverlay.style.display = 'flex';
-        } else {
-            ui.loadingOverlay.style.display = 'none';
-        }
-    }
-
-    /** Loads the app data from Google Drive. */
-    async function loadDataFromDrive() {
-        setLoading(true, "Loading your data from Google Drive...");
-        try {
-            ui.driveStatus.textContent = 'Searching for your data file...';
-            const response = await gapi.client.drive.files.list({
-                spaces: 'appDataFolder',
-                q: `name='${DRIVE_FILENAME}' and trashed=false`,
-                fields: 'files(id, name)',
-            });
-
-            if (response.result.files && response.result.files.length > 0) {
-                driveFileId = response.result.files[0].id;
-                ui.driveStatus.textContent = 'Data file found. Downloading...';
-                const fileContentResponse = await gapi.client.drive.files.get({
-                    fileId: driveFileId, alt: 'media',
-                });
-                const data = JSON.parse(fileContentResponse.body);
-                inventory = data.inventory || [];
-                transactions = data.transactions || [];
-                transactions.forEach(t => t.date = new Date(t.date));
-                ui.driveStatus.textContent = 'Data loaded successfully!';
-            } else {
-                ui.driveStatus.textContent = 'No data file found. A new one will be created when you make a change.';
-                inventory = [];
-                transactions = [];
-            }
-            recalculateAndRenderAll();
-        } catch (err) {
-            console.error("Error loading from Drive:", err);
-            ui.driveStatus.textContent = `Error: ${err.result?.error?.message || err.message}`;
-            updateSigninStatus(false);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    /** Saves the app data to Google Drive. Debounced to avoid excessive API calls. */
-    const saveDataToDrive = debounce(async () => {
-        if (!gapi.client.getToken()) return;
-        setLoading(true, "Saving changes to Google Drive...");
-        try {
-            const dataToSave = {
-                inventory: inventory,
-                transactions: transactions,
-                lastUpdated: new Date().toISOString()
-            };
-            const metadata = { name: DRIVE_FILENAME, mimeType: 'application/json' };
-            const boundary = '-------314159265358979323846';
-            const multipartRequestBody =
-                `--${boundary}\r\n` +
-                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-                JSON.stringify(driveFileId ? {} : { ...metadata, parents: ['appDataFolder'] }) +
-                `\r\n--${boundary}\r\n` +
-                'Content-Type: application/json\r\n\r\n' +
-                JSON.stringify(dataToSave) +
-                `\r\n--${boundary}--`;
-
-            const request = gapi.client.request({
-                path: `/upload/drive/v3/files${driveFileId ? `/${driveFileId}` : ''}`,
-                method: driveFileId ? 'PATCH' : 'POST',
-                params: { uploadType: 'multipart' },
-                headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
-                body: multipartRequestBody,
-            });
-            const response = await request;
-            driveFileId = response.result.id;
-            ui.driveStatus.textContent = 'All changes saved.';
-        } catch (err) {
-            console.error("Error saving to Drive:", err);
-            ui.driveStatus.textContent = `Error saving: ${err.result?.error?.message || err.message}`;
-        } finally {
-            setLoading(false);
-        }
-    }, 2000);
-
+    const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+    const DATA_FILE_NAME = 'TinnyFashionStore_Data.json';
+    let gapi; // Will be populated by the Google API script
 
     document.addEventListener('DOMContentLoaded', () => {
         const { jsPDF } = window.jspdf;
 
+        // --- STATE MANAGEMENT ---
+        let inventory = [];
+        let transactions = [];
+        let totalProfit = 0;
+        let totalRevenue = 0;
+        let googleFileId = null; // NEW: To store the ID of our data file in Drive
+
         // --- DOM ELEMENT REFERENCES ---
-        ui = {
-            loadingOverlay: document.getElementById('loading-overlay'),
+        const ui = {
             excelFile: document.getElementById('excel-file'),
             inventoryTableBody: document.querySelector('#inventory-table tbody'),
             inventoryDatalist: document.getElementById('inventory-datalist'),
@@ -534,105 +447,586 @@
             cosmeticSaleForm: document.getElementById('cosmetic-sale-form'),
             tabButtons: document.querySelectorAll('.tab-button'),
             tabContents: document.querySelectorAll('.tab-content'),
-            driveStatus: document.getElementById('drive-status'),
-            auth: { authorizeBtn: document.getElementById('authorize_button'), signoutBtn: document.getElementById('signout_button') },
-            analytics: { totalProfit: document.getElementById('total-profit'), totalRevenue: document.getElementById('total-revenue'), avgMargin: document.getElementById('avg-margin'), inventoryCost: document.getElementById('total-inventory-cost'), totalUnits: document.getElementById('total-units'), lowStockItems: document.getElementById('low-stock-items') },
-            transactions: { salesHistoryBody: document.querySelector('#sales-history-table tbody'), purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'), transactionsTab: document.getElementById('transactions'), startDateInput: document.getElementById('start-date'), endDateInput: document.getElementById('end-date'), filterBtn: document.getElementById('filter-btn'), resetFilterBtn: document.getElementById('reset-filter-btn'), exportExcelBtn: document.getElementById('export-excel-btn') },
-            profit: { profitDetailsBody: document.querySelector('#profit-details-table tbody') },
-            credit: { inventorySaleForm: document.getElementById('credit-inventory-sale-form'), inventoryItemsContainer: document.getElementById('credit-inventory-items-container'), addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'), inventoryDateInput: document.getElementById('credit-inventory-date'), cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'), cosmeticDateInput: document.getElementById('credit-cosmetic-date') }
+            analytics: {
+                totalProfit: document.getElementById('total-profit'),
+                totalRevenue: document.getElementById('total-revenue'),
+                avgMargin: document.getElementById('avg-margin'),
+                inventoryCost: document.getElementById('total-inventory-cost'),
+                totalUnits: document.getElementById('total-units'),
+                lowStockItems: document.getElementById('low-stock-items'),
+            },
+            transactions: {
+                salesHistoryBody: document.querySelector('#sales-history-table tbody'),
+                purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
+                transactionsTab: document.getElementById('transactions'),
+                startDateInput: document.getElementById('start-date'),
+                endDateInput: document.getElementById('end-date'),
+                filterBtn: document.getElementById('filter-btn'),
+                resetFilterBtn: document.getElementById('reset-filter-btn'),
+                exportExcelBtn: document.getElementById('export-excel-btn'),
+            },
+            profit: {
+                profitDetailsBody: document.querySelector('#profit-details-table tbody'),
+            },
+            credit: {
+                inventorySaleForm: document.getElementById('credit-inventory-sale-form'),
+                inventoryItemsContainer: document.getElementById('credit-inventory-items-container'),
+                addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'),
+                inventoryDateInput: document.getElementById('credit-inventory-date'),
+                cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'),
+                cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
+            },
+            // NEW: Sync UI Elements
+            sync: {
+                authorizeButton: document.getElementById('authorize-button'),
+                signoutButton: document.getElementById('signout-button'),
+                syncButton: document.getElementById('sync-button'),
+                loadButton: document.getElementById('load-button'),
+                status: document.getElementById('sync-status'),
+            }
         };
-
-        // --- CORE STATE & RENDER LOGIC ---
-        const recalculateAndRenderAll = () => {
-            totalProfit = 0;
-            totalRevenue = 0;
-            transactions.forEach(t => {
-                if (t.type === 'Sale') {
-                    const transactionRevenue = t.items.reduce((sum, item) => sum + (item.quantity * item.sellingRate), 0);
-                    const transactionProfit = t.items.reduce((sum, item) => sum + (item.quantity * (item.sellingRate - item.costRate)), 0);
-                    totalRevenue += transactionRevenue;
-                    totalProfit += transactionProfit;
-                }
-            });
-            renderInventory(); renderAnalytics(); renderTransactions(); renderProfit();
-        };
-
-        const updateStateAndSave = () => { recalculateAndRenderAll(); saveDataToDrive(); };
-        const getTodayDateString = () => new Date().toISOString().slice(0, 10);
         
-        // --- RENDER FUNCTIONS (Mostly unchanged, but now handle empty/signed-out state better) ---
+        // --- GOOGLE DRIVE API FUNCTIONS ---
+        window.handleClientLoad = () => {
+            gapi = window.gapi;
+            gapi.load('client:auth2', initClient);
+        };
+
+        const initClient = () => {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(() => {
+                const authInstance = gapi.auth2.getAuthInstance();
+                authInstance.isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(authInstance.isSignedIn.get());
+                ui.sync.authorizeButton.onclick = () => authInstance.signIn();
+                ui.sync.signoutButton.onclick = () => authInstance.signOut();
+                ui.sync.syncButton.onclick = syncDataToDrive;
+                ui.sync.loadButton.onclick = loadDataFromDrive;
+            }).catch(error => {
+                console.error("Error initializing Google Client", error);
+                ui.sync.status.textContent = 'Error: Could not connect to Google.';
+            });
+        };
+
+        const updateSigninStatus = (isSignedIn) => {
+            if (isSignedIn) {
+                const profile = gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile();
+                ui.sync.status.textContent = `Signed in as ${profile.getName()}`;
+                ui.sync.authorizeButton.style.display = 'none';
+                ui.sync.signoutButton.style.display = 'inline-flex';
+                ui.sync.syncButton.style.display = 'inline-flex';
+                ui.sync.loadButton.style.display = 'inline-flex';
+            } else {
+                ui.sync.status.textContent = 'Login with Google to sync your data.';
+                ui.sync.authorizeButton.style.display = 'inline-flex';
+                ui.sync.signoutButton.style.display = 'none';
+                ui.sync.syncButton.style.display = 'none';
+                ui.sync.loadButton.style.display = 'none';
+            }
+        };
+        
+        const getFileId = async () => {
+            if (googleFileId) return googleFileId;
+            try {
+                const response = await gapi.client.drive.files.list({
+                    q: `name='${DATA_FILE_NAME}' and trashed=false`,
+                    fields: 'files(id, name)',
+                    spaces: 'drive'
+                });
+                if (response.result.files && response.result.files.length > 0) {
+                    googleFileId = response.result.files[0].id;
+                    return googleFileId;
+                } else {
+                    // File not found, create it
+                    const fileMetadata = { name: DATA_FILE_NAME };
+                    const createResponse = await gapi.client.drive.files.create({ resource: fileMetadata, fields: 'id' });
+                    googleFileId = createResponse.result.id;
+                    return googleFileId;
+                }
+            } catch (error) {
+                console.error("Error finding or creating file: ", error);
+                alert("An error occurred while accessing Google Drive.");
+                return null;
+            }
+        };
+
+        const syncDataToDrive = async () => {
+            if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                alert("Please log in first."); return;
+            }
+            ui.sync.status.textContent = "Syncing data...";
+            const fileId = await getFileId();
+            if (!fileId) return;
+
+            const dataToSave = {
+                inventory,
+                transactions,
+                totalProfit,
+                totalRevenue,
+                lastSync: new Date().toISOString()
+            };
+
+            const boundary = '-------314159265358979323846';
+            const delimiter = "\r\n--" + boundary + "\r\n";
+            const close_delim = "\r\n--" + boundary + "--";
+            const metadata = { 'mimeType': 'application/json' };
+            const multipartRequestBody =
+                delimiter + 'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter + 'Content-Type: application/json\r\n\r\n' +
+                JSON.stringify(dataToSave) +
+                close_delim;
+
+            try {
+                await gapi.client.request({
+                    'path': `/upload/drive/v3/files/${fileId}`,
+                    'method': 'PATCH',
+                    'params': { 'uploadType': 'multipart' },
+                    'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                    'body': multipartRequestBody
+                });
+                ui.sync.status.textContent = `Data synced at ${new Date().toLocaleTimeString()}`;
+                alert('Data saved to Google Drive successfully!');
+            } catch (error) {
+                console.error("Error syncing data: ", error);
+                alert('Failed to save data to Google Drive.');
+                ui.sync.status.textContent = "Sync failed.";
+            }
+        };
+        
+        const loadDataFromDrive = async () => {
+            if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                alert("Please log in first."); return;
+            }
+            if (!confirm("This will overwrite your current data with the data from Google Drive. Are you sure?")) return;
+            
+            ui.sync.status.textContent = "Loading data...";
+            const fileId = await getFileId();
+            if (!fileId) {
+                ui.sync.status.textContent = "No data file found in Drive.";
+                alert("No data file found in Google Drive. Sync some data first.");
+                return;
+            }
+
+            try {
+                const response = await gapi.client.drive.files.get({ fileId: fileId, alt: 'media' });
+                if (!response.body || response.body.length === 0) {
+                     alert("The data file in Google Drive is empty. Sync some data first.");
+                     ui.sync.status.textContent = "Loaded empty file from Drive.";
+                     return;
+                }
+
+                const loadedData = JSON.parse(response.body);
+                
+                // Rehydrate the data
+                inventory = loadedData.inventory || [];
+                transactions = (loadedData.transactions || []).map(tx => ({
+                    ...tx,
+                    date: new Date(tx.date) // IMPORTANT: Convert date string back to Date object
+                }));
+                totalProfit = loadedData.totalProfit || 0;
+                totalRevenue = loadedData.totalRevenue || 0;
+                
+                renderAll(); // Re-render the entire UI with new data
+                ui.sync.status.textContent = `Data loaded. Last sync was ${new Date(loadedData.lastSync).toLocaleString()}`;
+                alert("Data loaded from Google Drive successfully!");
+            } catch (error) {
+                console.error("Error loading data: ", error);
+                alert('Failed to load data from Google Drive.');
+                ui.sync.status.textContent = "Load failed.";
+            }
+        };
+
+
+        // --- HELPER FUNCTIONS ---
+        const getTodayDateString = () => new Date().toISOString().slice(0, 10);
+
+        // --- RENDER FUNCTIONS ---
+        const renderAll = () => {
+            renderInventory();
+            renderAnalytics();
+            renderTransactions();
+            renderProfit();
+        };
+
         const renderInventory = () => {
-            const isSignedIn = !!gapi.client.getToken();
             inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
             ui.inventoryTableBody.innerHTML = inventory.length
-                ? inventory.map(item => `...`).join('') // Shortened for brevity
-                : `<tr><td colspan="4" style="text-align:center;">${isSignedIn ? 'No inventory data. Add stock or load an Excel file.' : 'Please sign in to load your data.'}</td></tr>`;
+                ? inventory.map(item => `
+                    <tr data-particulars="${item.particulars}">
+                        <td>
+                            <span class="display-value">${item.particulars}</span>
+                            <div class="edit-field"><input type="text" class="edit-input" value="${item.particulars}" readonly></div>
+                        </td>
+                        <td>
+                            <span class="display-value">${item.quantity}</span>
+                            <div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div>
+                        </td>
+                        <td>
+                            <span class="display-value">${item.rate.toFixed(2)}</span>
+                            <div class="edit-field"><input type="number" class="edit-input edit-rate" value="${item.rate.toFixed(2)}" min="0" step="0.01"></div>
+                        </td>
+                        <td>
+                            <div class="inventory-actions">
+                                <button class="btn btn-small btn-secondary edit-btn" data-particulars="${item.particulars}">Edit</button>
+                                <button class="btn btn-small btn-success save-btn" data-particulars="${item.particulars}">Save</button>
+                                <button class="btn btn-small btn-secondary cancel-btn">Cancel</button>
+                                <button class="btn btn-small btn-danger delete-btn" data-particulars="${item.particulars}">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')
+                : `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock or load a file.</td></tr>`;
             ui.inventoryDatalist.innerHTML = inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
         };
-        // (Other render functions are largely the same, but their content will be empty when signed out)
-        // [NOTE: The full content of the other render functions is omitted here for clarity, but it's identical to your previous version]
-        
+
+        const renderAnalytics = () => {
+            const { cost, units, lowStock } = inventory.reduce((acc, item) => {
+                acc.cost += item.quantity * item.rate;
+                acc.units += item.quantity;
+                if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
+                return acc;
+            }, { cost: 0, units: 0, lowStock: [] });
+            const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
+            ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
+            ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
+            ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
+            ui.analytics.inventoryCost.textContent = `₹${cost.toFixed(2)}`;
+            ui.analytics.totalUnits.textContent = units;
+            ui.analytics.lowStockItems.innerHTML = lowStock.length > 0
+                ? `<ul>${lowStock.map(item => `<li>${item.particulars} - <span class="low-stock-qty">${item.quantity} left</span></li>`).join('')}</ul>`
+                : '<ul><li>No low stock items.</li></ul>';
+        };
+
+        const renderTransactions = () => {
+            const startDateStr = ui.transactions.startDateInput.value;
+            const endDateStr = ui.transactions.endDateInput.value;
+            const startDate = startDateStr ? new Date(startDateStr) : null;
+            if(startDate) startDate.setHours(0,0,0,0);
+            const endDate = endDateStr ? new Date(endDateStr) : null;
+            if(endDate) endDate.setHours(23,59,59,999);
+            const allSales = transactions.filter(t => t.type === 'Sale');
+            const allPurchases = transactions.filter(t => t.type === 'Purchase');
+            const filteredSales = allSales.filter(t => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
+            const filteredPurchases = allPurchases.filter(t => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
+
+            ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
+                const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName}</span>` : '';
+                return `
+                <tr>
+                    <td>${t.date.toLocaleDateString()}</td>
+                    <td>
+                        <ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul>
+                        ${creditLabel}
+                    </td>
+                    <td>₹${t.total.toFixed(2)}</td>
+                    <td><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button></td>
+                </tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
+
+            ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `
+                <tr>
+                    <td>${t.date.toLocaleDateString()}</td>
+                    <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td>
+                    <td>₹${t.total.toFixed(2)}</td>
+                </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
+        };
+       
+        const renderProfit = () => {
+            const allItemsSold = transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({...item, date: t.date })));
+            if (!allItemsSold.length) {
+                ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`;
+                return;
+            }
+            allItemsSold.sort((a,b) => b.date - a.date);
+            const tableRows = allItemsSold.map(item => {
+                const profit = (item.sellingRate - item.costRate) * item.quantity;
+                return `<tr><td>${item.date.toLocaleDateString()}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
+            }).join('');
+            ui.profit.profitDetailsBody.innerHTML = tableRows;
+        };
+       
+        // --- CORE LOGIC (UNCHANGED) ---
+        const createFormItemHTML = (isSale) => isSale
+            ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
+            : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`;
+
+        const addFormItem = (container, isSale) => container.insertAdjacentHTML('beforeend', createFormItemHTML(isSale));
+
+        const handleFileUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    inventory = json.map(row => ({
+                        particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0,
+                    })).filter(item => item.particulars !== "N/A");
+                    renderAll();
+                    alert('Inventory loaded successfully!');
+                } catch (error) { alert('Error reading Excel file. Ensure columns are: particulars, quantity, rate.'); console.error(error); }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
         const processSale = (isInvoice, isCredit = false, creditForm) => {
-            // ... (Function logic is identical to your previous version)
+            const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : ui.salesItemsContainer;
+            const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
+            const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value) : new Date();
+
+            if (isCredit && !partyName) {
+                alert("Party Name is required for credit sales.");
+                return null;
+            }
+
+            const saleItems = [], errors = [];
+            let isValid = true;
+            container.querySelectorAll('.item-entry').forEach(entry => {
+                const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
+                if (!p || !q || isNaN(r)) return;
+                const item = inventory.find(i => i.particulars === p);
+                if (!item) { isValid = false; errors.push(`Item not found: ${p}`); }
+                else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}. Only ${item.quantity} left.`); }
+                else { saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }
+            });
+
+            if (saleItems.length === 0) { alert("Please add at least one valid item."); return null; }
+            if (!isValid) { alert("Sale could not be completed:\n" + errors.join("\n")); return null; }
+
+            const { profit, revenue } = saleItems.reduce((acc, soldItem) => {
+                const inventoryItem = inventory.find(i => i.particulars === soldItem.particulars);
+                inventoryItem.quantity -= soldItem.quantity;
+                const itemProfit = (soldItem.sellingRate - soldItem.costRate) * soldItem.quantity;
+                acc.profit += itemProfit;
+                acc.revenue += soldItem.sellingRate * soldItem.quantity;
+                return acc;
+            }, { profit: 0, revenue: 0 });
+            totalProfit += profit;
+            totalRevenue += revenue;
+            
+            const newTransaction = { 
+                id: Date.now(), 
+                type: 'Sale', 
+                saleType: isCredit ? 'Credit' : 'Cash',
+                partyName: partyName,
+                date: saleDate, 
+                items: saleItems, 
+                total: revenue 
+            };
+            transactions.push(newTransaction);
+            renderAll();
+            
+            if (isCredit) {
+                creditForm.reset();
+                ui.credit.inventoryDateInput.value = getTodayDateString();
+                container.innerHTML = '';
+                addFormItem(container, true);
+            } else {
+                ui.salesItemsContainer.innerHTML = '';
+                addFormItem(ui.salesItemsContainer, true);
+            }
+
+            if (isInvoice) generateInvoice(newTransaction);
+            alert((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!');
         };
        
         const exportTransactionsToExcel = () => {
-            // ... (Function logic is identical to your previous version)
+            if (transactions.length === 0) { alert("No transactions to export."); return; }
+            const salesData = transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
+            const purchaseData = transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
+            const profitData = salesData.map(item => ({ "Date": item["Date"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
+            const wsSales = XLSX.utils.json_to_sheet(salesData); const wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wsProfit = XLSX.utils.json_to_sheet(profitData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsSales, "Sales History"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History"); XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
+            XLSX.writeFile(wb, "Transaction_History.xlsx");
+            alert("Transaction history exported successfully!");
         };
 
         const generateInvoice = (transaction) => {
-            // ... (Function logic is identical to your previous version)
+            const doc = new jsPDF(); let y = 20;
+            doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" });
+            y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" });
+            y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" });
+            y += 8; doc.setFontSize(10); 
+            if (transaction.saleType === 'Credit') {
+                doc.text(`Credit To: ${transaction.partyName}`, 20, y);
+            }
+            doc.text(`Date: ${transaction.date.toLocaleDateString()}`, 190, y, { align: "right" });
+
+            y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold");
+            doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" });
+            y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8;
+            doc.setFont("helvetica", "normal");
+            transaction.items.forEach(item => {
+                const itemTotal = item.quantity * item.sellingRate;
+                doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y);
+                doc.text(item.sellingRate.toFixed(2), 150, y); doc.text(itemTotal.toFixed(2), 185, y, { align: "right" }); y += 7;
+            });
+            y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7;
+            doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y);
+            doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" });
+            doc.save(`Invoice_${transaction.id}.pdf`);
         };
 
-        // --- EVENT LISTENERS ---
-        ui.auth.authorizeBtn.addEventListener('click', handleAuthClick);
-        ui.auth.signoutBtn.addEventListener('click', handleSignoutClick);
-        // ... (All other event listeners are identical to your previous version)
+        // --- EVENT LISTENERS (UNCHANGED) ---
+        ui.excelFile.addEventListener('change', handleFileUpload);
+        ui.addSaleItemBtn.addEventListener('click', () => addFormItem(ui.salesItemsContainer, true));
+        ui.addPurchaseItemBtn.addEventListener('click', () => addFormItem(ui.purchaseItemsContainer, false));
+        ui.recordSaleBtn.addEventListener('click', () => processSale(false, false));
+        ui.recordInvoiceBtn.addEventListener('click', () => processSale(true, false));
+        ui.credit.addInventoryItemBtn.addEventListener('click', () => addFormItem(ui.credit.inventoryItemsContainer, true));
+        ui.credit.inventorySaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            processSale(false, true, e.target);
+        });
+
+        ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const partyName = form.querySelector('#credit-cosmetic-party-name').value.trim();
+            const saleDate = new Date(form.querySelector('#credit-cosmetic-date').value);
+            const itemName = form.querySelector('#credit-cosmetic-item-name').value.trim();
+            const quantity = parseInt(form.querySelector('#credit-cosmetic-qty').value, 10);
+            const costRate = parseFloat(form.querySelector('#credit-cosmetic-cost-rate').value);
+            const sellRate = parseFloat(form.querySelector('#credit-cosmetic-sell-rate').value);
+            
+            if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0) {
+                 alert("Please fill all fields correctly for the cosmetic credit sale."); return;
+            }
+            const totalSelling = sellRate * quantity;
+            const totalCost = costRate * quantity;
+            const profit = totalSelling - totalCost;
+            totalProfit += profit;
+            totalRevenue += totalSelling;
+
+            const cosmeticItem = { particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate };
+            transactions.push({ 
+                id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: partyName,
+                date: saleDate, items: [cosmeticItem], total: totalSelling 
+            });
+            renderAll();
+            form.reset();
+            ui.credit.cosmeticDateInput.value = getTodayDateString();
+            alert(`Cosmetic credit sale to ${partyName} recorded!`);
+        });
+
+        ui.transactions.exportExcelBtn.addEventListener('click', exportTransactionsToExcel);
+        ui.transactions.filterBtn.addEventListener('click', renderTransactions);
+        ui.transactions.resetFilterBtn.addEventListener('click', () => { ui.transactions.startDateInput.value = ''; ui.transactions.endDateInput.value = ''; renderTransactions(); });
+
+        ui.cosmeticSaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const particulars = e.target.querySelector('#cosmetic-particulars').value;
+            const quantity = parseFloat(e.target.querySelector('#cosmetic-quantity').value);
+            const totalCost = parseFloat(e.target.querySelector('#cosmetic-cost').value);
+            const totalSelling = parseFloat(e.target.querySelector('#cosmetic-selling').value);
+            if (!particulars || isNaN(quantity) || isNaN(totalCost) || isNaN(totalSelling) || quantity <= 0) { alert("Please fill all fields correctly. Quantity must be greater than 0."); return; }
+            const profit = totalSelling - totalCost;
+            totalProfit += profit;
+            totalRevenue += totalSelling;
+            const cosmeticItem = { particulars: `(Cosmetic) ${particulars}`, quantity: quantity, sellingRate: totalSelling / quantity, costRate: totalCost / quantity };
+            transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [cosmeticItem], total: totalSelling });
+            renderAll();
+            ui.cosmeticSaleForm.reset();
+            alert(`Profit of ₹${profit.toFixed(2)} recorded successfully!`);
+        });
+
+        ui.purchaseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const { newItems, total } = Array.from(ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => {
+                const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
+                if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; }
+                return acc;
+            }, { newItems: [], total: 0 });
+            if (newItems.length === 0) return alert("Please fill out all fields for at least one item.");
+            newItems.forEach(newItem => {
+                const existing = inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+                if (existing) {
+                    const totalExistingValue = existing.rate * existing.quantity;
+                    const totalNewValue = newItem.rate * newItem.quantity;
+                    const totalQuantity = existing.quantity + newItem.quantity;
+                    existing.rate = (totalExistingValue + totalNewValue) / totalQuantity;
+                    existing.quantity = totalQuantity;
+                } else { inventory.push(newItem); }
+            });
+            transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total });
+            renderAll();
+            ui.purchaseItemsContainer.innerHTML = '';
+            addFormItem(ui.purchaseItemsContainer, false);
+            alert('Stock updated!');
+        });
+
+        ui.tabButtons.forEach(button => button.addEventListener('click', () => {
+            ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active');
+            ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
+        }));
+
+        document.body.addEventListener('change', e => {
+             if (e.target.classList.contains('particulars')) {
+                const item = inventory.find(i => i.particulars === e.target.value);
+                const rateInput = e.target.closest('.item-entry').querySelector('.rate');
+                if (item && rateInput) {
+                    rateInput.value = item.rate.toFixed(2);
+                }
+            }
+        });
+       
+        ui.transactions.transactionsTab.addEventListener('click', e => {
+            if (e.target.classList.contains('download-invoice-btn')) {
+                const tx = transactions.find(t => t.id === parseInt(e.target.dataset.id, 10));
+                if (tx) generateInvoice(tx);
+            }
+        });
+
+        ui.inventoryTableBody.addEventListener('click', (e) => {
+            const particulars = e.target.dataset.particulars;
+            const targetRow = e.target.closest('tr');
+            if (!targetRow) return;
+
+            if (e.target.classList.contains('edit-btn')) {
+                const currentlyEditing = ui.inventoryTableBody.querySelector('tr.edit-mode');
+                if(currentlyEditing) currentlyEditing.classList.remove('edit-mode');
+                targetRow.classList.add('edit-mode');
+            } else if (e.target.classList.contains('cancel-btn')) {
+                targetRow.classList.remove('edit-mode');
+            } else if (e.target.classList.contains('delete-btn')) {
+                if (confirm(`Are you sure you want to delete the item "${particulars}"? This action cannot be undone.`)) {
+                    inventory = inventory.filter(item => item.particulars !== particulars);
+                    renderAll();
+                    alert('Item deleted.');
+                }
+            } else if (e.target.classList.contains('save-btn')) {
+                const newQty = parseInt(targetRow.querySelector('.edit-quantity').value, 10);
+                const newRate = parseFloat(targetRow.querySelector('.edit-rate').value);
+
+                if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) {
+                    alert('Invalid input. Please enter valid numbers for quantity and rate.');
+                    return;
+                }
+               
+                const itemToUpdate = inventory.find(item => item.particulars === particulars);
+                if (itemToUpdate) {
+                    itemToUpdate.quantity = newQty;
+                    itemToUpdate.rate = newRate;
+                }
+                renderAll();
+                alert('Inventory updated successfully!');
+            }
+        });
 
         // --- INITIALIZATION ---
-        /** Enables or disables all inputs and buttons in the app */
-        function setAppEnabled(isEnabled) {
-            document.querySelectorAll('input, button').forEach(el => {
-                // Don't disable the auth buttons themselves
-                if (el.id !== 'authorize_button' && el.id !== 'signout_button') {
-                    el.disabled = !isEnabled;
-                }
-            });
-        }
-        
-        // Initial state: app is disabled until sign-in is complete
-        setAppEnabled(false);
         addFormItem(ui.salesItemsContainer, true);
         addFormItem(ui.purchaseItemsContainer, false);
         addFormItem(ui.credit.inventoryItemsContainer, true);
         ui.credit.inventoryDateInput.value = getTodayDateString();
         ui.credit.cosmeticDateInput.value = getTodayDateString();
-        recalculateAndRenderAll();
-        
-        // The main entry point for the application logic after libraries load.
-        Promise.all([gapiReady, gisReady]).then(initializeAuthFlow);
+        renderAll();
     });
-
-    // Dummy renderInventory function to show the structure (replace with your full function)
-    const renderInventory = () => {
-        const isSignedIn = typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken();
-        const body = document.querySelector('#inventory-table tbody');
-        if (!body) return;
-        inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
-        body.innerHTML = inventory.length
-            ? inventory.map(item => `
-                <tr data-particulars="${item.particulars}">
-                    <td><span class="display-value">${item.particulars}</span><div class="edit-field"><input type="text" class="edit-input" value="${item.particulars}" readonly></div></td>
-                    <td><span class="display-value">${item.quantity}</span><div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div></td>
-                    <td><span class="display-value">${item.rate.toFixed(2)}</span><div class="edit-field"><input type="number" class="edit-input edit-rate" value="${item.rate.toFixed(2)}" min="0" step="0.01"></div></td>
-                    <td><div class="inventory-actions"><button class="btn btn-small btn-secondary edit-btn" data-particulars="${item.particulars}">Edit</button><button class="btn btn-small btn-success save-btn" data-particulars="${item.particulars}">Save</button><button class="btn btn-small btn-secondary cancel-btn">Cancel</button><button class="btn btn-small btn-danger delete-btn" data-particulars="${item.particulars}">Delete</button></div></td>
-                </tr>`).join('')
-            : `<tr><td colspan="4" style="text-align:center;">${isSignedIn ? 'No inventory data. Add stock or load an Excel file.' : 'Please sign in to load your data.'}</td></tr>`;
-        const datalist = document.getElementById('inventory-datalist');
-        if (datalist) datalist.innerHTML = inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
-    };
-    // Repeat for other render functions as needed
-    const renderAnalytics = ()=>{}; const renderTransactions = ()=>{}; const renderProfit = ()=>{};
     </script>
 </body>
 </html>
