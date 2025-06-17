@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,7 +64,7 @@
        
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .operations-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; } /* NEW: .credit-layout */
 
 
         .card {
@@ -80,7 +79,12 @@
         /* Form Styles */
         .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-       
+        /* NEW: Cosmetic Credit form grid */
+        .cosmetic-credit-form-grid { display: grid; grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+
         input[type="text"], input[type="number"], input[type="file"], input[type="date"] {
             width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
             box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
@@ -94,7 +98,7 @@
        
         /* Control Section styles */
         .controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: flex-end; }
-        .controls-grid label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
+        .controls-grid label, .form-row label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
         .controls-grid .btn { margin-top: 0; } /* Align buttons with inputs */
 
 
@@ -113,17 +117,29 @@
         .btn-secondary:hover { background-color: #BDBDBD; }
         .btn-success { background-color: var(--success-green); color: white; }
         .btn-success:hover { background-color: #43A047; }
+        .btn-danger { background-color: var(--danger-red); color: white; }
+        .btn-danger:hover { background-color: #D32F2F; }
         .btn-small { padding: 6px 12px; font-size: 12px; margin-top: 0; width: auto; }
         .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
        
         /* Table Styles */
         .table-container { max-height: 400px; overflow-y: auto; }
         .styled-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .styled-table th, .styled-table td { border-bottom: 1px solid var(--divider-color); padding: 14px; text-align: left; font-size: 14px; }
+        .styled-table th, .styled-table td { border-bottom: 1px solid var(--divider-color); padding: 14px; text-align: left; font-size: 14px; vertical-align: middle; }
         .styled-table th { background-color: #fafafa; font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
         .styled-table tr:hover { background-color: #FFF8E1; }
         .styled-table td ul { margin: 0; padding-left: 20px; }
         .profit-col { font-weight: 500; color: var(--success-green); }
+        .credit-label { font-size: 11px; font-weight: bold; color: var(--danger-red); display: block; margin-top: 4px; }
+
+
+        /* Styles for Inline Editing */
+        .inventory-actions { display: flex; gap: 8px; }
+        .edit-input { padding: 8px; font-size: 14px; max-width: 100px; }
+        tr.edit-mode .display-value { display: none; }
+        tr:not(.edit-mode) .edit-field { display: none; }
+        tr.edit-mode .edit-btn, tr.edit-mode .delete-btn { display: none; }
+        tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
 
         /* Analytics Section */
         .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
@@ -137,11 +153,11 @@
 
         /* Responsive Design */
         @media (max-width: 900px) {
-            .main-columns, .cosmetic-form-grid { grid-template-columns: 1fr; }
+            .main-columns, .cosmetic-form-grid, .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 800px) {
             body { padding: 10px; }
-            .analytics-grid, .sales-actions { grid-template-columns: 1fr; }
+            .analytics-grid, .sales-actions, .form-row { grid-template-columns: 1fr; }
             .tab-button { padding: 15px 10px; font-size: 14px; }
             .form-grid { grid-template-columns: 1fr; }
             .controls-grid { grid-template-columns: 1fr; }
@@ -157,6 +173,7 @@
 
     <nav class="tab-nav">
         <button class="tab-button active" data-tab="operations">Operations</button>
+        <button class="tab-button" data-tab="credit">Credit</button>
         <button class="tab-button" data-tab="analytics">Analytics</button>
         <button class="tab-button" data-tab="profit">Profit</button>
         <button class="tab-button" data-tab="transactions">Transactions</button>
@@ -204,6 +221,46 @@
             </div>
         </div>
 
+        <!-- NEW: Credit Tab -->
+        <div id="credit" class="tab-content">
+            <div class="credit-layout">
+                 <section class="card">
+                    <h2>Credit Sale (From Inventory)</h2>
+                    <form id="credit-inventory-sale-form">
+                        <div class="form-row">
+                            <div>
+                                <label for="credit-inventory-party-name">Party Name</label>
+                                <input type="text" id="credit-inventory-party-name" placeholder="Enter party's name" required>
+                            </div>
+                            <div>
+                                <label for="credit-inventory-date">Transaction Date</label>
+                                <input type="date" id="credit-inventory-date" required>
+                            </div>
+                        </div>
+                        <div id="credit-inventory-items-container"></div>
+                        <button type="button" id="add-credit-inventory-item-btn" class="btn btn-secondary">+ Add More Items</button>
+                        <button type="submit" class="btn btn-primary">Record Credit Sale</button>
+                    </form>
+                </section>
+
+                <section class="card">
+                    <h2>Cosmetics Sales on Credit</h2>
+                    <p>Record credit sales for items not tracked in inventory, like cosmetics.</p>
+                    <form id="credit-cosmetic-sale-form">
+                        <div class="cosmetic-credit-form-grid">
+                           <div><label>Party Name</label><input type="text" id="credit-cosmetic-party-name" placeholder="Party's Name" required></div>
+                           <div><label>Date</label><input type="date" id="credit-cosmetic-date" required></div>
+                           <div><label>Item Name</label><input type="text" id="credit-cosmetic-item-name" placeholder="e.g., Lipstick" required></div>
+                           <div><label>Quantity</label><input type="number" id="credit-cosmetic-qty" placeholder="Qty" min="1" required></div>
+                           <div><label>Cost Rate</label><input type="number" id="credit-cosmetic-cost-rate" placeholder="Cost per item" min="0" step="0.01" required></div>
+                           <div><label>Sell Rate</label><input type="number" id="credit-cosmetic-sell-rate" placeholder="Sell per item" min="0" step="0.01" required></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Record Cosmetic Credit Sale</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+
         <!-- Analytics Tab -->
         <div id="analytics" class="tab-content">
             <section class="card"><h2>Shop Performance</h2><div class="analytics-grid">
@@ -242,7 +299,6 @@
 
         <!-- Transactions Tab -->
         <div id="transactions" class="tab-content">
-            <!-- NEW: Controls section for filtering and export -->
             <section class="card">
                 <h2>Controls</h2>
                 <div class="controls-grid">
@@ -259,8 +315,6 @@
                     <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
                 </div>
             </section>
-            <!-- End of new section -->
-
             <section class="card"><h2>Sales History</h2><div class="table-container">
                 <table class="styled-table" id="sales-history-table">
                     <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
@@ -287,7 +341,7 @@
         <!-- Inventory Display Section (Shared) -->
         <section class="card"><h2>Current Inventory</h2><div class="table-container">
             <table class="styled-table" id="inventory-table">
-                <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th></tr></thead>
+                <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div></section>
@@ -336,7 +390,6 @@
                 salesHistoryBody: document.querySelector('#sales-history-table tbody'),
                 purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
                 transactionsTab: document.getElementById('transactions'),
-                // NEW: Transaction controls
                 startDateInput: document.getElementById('start-date'),
                 endDateInput: document.getElementById('end-date'),
                 filterBtn: document.getElementById('filter-btn'),
@@ -345,22 +398,56 @@
             },
             profit: {
                 profitDetailsBody: document.querySelector('#profit-details-table tbody'),
+            },
+            credit: { // NEW DOM References for Credit Tab
+                inventorySaleForm: document.getElementById('credit-inventory-sale-form'),
+                inventoryItemsContainer: document.getElementById('credit-inventory-items-container'),
+                addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'),
+                inventoryDateInput: document.getElementById('credit-inventory-date'),
+                cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'),
+                cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
             }
         };
+        
+        // --- HELPER FUNCTIONS ---
+        const getTodayDateString = () => new Date().toISOString().slice(0, 10);
 
         // --- RENDER FUNCTIONS ---
         const renderAll = () => {
             renderInventory();
             renderAnalytics();
-            renderTransactions(); // This function now handles date filtering
+            renderTransactions();
             renderProfit();
         };
 
         const renderInventory = () => {
             inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
             ui.inventoryTableBody.innerHTML = inventory.length
-                ? inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.rate.toFixed(2)}</td></tr>`).join('')
-                : `<tr><td colspan="3" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
+                ? inventory.map(item => `
+                    <tr data-particulars="${item.particulars}">
+                        <td>
+                            <span class="display-value">${item.particulars}</span>
+                            <div class="edit-field"><input type="text" class="edit-input" value="${item.particulars}" readonly></div>
+                        </td>
+                        <td>
+                            <span class="display-value">${item.quantity}</span>
+                            <div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div>
+                        </td>
+                        <td>
+                            <span class="display-value">${item.rate.toFixed(2)}</span>
+                            <div class="edit-field"><input type="number" class="edit-input edit-rate" value="${item.rate.toFixed(2)}" min="0" step="0.01"></div>
+                        </td>
+                        <td>
+                            <div class="inventory-actions">
+                                <button class="btn btn-small btn-secondary edit-btn" data-particulars="${item.particulars}">Edit</button>
+                                <button class="btn btn-small btn-success save-btn" data-particulars="${item.particulars}">Save</button>
+                                <button class="btn btn-small btn-secondary cancel-btn">Cancel</button>
+                                <button class="btn btn-small btn-danger delete-btn" data-particulars="${item.particulars}">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')
+                : `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
             ui.inventoryDatalist.innerHTML = inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
         };
 
@@ -382,45 +469,32 @@
                 : '<ul><li>No low stock items.</li></ul>';
         };
 
-        // MODIFIED: This function now includes logic for date filtering
         const renderTransactions = () => {
             const startDateStr = ui.transactions.startDateInput.value;
             const endDateStr = ui.transactions.endDateInput.value;
-           
-            // Create date objects for filtering. Set end date to the very end of the day.
             const startDate = startDateStr ? new Date(startDateStr) : null;
             if(startDate) startDate.setHours(0,0,0,0);
-
             const endDate = endDateStr ? new Date(endDateStr) : null;
             if(endDate) endDate.setHours(23,59,59,999);
-           
             const allSales = transactions.filter(t => t.type === 'Sale');
             const allPurchases = transactions.filter(t => t.type === 'Purchase');
+            const filteredSales = allSales.filter(t => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
+            const filteredPurchases = allPurchases.filter(t => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
 
-            // Apply date filters if dates are provided
-            const filteredSales = allSales.filter(t => {
-                if (!startDate && !endDate) return true; // No filter
-                if (startDate && t.date < startDate) return false;
-                if (endDate && t.date > endDate) return false;
-                return true;
-            }).sort((a,b) => b.id - a.id);
-           
-            const filteredPurchases = allPurchases.filter(t => {
-                if (!startDate && !endDate) return true; // No filter
-                if (startDate && t.date < startDate) return false;
-                if (endDate && t.date > endDate) return false;
-                return true;
-            }).sort((a,b) => b.id - a.id);
-
-
-            ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => `
+            ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
+                // NEW: Add a label for credit sales
+                const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName}</span>` : '';
+                return `
                 <tr>
                     <td>${t.date.toLocaleDateString()}</td>
-                    <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul></td>
+                    <td>
+                        <ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul>
+                        ${creditLabel}
+                    </td>
                     <td>₹${t.total.toFixed(2)}</td>
                     <td><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button></td>
-                </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
-           
+                </tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
+
             ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `
                 <tr>
                     <td>${t.date.toLocaleDateString()}</td>
@@ -430,36 +504,23 @@
         };
        
         const renderProfit = () => {
-            const allItemsSold = transactions
-                .filter(t => t.type === 'Sale')
-                .flatMap(t => t.items.map(item => ({...item, date: t.date })));
-           
+            const allItemsSold = transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({...item, date: t.date })));
             if (!allItemsSold.length) {
                 ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`;
                 return;
             }
-
-            allItemsSold.sort((a,b) => b.date - a.date); // Sort by date descending
-
+            allItemsSold.sort((a,b) => b.date - a.date);
             const tableRows = allItemsSold.map(item => {
                 const profit = (item.sellingRate - item.costRate) * item.quantity;
-                return `
-                    <tr>
-                        <td>${item.date.toLocaleDateString()}</td>
-                        <td>${item.particulars}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.sellingRate.toFixed(2)}</td>
-                        <td>${item.costRate.toFixed(2)}</td>
-                        <td class="profit-col">₹${profit.toFixed(2)}</td>
-                    </tr>`;
+                return `<tr><td>${item.date.toLocaleDateString()}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
             }).join('');
             ui.profit.profitDetailsBody.innerHTML = tableRows;
         };
        
         // --- CORE LOGIC ---
         const createFormItemHTML = (isSale) => isSale
-            ? `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
-            : `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`;
+            ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
+            : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`;
 
         const addFormItem = (container, isSale) => container.insertAdjacentHTML('beforeend', createFormItemHTML(isSale));
 
@@ -472,7 +533,7 @@
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                     inventory = json.map(row => ({
-                        particulars: row.particulars || "N/A", quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0,
+                        particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0,
                     })).filter(item => item.particulars !== "N/A");
                     renderAll();
                     alert('Inventory loaded successfully!');
@@ -481,17 +542,27 @@
             reader.readAsArrayBuffer(file);
         };
 
-        const processSale = (isInvoice) => {
+        const processSale = (isInvoice, isCredit = false, creditForm) => {
+            const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : ui.salesItemsContainer;
+            const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
+            const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value) : new Date();
+
+            if (isCredit && !partyName) {
+                alert("Party Name is required for credit sales.");
+                return null;
+            }
+
             const saleItems = [], errors = [];
             let isValid = true;
-            ui.salesItemsContainer.querySelectorAll('.form-grid').forEach(entry => {
+            container.querySelectorAll('.item-entry').forEach(entry => {
                 const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
                 if (!p || !q || isNaN(r)) return;
                 const item = inventory.find(i => i.particulars === p);
                 if (!item) { isValid = false; errors.push(`Item not found: ${p}`); }
-                else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}.`); }
+                else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}. Only ${item.quantity} left.`); }
                 else { saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }
             });
+
             if (saleItems.length === 0) { alert("Please add at least one valid item."); return null; }
             if (!isValid) { alert("Sale could not be completed:\n" + errors.join("\n")); return null; }
 
@@ -503,77 +574,44 @@
                 acc.revenue += soldItem.sellingRate * soldItem.quantity;
                 return acc;
             }, { profit: 0, revenue: 0 });
-
             totalProfit += profit;
             totalRevenue += revenue;
-            const newTransaction = { id: Date.now(), type: 'Sale', date: new Date(), items: saleItems, total: revenue };
+            
+            const newTransaction = { 
+                id: Date.now(), 
+                type: 'Sale', 
+                saleType: isCredit ? 'Credit' : 'Cash',
+                partyName: partyName,
+                date: saleDate, 
+                items: saleItems, 
+                total: revenue 
+            };
             transactions.push(newTransaction);
-           
             renderAll();
-            ui.salesItemsContainer.innerHTML = '';
-            addFormItem(ui.salesItemsContainer, true);
-           
-            if (isInvoice) generateInvoice(newTransaction);
-            alert('Sale recorded successfully!');
-        };
-       
-        // NEW: Function to export data to an Excel file
-        const exportTransactionsToExcel = () => {
-            if (transactions.length === 0) {
-                alert("No transactions to export.");
-                return;
+            
+            if (isCredit) {
+                creditForm.reset();
+                ui.credit.inventoryDateInput.value = getTodayDateString();
+                container.innerHTML = '';
+                addFormItem(container, true);
+            } else {
+                ui.salesItemsContainer.innerHTML = '';
+                addFormItem(ui.salesItemsContainer, true);
             }
 
-            // 1. Prepare data for "Sales" sheet
-            const salesData = transactions.filter(t => t.type === 'Sale')
-                .flatMap(t => t.items.map(item => ({
-                    "Transaction ID": t.id,
-                    "Date": t.date.toLocaleDateString(),
-                    "Item Particulars": item.particulars,
-                    "Quantity": item.quantity,
-                    "Selling Rate (per item)": item.sellingRate,
-                    "Cost Rate (per item)": item.costRate,
-                    "Total Sale": (item.quantity * item.sellingRate),
-                    "Profit": (item.sellingRate - item.costRate) * item.quantity
-                })));
-
-            // 2. Prepare data for "Purchases" sheet
-            const purchaseData = transactions.filter(t => t.type === 'Purchase')
-                .flatMap(t => t.items.map(item => ({
-                    "Transaction ID": t.id,
-                    "Date": t.date.toLocaleDateString(),
-                    "Item Particulars": item.particulars,
-                    "Quantity": item.quantity,
-                    "Cost Rate (per item)": item.rate,
-                    "Total Purchase": (item.quantity * item.rate)
-                })));
-
-            // 3. Prepare data for "Profit" sheet (already flat)
-            const profitData = salesData.map(item => ({
-                 "Date": item["Date"],
-                 "Item Particulars": item["Item Particulars"],
-                 "Quantity": item.Quantity,
-                 "Selling Rate": item["Selling Rate (per item)"],
-                 "Cost Rate": item["Cost Rate (per item)"],
-                 "Total Profit": item.Profit
-            }));
-
-            // Create worksheets
-            const wsSales = XLSX.utils.json_to_sheet(salesData);
-            const wsPurchases = XLSX.utils.json_to_sheet(purchaseData);
-            const wsProfit = XLSX.utils.json_to_sheet(profitData);
-
-            // Create a new workbook
+            if (isInvoice) generateInvoice(newTransaction);
+            alert((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!');
+        };
+       
+        const exportTransactionsToExcel = () => {
+            if (transactions.length === 0) { alert("No transactions to export."); return; }
+            const salesData = transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
+            const purchaseData = transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
+            const profitData = salesData.map(item => ({ "Date": item["Date"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
+            const wsSales = XLSX.utils.json_to_sheet(salesData); const wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wsProfit = XLSX.utils.json_to_sheet(profitData);
             const wb = XLSX.utils.book_new();
-
-            // Append worksheets
-            XLSX.utils.book_append_sheet(wb, wsSales, "Sales History");
-            XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History");
-            XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
-
-            // Write and download the file
+            XLSX.utils.book_append_sheet(wb, wsSales, "Sales History"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History"); XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
             XLSX.writeFile(wb, "Transaction_History.xlsx");
-           
             alert("Transaction history exported successfully!");
         };
 
@@ -582,7 +620,12 @@
             doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" });
             y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" });
             y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" });
-            y += 8; doc.setFontSize(10); doc.text(`Date: ${transaction.date.toLocaleDateString()}`, 105, y, { align: "center" });
+            y += 8; doc.setFontSize(10); 
+            if (transaction.saleType === 'Credit') {
+                doc.text(`Credit To: ${transaction.partyName}`, 20, y);
+            }
+            doc.text(`Date: ${transaction.date.toLocaleDateString()}`, 190, y, { align: "right" });
+
             y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold");
             doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" });
             y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8;
@@ -602,21 +645,56 @@
         ui.excelFile.addEventListener('change', handleFileUpload);
         ui.addSaleItemBtn.addEventListener('click', () => addFormItem(ui.salesItemsContainer, true));
         ui.addPurchaseItemBtn.addEventListener('click', () => addFormItem(ui.purchaseItemsContainer, false));
-       
-        ui.recordSaleBtn.addEventListener('click', () => processSale(false));
-        ui.recordInvoiceBtn.addEventListener('click', () => processSale(true));
-       
-        // NEW: Event listener for the Excel export button
-        ui.transactions.exportExcelBtn.addEventListener('click', exportTransactionsToExcel);
-
-        // NEW: Event listeners for transaction date filtering
-        ui.transactions.filterBtn.addEventListener('click', renderTransactions);
-        ui.transactions.resetFilterBtn.addEventListener('click', () => {
-            ui.transactions.startDateInput.value = '';
-            ui.transactions.endDateInput.value = '';
-            renderTransactions(); // Re-render with cleared filters
+        
+        ui.recordSaleBtn.addEventListener('click', () => processSale(false, false));
+        ui.recordInvoiceBtn.addEventListener('click', () => processSale(true, false));
+        
+        // NEW Credit Tab Listeners
+        ui.credit.addInventoryItemBtn.addEventListener('click', () => addFormItem(ui.credit.inventoryItemsContainer, true));
+        ui.credit.inventorySaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            processSale(false, true, e.target);
         });
 
+        ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const partyName = form.querySelector('#credit-cosmetic-party-name').value.trim();
+            const saleDate = new Date(form.querySelector('#credit-cosmetic-date').value);
+            const itemName = form.querySelector('#credit-cosmetic-item-name').value.trim();
+            const quantity = parseInt(form.querySelector('#credit-cosmetic-qty').value, 10);
+            const costRate = parseFloat(form.querySelector('#credit-cosmetic-cost-rate').value);
+            const sellRate = parseFloat(form.querySelector('#credit-cosmetic-sell-rate').value);
+            
+            if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0) {
+                 alert("Please fill all fields correctly for the cosmetic credit sale."); return;
+            }
+
+            const totalSelling = sellRate * quantity;
+            const totalCost = costRate * quantity;
+            const profit = totalSelling - totalCost;
+            totalProfit += profit;
+            totalRevenue += totalSelling;
+
+            const cosmeticItem = { particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate };
+            transactions.push({ 
+                id: Date.now(), 
+                type: 'Sale', 
+                saleType: 'Credit',
+                partyName: partyName,
+                date: saleDate, 
+                items: [cosmeticItem], 
+                total: totalSelling 
+            });
+            renderAll();
+            form.reset();
+            ui.credit.cosmeticDateInput.value = getTodayDateString();
+            alert(`Cosmetic credit sale to ${partyName} recorded!`);
+        });
+
+        ui.transactions.exportExcelBtn.addEventListener('click', exportTransactionsToExcel);
+        ui.transactions.filterBtn.addEventListener('click', renderTransactions);
+        ui.transactions.resetFilterBtn.addEventListener('click', () => { ui.transactions.startDateInput.value = ''; ui.transactions.endDateInput.value = ''; renderTransactions(); });
 
         ui.cosmeticSaleForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -624,25 +702,12 @@
             const quantity = parseFloat(e.target.querySelector('#cosmetic-quantity').value);
             const totalCost = parseFloat(e.target.querySelector('#cosmetic-cost').value);
             const totalSelling = parseFloat(e.target.querySelector('#cosmetic-selling').value);
-
-            if (!particulars || isNaN(quantity) || isNaN(totalCost) || isNaN(totalSelling) || quantity <= 0) {
-                alert("Please fill all fields correctly. Quantity must be greater than 0.");
-                return;
-            }
-           
+            if (!particulars || isNaN(quantity) || isNaN(totalCost) || isNaN(totalSelling) || quantity <= 0) { alert("Please fill all fields correctly. Quantity must be greater than 0."); return; }
             const profit = totalSelling - totalCost;
             totalProfit += profit;
             totalRevenue += totalSelling;
-
-            const cosmeticItem = {
-                particulars: `(Cosmetic) ${particulars}`,
-                quantity: quantity,
-                sellingRate: totalSelling / quantity,
-                costRate: totalCost / quantity
-            };
-
-            transactions.push({ id: Date.now(), type: 'Sale', date: new Date(), items: [cosmeticItem], total: totalSelling });
-
+            const cosmeticItem = { particulars: `(Cosmetic) ${particulars}`, quantity: quantity, sellingRate: totalSelling / quantity, costRate: totalCost / quantity };
+            transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [cosmeticItem], total: totalSelling });
             renderAll();
             ui.cosmeticSaleForm.reset();
             alert(`Profit of ₹${profit.toFixed(2)} recorded successfully!`);
@@ -650,7 +715,7 @@
 
         ui.purchaseForm.addEventListener('submit', (event) => {
             event.preventDefault();
-            const { newItems, total } = Array.from(ui.purchaseItemsContainer.querySelectorAll('.form-grid')).reduce((acc, entry) => {
+            const { newItems, total } = Array.from(ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => {
                 const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
                 if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; }
                 return acc;
@@ -662,10 +727,9 @@
                     const totalExistingValue = existing.rate * existing.quantity;
                     const totalNewValue = newItem.rate * newItem.quantity;
                     const totalQuantity = existing.quantity + newItem.quantity;
-                    existing.rate = (totalExistingValue + totalNewValue) / totalQuantity; // Weighted average
+                    existing.rate = (totalExistingValue + totalNewValue) / totalQuantity;
                     existing.quantity = totalQuantity;
-                }
-                else { inventory.push(newItem); }
+                } else { inventory.push(newItem); }
             });
             transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total });
             renderAll();
@@ -679,10 +743,13 @@
             ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
         }));
 
-        ui.salesItemsContainer.addEventListener('change', e => {
-            if (e.target.classList.contains('particulars')) {
+        document.body.addEventListener('change', e => {
+             if (e.target.classList.contains('particulars')) {
                 const item = inventory.find(i => i.particulars === e.target.value);
-                if (item) e.target.closest('.form-grid').querySelector('.rate').value = item.rate.toFixed(2);
+                const rateInput = e.target.closest('.item-entry').querySelector('.rate');
+                if (item && rateInput) {
+                    rateInput.value = item.rate.toFixed(2);
+                }
             }
         });
        
@@ -693,9 +760,52 @@
             }
         });
 
+        ui.inventoryTableBody.addEventListener('click', (e) => {
+            const particulars = e.target.dataset.particulars;
+            const targetRow = e.target.closest('tr');
+            if (!targetRow) return;
+
+            if (e.target.classList.contains('edit-btn')) {
+                const currentlyEditing = ui.inventoryTableBody.querySelector('tr.edit-mode');
+                if(currentlyEditing) currentlyEditing.classList.remove('edit-mode');
+                targetRow.classList.add('edit-mode');
+            } else if (e.target.classList.contains('cancel-btn')) {
+                targetRow.classList.remove('edit-mode');
+            } else if (e.target.classList.contains('delete-btn')) {
+                if (confirm(`Are you sure you want to delete the item "${particulars}"? This action cannot be undone.`)) {
+                    inventory = inventory.filter(item => item.particulars !== particulars);
+                    renderAll();
+                    alert('Item deleted.');
+                }
+            } else if (e.target.classList.contains('save-btn')) {
+                const newQty = parseInt(targetRow.querySelector('.edit-quantity').value, 10);
+                const newRate = parseFloat(targetRow.querySelector('.edit-rate').value);
+
+                if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) {
+                    alert('Invalid input. Please enter valid numbers for quantity and rate.');
+                    return;
+                }
+               
+                const itemToUpdate = inventory.find(item => item.particulars === particulars);
+                if (itemToUpdate) {
+                    itemToUpdate.quantity = newQty;
+                    itemToUpdate.rate = newRate;
+                }
+               
+                renderAll();
+                alert('Inventory updated successfully!');
+            }
+        });
+
         // --- INITIALIZATION ---
         addFormItem(ui.salesItemsContainer, true);
         addFormItem(ui.purchaseItemsContainer, false);
+        addFormItem(ui.credit.inventoryItemsContainer, true); // Initialize credit form
+        
+        // Set default dates
+        ui.credit.inventoryDateInput.value = getTodayDateString();
+        ui.credit.cosmeticDateInput.value = getTodayDateString();
+        
         renderAll();
     });
     </script>
