@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinny Fashion Store - Complete Business Manager</title>
+    <!-- Google Fonts for Material Design -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Embedded CSS -->
+    <style>
+        :root {
+            --primary-yellow: #FFC107; /* Amber */
+            --primary-dark: #FFA000;
+            --background-light: #F5F5F5;
+            --card-white: #FFFFFF;
+            --text-dark: #212121;
+            --text-secondary: #757575;
+            --divider-color: #E0E0E0;
+        }
+
+        /* General Body Styles */
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--primary-yellow);
+            color: var(--text-dark);
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-weight: 700; }
+        header p { margin: 5px 0 0; font-weight: 400; }
+
+        /* Tab Navigation */
+        .tab-nav { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 25px; position: relative; }
+        .tab-button {
+            padding: 15px 25px; cursor: pointer; border: none; background-color: transparent; font-size: 16px;
+            font-weight: 500; color: var(--text-secondary); text-transform: uppercase; position: relative; transition: color 0.3s ease;
+        }
+        .tab-button.active { color: var(--primary-dark); }
+        .tab-button::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background-color: var(--primary-dark); transform: scaleX(0); transition: transform 0.3s ease;
+        }
+        .tab-button.active::after { transform: scaleX(1); }
+
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        main { max-width: 1200px; margin: 0 auto; }
+        .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .operations-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
+
+
+        .card {
+            background-color: var(--card-white); border-radius: 8px; padding: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 3px 6px rgba(0,0,0,0.1); margin-bottom: 25px;
+        }
+        .card h2 {
+            color: var(--text-dark); font-weight: 500; margin-top: 0;
+            border-bottom: 1px solid var(--divider-color); padding-bottom: 15px; margin-bottom: 20px;
+        }
+
+        /* Form Styles */
+        .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        
+        input[type="text"], input[type="number"], input[type="file"] {
+            width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
+            box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none;
+        }
+        input[type="file"] { background-color: #fafafa; cursor: pointer; }
+        #settings .card input[type="file"] { margin-top: 15px; }
+
+        /* Button Styles */
+        .btn {
+            width: 100%; padding: 12px 20px; border-radius: 5px; border: none; font-size: 15px;
+            font-weight: 500; text-transform: uppercase; cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.2s ease; margin-top: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        .btn:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn:active { box-shadow: 0 1px 2px rgba(0,0,0,0.15); transform: translateY(1px); }
+        .btn-primary { background-color: var(--primary-yellow); color: var(--text-dark); }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+        .btn-secondary { background-color: #E0E0E0; color: var(--text-dark); }
+        .btn-secondary:hover { background-color: #BDBDBD; }
+        .btn-small { padding: 6px 12px; font-size: 12px; margin-top: 0; width: auto; }
+        .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* Table Styles */
+        .table-container { max-height: 400px; overflow-y: auto; }
+        .styled-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .styled-table th, .styled-table td { border-bottom: 1px solid var(--divider-color); padding: 14px; text-align: left; font-size: 14px; }
+        .styled-table th { background-color: #fafafa; font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
+        .styled-table tr:hover { background-color: #FFF8E1; }
+        .styled-table td ul { margin: 0; padding-left: 20px; }
+        .profit-col { font-weight: 500; color: #4CAF50; }
+
+        /* Analytics Section */
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .metric-card { background-color: #fafafa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--divider-color); }
+        .metric-card h3 { margin: 0 0 10px; color: var(--text-secondary); font-size: 16px; font-weight: 400; }
+        .metric-card p { font-size: 28px; margin: 0; color: var(--text-dark); font-weight: 500; }
+        #low-stock-items ul { list-style-type: none; padding: 0; text-align: left; }
+        #low-stock-items li { padding: 8px; border-bottom: 1px solid var(--divider-color); }
+        #low-stock-items li:last-child { border-bottom: none; }
+        #low-stock-items li .low-stock-qty { color: #f44336; font-weight: 500; }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-columns, .cosmetic-form-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 800px) {
+            body { padding: 10px; }
+            .analytics-grid, .sales-actions { grid-template-columns: 1fr; }
+            .tab-button { padding: 15px 10px; font-size: 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tinny Fashion Store</h1>
+        <p>Run by Rekha ChandraShekhar Mishra since 2022</p>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-button active" data-tab="operations">Operations</button>
+        <button class="tab-button" data-tab="analytics">Analytics</button>
+        <button class="tab-button" data-tab="profit">Profit</button>
+        <button class="tab-button" data-tab="transactions">Transactions</button>
+        <button class="tab-button" data-tab="settings">Settings</button>
+    </nav>
+
+    <main>
+        <!-- Operations Tab -->
+        <div id="operations" class="tab-content active">
+            <div class="main-columns">
+                <section class="card">
+                    <h2>Make a Sale (From Inventory)</h2>
+                    <form id="sales-form">
+                        <div id="sales-items-container"></div>
+                        <datalist id="inventory-datalist"></datalist>
+                        <button type="button" id="add-sale-item-btn" class="btn btn-secondary">+ Add Item</button>
+                        <div class="sales-actions">
+                            <button type="button" id="record-sale-btn" class="btn btn-secondary">Record Sale</button>
+                            <button type="button" id="record-invoice-btn" class="btn btn-primary">Record & Print</button>
+                        </div>
+                    </form>
+                </section>
+                <section class="card">
+                    <h2>Add New Stock (Purchase)</h2>
+                    <form id="purchase-form">
+                        <div id="purchase-items-container"></div>
+                        <button type="button" id="add-purchase-item-btn" class="btn btn-secondary">+ Add Item</button>
+                        <button type="submit" class="btn btn-primary">Add to Stock</button>
+                    </form>
+                </section>
+            </div>
+            <div class="operations-layout">
+                 <section class="card">
+                    <h2>Cosmetic & Non-Inventory Sale</h2>
+                    <form id="cosmetic-sale-form">
+                        <div class="cosmetic-form-grid">
+                            <input type="text" id="cosmetic-particulars" placeholder="Item Particulars" required>
+                            <input type="number" id="cosmetic-quantity" placeholder="Quantity" min="1" required>
+                            <input type="number" id="cosmetic-cost" placeholder="Total Cost Price" min="0" step="0.01" required>
+                            <input type="number" id="cosmetic-selling" placeholder="Total Selling Price" min="0" step="0.01" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Record Profit</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <section class="card"><h2>Shop Performance</h2><div class="analytics-grid">
+                <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
+                <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue">₹0.00</p></div>
+                <div class="metric-card"><h3>Average Margin</h3><p id="avg-margin">0%</p></div>
+                <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
+                <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
+            </div></section>
+            <section class="card"><h2>Low Stock Items (5 or less)</h2><div id="low-stock-items" class="metric-card"><ul><li>No low stock items.</li></ul></div></section>
+        </div>
+
+        <!-- Profit Tab -->
+        <div id="profit" class="tab-content">
+            <section class="card">
+                <h2>Item-wise Profit Details</h2>
+                <div class="table-container">
+                    <table class="styled-table" id="profit-details-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Particulars</th>
+                                <th>Qty</th>
+                                <th>Sell Rate</th>
+                                <th>Cost Rate</th>
+                                <th>Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content">
+            <section class="card"><h2>Sales History</h2><div class="table-container">
+                <table class="styled-table" id="sales-history-table">
+                    <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
+                    <tbody><tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr></tbody>
+                </table>
+            </div></section>
+            <section class="card"><h2>Purchase History</h2><div class="table-container">
+                <table class="styled-table" id="purchase-history-table">
+                    <thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead>
+                    <tbody><tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr></tbody>
+                </table>
+            </div></section>
+        </div>
+        
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <section class="card">
+                <h2>Data Management</h2>
+                <p>Load your existing inventory from an Excel file. The file must contain 'particulars', 'quantity', and 'rate' columns.</p>
+                <input type="file" id="excel-file" accept=".xlsx, .xls">
+            </section>
+        </div>
+
+        <!-- Inventory Display Section (Shared) -->
+        <section class="card"><h2>Current Inventory</h2><div class="table-container">
+            <table class="styled-table" id="inventory-table">
+                <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></section>
+    </main>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Embedded JavaScript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const { jsPDF } = window.jspdf;
+
+        // --- STATE MANAGEMENT ---
+        let inventory = [];
+        let transactions = [];
+        let totalProfit = 0;
+        let totalRevenue = 0;
+
+        // --- DOM ELEMENT REFERENCES ---
+        const ui = {
+            excelFile: document.getElementById('excel-file'),
+            inventoryTableBody: document.querySelector('#inventory-table tbody'),
+            inventoryDatalist: document.getElementById('inventory-datalist'),
+            salesForm: document.getElementById('sales-form'),
+            addSaleItemBtn: document.getElementById('add-sale-item-btn'),
+            salesItemsContainer: document.getElementById('sales-items-container'),
+            purchaseForm: document.getElementById('purchase-form'),
+            addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
+            purchaseItemsContainer: document.getElementById('purchase-items-container'),
+            recordSaleBtn: document.getElementById('record-sale-btn'),
+            recordInvoiceBtn: document.getElementById('record-invoice-btn'),
+            cosmeticSaleForm: document.getElementById('cosmetic-sale-form'),
+            tabButtons: document.querySelectorAll('.tab-button'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            analytics: {
+                totalProfit: document.getElementById('total-profit'),
+                totalRevenue: document.getElementById('total-revenue'),
+                avgMargin: document.getElementById('avg-margin'),
+                inventoryCost: document.getElementById('total-inventory-cost'),
+                totalUnits: document.getElementById('total-units'),
+                lowStockItems: document.getElementById('low-stock-items'),
+            },
+            transactions: {
+                salesHistoryBody: document.querySelector('#sales-history-table tbody'),
+                purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
+                transactionsTab: document.getElementById('transactions'),
+            },
+            profit: {
+                profitDetailsBody: document.querySelector('#profit-details-table tbody'),
+            }
+        };
+
+        // --- RENDER FUNCTIONS ---
+        const renderAll = () => {
+            renderInventory();
+            renderAnalytics();
+            renderTransactions();
+            renderProfit();
+        };
+
+        const renderInventory = () => {
+            inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
+            ui.inventoryTableBody.innerHTML = inventory.length 
+                ? inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.rate.toFixed(2)}</td></tr>`).join('')
+                : `<tr><td colspan="3" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
+            ui.inventoryDatalist.innerHTML = inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
+        };
+
+        const renderAnalytics = () => {
+            const { cost, units, lowStock } = inventory.reduce((acc, item) => {
+                acc.cost += item.quantity * item.rate;
+                acc.units += item.quantity;
+                if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
+                return acc;
+            }, { cost: 0, units: 0, lowStock: [] });
+            const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
+            ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
+            ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
+            ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
+            ui.analytics.inventoryCost.textContent = `₹${cost.toFixed(2)}`;
+            ui.analytics.totalUnits.textContent = units;
+            ui.analytics.lowStockItems.innerHTML = lowStock.length > 0
+                ? `<ul>${lowStock.map(item => `<li>${item.particulars} - <span class="low-stock-qty">${item.quantity} left</span></li>`).join('')}</ul>`
+                : '<ul><li>No low stock items.</li></ul>';
+        };
+
+        const renderTransactions = () => {
+            const sales = transactions.filter(t => t.type === 'Sale').sort((a, b) => b.id - a.id);
+            const purchases = transactions.filter(t => t.type === 'Purchase').sort((a, b) => b.id - a.id);
+
+            ui.transactions.salesHistoryBody.innerHTML = sales.length ? sales.map(t => `
+                <tr>
+                    <td>${t.date.toLocaleDateString()}</td>
+                    <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul></td>
+                    <td>₹${t.total.toFixed(2)}</td>
+                    <td><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button></td>
+                </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr>`;
+            
+            ui.transactions.purchaseHistoryBody.innerHTML = purchases.length ? purchases.map(t => `
+                <tr>
+                    <td>${t.date.toLocaleDateString()}</td>
+                    <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td>
+                    <td>₹${t.total.toFixed(2)}</td>
+                </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr>`;
+        };
+        
+        const renderProfit = () => {
+            const allItemsSold = transactions
+                .filter(t => t.type === 'Sale')
+                .flatMap(t => t.items.map(item => ({...item, date: t.date })));
+            
+            if (!allItemsSold.length) {
+                ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`;
+                return;
+            }
+
+            allItemsSold.sort((a,b) => b.date - a.date); // Sort by date descending
+
+            const tableRows = allItemsSold.map(item => {
+                const profit = (item.sellingRate - item.costRate) * item.quantity;
+                return `
+                    <tr>
+                        <td>${item.date.toLocaleDateString()}</td>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.sellingRate.toFixed(2)}</td>
+                        <td>${item.costRate.toFixed(2)}</td>
+                        <td class="profit-col">₹${profit.toFixed(2)}</td>
+                    </tr>`;
+            }).join('');
+            ui.profit.profitDetailsBody.innerHTML = tableRows;
+        };
+        
+        // --- CORE LOGIC ---
+        const createFormItemHTML = (isSale) => isSale 
+            ? `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
+            : `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`;
+
+        const addFormItem = (container, isSale) => container.insertAdjacentHTML('beforeend', createFormItemHTML(isSale));
+
+        const handleFileUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    inventory = json.map(row => ({
+                        particulars: row.particulars || "N/A", quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0,
+                    })).filter(item => item.particulars !== "N/A");
+                    renderAll();
+                    alert('Inventory loaded successfully!');
+                } catch (error) { alert('Error reading Excel file. Ensure columns are: particulars, quantity, rate.'); console.error(error); }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        const processSale = (isInvoice) => {
+            const saleItems = [], errors = [];
+            let isValid = true;
+            ui.salesItemsContainer.querySelectorAll('.form-grid').forEach(entry => {
+                const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
+                if (!p || !q || isNaN(r)) return;
+                const item = inventory.find(i => i.particulars === p);
+                if (!item) { isValid = false; errors.push(`Item not found: ${p}`); }
+                else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}.`); }
+                else { saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }
+            });
+            if (saleItems.length === 0) { alert("Please add at least one valid item."); return null; }
+            if (!isValid) { alert("Sale could not be completed:\n" + errors.join("\n")); return null; }
+
+            const { profit, revenue } = saleItems.reduce((acc, soldItem) => {
+                const inventoryItem = inventory.find(i => i.particulars === soldItem.particulars);
+                inventoryItem.quantity -= soldItem.quantity;
+                const itemProfit = (soldItem.sellingRate - soldItem.costRate) * soldItem.quantity;
+                acc.profit += itemProfit;
+                acc.revenue += soldItem.sellingRate * soldItem.quantity;
+                return acc;
+            }, { profit: 0, revenue: 0 });
+
+            totalProfit += profit;
+            totalRevenue += revenue;
+            const newTransaction = { id: Date.now(), type: 'Sale', date: new Date(), items: saleItems, total: revenue };
+            transactions.push(newTransaction);
+            
+            renderAll();
+            ui.salesItemsContainer.innerHTML = '';
+            addFormItem(ui.salesItemsContainer, true);
+            
+            if (isInvoice) generateInvoice(newTransaction);
+            alert('Sale recorded successfully!');
+        };
+
+        const generateInvoice = (transaction) => {
+            const doc = new jsPDF(); let y = 20;
+            doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" });
+            y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" });
+            y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" });
+            y += 8; doc.setFontSize(10); doc.text(`Date: ${transaction.date.toLocaleDateString()}`, 105, y, { align: "center" });
+            y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold");
+            doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" });
+            y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8;
+            doc.setFont("helvetica", "normal");
+            transaction.items.forEach(item => {
+                const itemTotal = item.quantity * item.sellingRate;
+                doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y);
+                doc.text(item.sellingRate.toFixed(2), 150, y); doc.text(itemTotal.toFixed(2), 185, y, { align: "right" }); y += 7;
+            });
+            y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7;
+            doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y);
+            doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" });
+            doc.save(`Invoice_${transaction.id}.pdf`);
+        };
+
+        // --- EVENT LISTENERS ---
+        ui.excelFile.addEventListener('change', handleFileUpload);
+        ui.addSaleItemBtn.addEventListener('click', () => addFormItem(ui.salesItemsContainer, true));
+        ui.addPurchaseItemBtn.addEventListener('click', () => addFormItem(ui.purchaseItemsContainer, false));
+        
+        ui.recordSaleBtn.addEventListener('click', () => processSale(false));
+        ui.recordInvoiceBtn.addEventListener('click', () => processSale(true));
+
+        ui.cosmeticSaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const particulars = e.target.querySelector('#cosmetic-particulars').value;
+            const quantity = parseFloat(e.target.querySelector('#cosmetic-quantity').value);
+            const totalCost = parseFloat(e.target.querySelector('#cosmetic-cost').value);
+            const totalSelling = parseFloat(e.target.querySelector('#cosmetic-selling').value);
+
+            if (!particulars || isNaN(quantity) || isNaN(totalCost) || isNaN(totalSelling) || quantity <= 0) {
+                alert("Please fill all fields correctly. Quantity must be greater than 0.");
+                return;
+            }
+            
+            const profit = totalSelling - totalCost;
+            totalProfit += profit;
+            totalRevenue += totalSelling;
+
+            const cosmeticItem = {
+                particulars: `(Cosmetic) ${particulars}`,
+                quantity: quantity,
+                sellingRate: totalSelling / quantity,
+                costRate: totalCost / quantity
+            };
+
+            transactions.push({ id: Date.now(), type: 'Sale', date: new Date(), items: [cosmeticItem], total: totalSelling });
+
+            renderAll();
+            ui.cosmeticSaleForm.reset();
+            alert(`Profit of ₹${profit.toFixed(2)} recorded successfully!`);
+        });
+
+        ui.purchaseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const { newItems, total } = Array.from(ui.purchaseItemsContainer.querySelectorAll('.form-grid')).reduce((acc, entry) => {
+                const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
+                if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; }
+                return acc;
+            }, { newItems: [], total: 0 });
+            if (newItems.length === 0) return alert("Please fill out all fields for at least one item.");
+            newItems.forEach(newItem => {
+                const existing = inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+                if (existing) { 
+                    const totalExistingValue = existing.rate * existing.quantity;
+                    const totalNewValue = newItem.rate * newItem.quantity;
+                    const totalQuantity = existing.quantity + newItem.quantity;
+                    existing.rate = (totalExistingValue + totalNewValue) / totalQuantity; // Weighted average
+                    existing.quantity = totalQuantity;
+                }
+                else { inventory.push(newItem); }
+            });
+            transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total });
+            renderAll();
+            ui.purchaseItemsContainer.innerHTML = '';
+            addFormItem(ui.purchaseItemsContainer, false);
+            alert('Stock updated!');
+        });
+
+        ui.tabButtons.forEach(button => button.addEventListener('click', () => {
+            ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active');
+            ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
+        }));
+
+        ui.salesItemsContainer.addEventListener('change', e => {
+            if (e.target.classList.contains('particulars')) {
+                const item = inventory.find(i => i.particulars === e.target.value);
+                if (item) e.target.closest('.form-grid').querySelector('.rate').value = item.rate.toFixed(2);
+            }
+        });
+        
+        ui.transactions.transactionsTab.addEventListener('click', e => {
+            if (e.target.classList.contains('download-invoice-btn')) {
+                const tx = transactions.find(t => t.id === parseInt(e.target.dataset.id, 10));
+                if (tx) generateInvoice(tx);
+            }
+        });
+
+        // --- INITIALIZATION ---
+        addFormItem(ui.salesItemsContainer, true);
+        addFormItem(ui.purchaseItemsContainer, false);
+        renderAll();
+    });
+    </script>
+</body>
+</html>
