@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +20,8 @@
             --text-dark: #212121;
             --text-secondary: #757575;
             --divider-color: #E0E0E0;
+            --success-green: #4CAF50;
+            --danger-red: #f44336;
         }
 
         /* General Body Styles */
@@ -59,7 +62,7 @@
         /* Tab Content */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+       
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         .operations-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
@@ -77,17 +80,23 @@
         /* Form Styles */
         .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        
-        input[type="text"], input[type="number"], input[type="file"] {
+       
+        input[type="text"], input[type="number"], input[type="file"], input[type="date"] {
             width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
             box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        input[type="text"]:focus, input[type="number"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
             border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none;
         }
         input[type="file"] { background-color: #fafafa; cursor: pointer; }
         #settings .card input[type="file"] { margin-top: 15px; }
+       
+        /* Control Section styles */
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: flex-end; }
+        .controls-grid label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
+        .controls-grid .btn { margin-top: 0; } /* Align buttons with inputs */
+
 
         /* Button Styles */
         .btn {
@@ -102,9 +111,11 @@
         .btn-primary:hover { background-color: var(--primary-dark); }
         .btn-secondary { background-color: #E0E0E0; color: var(--text-dark); }
         .btn-secondary:hover { background-color: #BDBDBD; }
+        .btn-success { background-color: var(--success-green); color: white; }
+        .btn-success:hover { background-color: #43A047; }
         .btn-small { padding: 6px 12px; font-size: 12px; margin-top: 0; width: auto; }
         .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
+       
         /* Table Styles */
         .table-container { max-height: 400px; overflow-y: auto; }
         .styled-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -112,7 +123,7 @@
         .styled-table th { background-color: #fafafa; font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
         .styled-table tr:hover { background-color: #FFF8E1; }
         .styled-table td ul { margin: 0; padding-left: 20px; }
-        .profit-col { font-weight: 500; color: #4CAF50; }
+        .profit-col { font-weight: 500; color: var(--success-green); }
 
         /* Analytics Section */
         .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
@@ -122,7 +133,7 @@
         #low-stock-items ul { list-style-type: none; padding: 0; text-align: left; }
         #low-stock-items li { padding: 8px; border-bottom: 1px solid var(--divider-color); }
         #low-stock-items li:last-child { border-bottom: none; }
-        #low-stock-items li .low-stock-qty { color: #f44336; font-weight: 500; }
+        #low-stock-items li .low-stock-qty { color: var(--danger-red); font-weight: 500; }
 
         /* Responsive Design */
         @media (max-width: 900px) {
@@ -133,6 +144,7 @@
             .analytics-grid, .sales-actions { grid-template-columns: 1fr; }
             .tab-button { padding: 15px 10px; font-size: 14px; }
             .form-grid { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -230,6 +242,25 @@
 
         <!-- Transactions Tab -->
         <div id="transactions" class="tab-content">
+            <!-- NEW: Controls section for filtering and export -->
+            <section class="card">
+                <h2>Controls</h2>
+                <div class="controls-grid">
+                    <div>
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div>
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date">
+                    </div>
+                    <button class="btn btn-primary" id="filter-btn">Filter</button>
+                    <button class="btn btn-secondary" id="reset-filter-btn">Reset</button>
+                    <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
+                </div>
+            </section>
+            <!-- End of new section -->
+
             <section class="card"><h2>Sales History</h2><div class="table-container">
                 <table class="styled-table" id="sales-history-table">
                     <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
@@ -243,7 +274,7 @@
                 </table>
             </div></section>
         </div>
-        
+       
         <!-- Settings Tab -->
         <div id="settings" class="tab-content">
             <section class="card">
@@ -305,6 +336,12 @@
                 salesHistoryBody: document.querySelector('#sales-history-table tbody'),
                 purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
                 transactionsTab: document.getElementById('transactions'),
+                // NEW: Transaction controls
+                startDateInput: document.getElementById('start-date'),
+                endDateInput: document.getElementById('end-date'),
+                filterBtn: document.getElementById('filter-btn'),
+                resetFilterBtn: document.getElementById('reset-filter-btn'),
+                exportExcelBtn: document.getElementById('export-excel-btn'),
             },
             profit: {
                 profitDetailsBody: document.querySelector('#profit-details-table tbody'),
@@ -315,13 +352,13 @@
         const renderAll = () => {
             renderInventory();
             renderAnalytics();
-            renderTransactions();
+            renderTransactions(); // This function now handles date filtering
             renderProfit();
         };
 
         const renderInventory = () => {
             inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
-            ui.inventoryTableBody.innerHTML = inventory.length 
+            ui.inventoryTableBody.innerHTML = inventory.length
                 ? inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.rate.toFixed(2)}</td></tr>`).join('')
                 : `<tr><td colspan="3" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
             ui.inventoryDatalist.innerHTML = inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
@@ -345,31 +382,58 @@
                 : '<ul><li>No low stock items.</li></ul>';
         };
 
+        // MODIFIED: This function now includes logic for date filtering
         const renderTransactions = () => {
-            const sales = transactions.filter(t => t.type === 'Sale').sort((a, b) => b.id - a.id);
-            const purchases = transactions.filter(t => t.type === 'Purchase').sort((a, b) => b.id - a.id);
+            const startDateStr = ui.transactions.startDateInput.value;
+            const endDateStr = ui.transactions.endDateInput.value;
+           
+            // Create date objects for filtering. Set end date to the very end of the day.
+            const startDate = startDateStr ? new Date(startDateStr) : null;
+            if(startDate) startDate.setHours(0,0,0,0);
 
-            ui.transactions.salesHistoryBody.innerHTML = sales.length ? sales.map(t => `
+            const endDate = endDateStr ? new Date(endDateStr) : null;
+            if(endDate) endDate.setHours(23,59,59,999);
+           
+            const allSales = transactions.filter(t => t.type === 'Sale');
+            const allPurchases = transactions.filter(t => t.type === 'Purchase');
+
+            // Apply date filters if dates are provided
+            const filteredSales = allSales.filter(t => {
+                if (!startDate && !endDate) return true; // No filter
+                if (startDate && t.date < startDate) return false;
+                if (endDate && t.date > endDate) return false;
+                return true;
+            }).sort((a,b) => b.id - a.id);
+           
+            const filteredPurchases = allPurchases.filter(t => {
+                if (!startDate && !endDate) return true; // No filter
+                if (startDate && t.date < startDate) return false;
+                if (endDate && t.date > endDate) return false;
+                return true;
+            }).sort((a,b) => b.id - a.id);
+
+
+            ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => `
                 <tr>
                     <td>${t.date.toLocaleDateString()}</td>
                     <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul></td>
                     <td>₹${t.total.toFixed(2)}</td>
                     <td><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button></td>
-                </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr>`;
-            
-            ui.transactions.purchaseHistoryBody.innerHTML = purchases.length ? purchases.map(t => `
+                </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
+           
+            ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `
                 <tr>
                     <td>${t.date.toLocaleDateString()}</td>
                     <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td>
                     <td>₹${t.total.toFixed(2)}</td>
-                </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr>`;
+                </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
         };
-        
+       
         const renderProfit = () => {
             const allItemsSold = transactions
                 .filter(t => t.type === 'Sale')
                 .flatMap(t => t.items.map(item => ({...item, date: t.date })));
-            
+           
             if (!allItemsSold.length) {
                 ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`;
                 return;
@@ -391,9 +455,9 @@
             }).join('');
             ui.profit.profitDetailsBody.innerHTML = tableRows;
         };
-        
+       
         // --- CORE LOGIC ---
-        const createFormItemHTML = (isSale) => isSale 
+        const createFormItemHTML = (isSale) => isSale
             ? `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
             : `<div class="form-grid"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`;
 
@@ -444,13 +508,73 @@
             totalRevenue += revenue;
             const newTransaction = { id: Date.now(), type: 'Sale', date: new Date(), items: saleItems, total: revenue };
             transactions.push(newTransaction);
-            
+           
             renderAll();
             ui.salesItemsContainer.innerHTML = '';
             addFormItem(ui.salesItemsContainer, true);
-            
+           
             if (isInvoice) generateInvoice(newTransaction);
             alert('Sale recorded successfully!');
+        };
+       
+        // NEW: Function to export data to an Excel file
+        const exportTransactionsToExcel = () => {
+            if (transactions.length === 0) {
+                alert("No transactions to export.");
+                return;
+            }
+
+            // 1. Prepare data for "Sales" sheet
+            const salesData = transactions.filter(t => t.type === 'Sale')
+                .flatMap(t => t.items.map(item => ({
+                    "Transaction ID": t.id,
+                    "Date": t.date.toLocaleDateString(),
+                    "Item Particulars": item.particulars,
+                    "Quantity": item.quantity,
+                    "Selling Rate (per item)": item.sellingRate,
+                    "Cost Rate (per item)": item.costRate,
+                    "Total Sale": (item.quantity * item.sellingRate),
+                    "Profit": (item.sellingRate - item.costRate) * item.quantity
+                })));
+
+            // 2. Prepare data for "Purchases" sheet
+            const purchaseData = transactions.filter(t => t.type === 'Purchase')
+                .flatMap(t => t.items.map(item => ({
+                    "Transaction ID": t.id,
+                    "Date": t.date.toLocaleDateString(),
+                    "Item Particulars": item.particulars,
+                    "Quantity": item.quantity,
+                    "Cost Rate (per item)": item.rate,
+                    "Total Purchase": (item.quantity * item.rate)
+                })));
+
+            // 3. Prepare data for "Profit" sheet (already flat)
+            const profitData = salesData.map(item => ({
+                 "Date": item["Date"],
+                 "Item Particulars": item["Item Particulars"],
+                 "Quantity": item.Quantity,
+                 "Selling Rate": item["Selling Rate (per item)"],
+                 "Cost Rate": item["Cost Rate (per item)"],
+                 "Total Profit": item.Profit
+            }));
+
+            // Create worksheets
+            const wsSales = XLSX.utils.json_to_sheet(salesData);
+            const wsPurchases = XLSX.utils.json_to_sheet(purchaseData);
+            const wsProfit = XLSX.utils.json_to_sheet(profitData);
+
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+
+            // Append worksheets
+            XLSX.utils.book_append_sheet(wb, wsSales, "Sales History");
+            XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History");
+            XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
+
+            // Write and download the file
+            XLSX.writeFile(wb, "Transaction_History.xlsx");
+           
+            alert("Transaction history exported successfully!");
         };
 
         const generateInvoice = (transaction) => {
@@ -478,9 +602,21 @@
         ui.excelFile.addEventListener('change', handleFileUpload);
         ui.addSaleItemBtn.addEventListener('click', () => addFormItem(ui.salesItemsContainer, true));
         ui.addPurchaseItemBtn.addEventListener('click', () => addFormItem(ui.purchaseItemsContainer, false));
-        
+       
         ui.recordSaleBtn.addEventListener('click', () => processSale(false));
         ui.recordInvoiceBtn.addEventListener('click', () => processSale(true));
+       
+        // NEW: Event listener for the Excel export button
+        ui.transactions.exportExcelBtn.addEventListener('click', exportTransactionsToExcel);
+
+        // NEW: Event listeners for transaction date filtering
+        ui.transactions.filterBtn.addEventListener('click', renderTransactions);
+        ui.transactions.resetFilterBtn.addEventListener('click', () => {
+            ui.transactions.startDateInput.value = '';
+            ui.transactions.endDateInput.value = '';
+            renderTransactions(); // Re-render with cleared filters
+        });
+
 
         ui.cosmeticSaleForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -493,7 +629,7 @@
                 alert("Please fill all fields correctly. Quantity must be greater than 0.");
                 return;
             }
-            
+           
             const profit = totalSelling - totalCost;
             totalProfit += profit;
             totalRevenue += totalSelling;
@@ -522,7 +658,7 @@
             if (newItems.length === 0) return alert("Please fill out all fields for at least one item.");
             newItems.forEach(newItem => {
                 const existing = inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
-                if (existing) { 
+                if (existing) {
                     const totalExistingValue = existing.rate * existing.quantity;
                     const totalNewValue = newItem.rate * newItem.quantity;
                     const totalQuantity = existing.quantity + newItem.quantity;
@@ -549,7 +685,7 @@
                 if (item) e.target.closest('.form-grid').querySelector('.rate').value = item.rate.toFixed(2);
             }
         });
-        
+       
         ui.transactions.transactionsTab.addEventListener('click', e => {
             if (e.target.classList.contains('download-invoice-btn')) {
                 const tx = transactions.find(t => t.id === parseInt(e.target.dataset.id, 10));
