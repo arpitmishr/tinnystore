@@ -7,78 +7,54 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- --- Google API & Identity Scripts --- -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
         :root {
-            --primary-yellow: #FFC107; /* Amber */
-            --primary-dark: #FFA000;
-            --background-light: #F5F5F5;
-            --card-white: #FFFFFF;
-            --text-dark: #212121;
-            --text-secondary: #757575;
-            --divider-color: #E0E0E0;
-            --success-green: #4CAF50;
-            --danger-red: #f44336;
+            --primary-yellow: #FFC107; --primary-dark: #FFA000; --background-light: #F5F5F5;
+            --card-white: #FFFFFF; --text-dark: #212121; --text-secondary: #757575;
+            --divider-color: #E0E0E0; --success-green: #4CAF50; --danger-red: #f44336;
         }
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background-light);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 20px;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            font-family: 'Roboto', sans-serif; background-color: var(--background-light); color: var(--text-dark);
+            margin: 0; padding: 20px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
         }
         
-        /* --- LOGIN SCREEN STYLES --- */
         #login-screen {
-            position: fixed; top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background-color: var(--background-light);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 10000;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--background-light); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; text-align: center;
         }
         .login-box {
-            background-color: var(--card-white);
-            padding: 40px 50px; text-align: center;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background-color: var(--card-white); padding: 40px 50px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .login-box h1 {
-            color: var(--text-dark);
-            margin-top: 0; margin-bottom: 10px;
-        }
-        .login-box p {
-            color: var(--text-secondary);
-            margin-top: 0; margin-bottom: 30px;
-        }
+        .login-box h1 { color: var(--text-dark); margin-top: 0; margin-bottom: 10px; }
+        .login-box p { color: var(--text-secondary); margin-top: 0; margin-bottom: 30px; }
         #login-button {
-            display: inline-flex; align-items: center; gap: 12px;
-            padding: 12px 24px; font-size: 16px;
-            background-color: #4285F4; color: white;
-            border: none; border-radius: 5px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 12px; padding: 12px 24px; font-size: 16px;
+            background-color: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer;
             transition: background-color 0.3s;
         }
         #login-button:hover { background-color: #357ae8; }
+        #login-button[disabled] { background-color: #ccc; cursor: not-allowed; }
+
+        #app-container { display: none; }
         
-        #app-container {
-            display: none; /* Initially hidden until login */
-        }
-        
-        /* --- CORE APP STYLES --- */
         header {
             background-color: var(--primary-yellow); color: var(--text-dark); padding: 20px;
             border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         header h1 { margin: 0; font-weight: 700; }
         header p { margin: 5px 0 0; font-weight: 400; }
-
         #sync-container {
-            background-color: rgba(255, 255, 255, 0.2); padding: 15px; margin-top: 20px;
-            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            background-color: rgba(255, 255, 255, 0.4); padding: 15px; margin-top: 20px;
+            border-radius: 6px; display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; gap: 15px;
         }
         #sync-status { font-size: 14px; font-weight: 500; }
-        #sync-button, #load-button, #signout-button { display: none; }
+        #signout-button { display: none; }
         
         .tab-nav { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 25px; position: relative; }
         .tab-button {
@@ -86,61 +62,29 @@
             font-weight: 500; color: var(--text-secondary); text-transform: uppercase; position: relative; transition: color 0.3s ease;
         }
         .tab-button.active { color: var(--primary-dark); }
-        .tab-button::after {
-            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
-            background-color: var(--primary-dark); transform: scaleX(0); transition: transform 0.3s ease;
-        }
+        .tab-button::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background-color: var(--primary-dark); transform: scaleX(0); transition: transform 0.3s ease; }
         .tab-button.active::after { transform: scaleX(1); }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         main { max-width: 1200px; margin: 0 auto; }
-        .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
-
-        .card {
-            background-color: var(--card-white); border-radius: 8px; padding: 25px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 3px 6px rgba(0,0,0,0.1); margin-bottom: 25px;
-        }
-        .card h2 {
-            color: var(--text-dark); font-weight: 500; margin-top: 0;
-            border-bottom: 1px solid var(--divider-color); padding-bottom: 15px; margin-bottom: 20px;
-        }
-        .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .cosmetic-credit-form-grid { display: grid; grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-
-        input[type="text"], input[type="number"], input[type="file"], input[type="date"] {
-            width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
-            box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
-            border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none;
-        }
-        .controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: flex-end; }
-        .controls-grid label, .form-row label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
         
-        .btn {
-            width: 100%; padding: 12px 20px; border-radius: 5px; border: none; font-size: 15px;
-            font-weight: 500; text-transform: uppercase; cursor: pointer;
-            transition: background-color 0.3s ease, box-shadow 0.2s ease; margin-top: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-        }
+        .card { background-color: var(--card-white); border-radius: 8px; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 3px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .card h2 { color: var(--text-dark); font-weight: 500; margin-top: 0; border-bottom: 1px solid var(--divider-color); padding-bottom: 15px; margin-bottom: 20px; }
+        input[type="text"], input[type="number"], input[type="file"], input[type="date"] { width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px; box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus { border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none; }
+        
+        .btn { padding: 12px 20px; border-radius: 5px; border: none; font-size: 15px; font-weight: 500; text-transform: uppercase; cursor: pointer; transition: background-color 0.3s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
         .btn:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .btn-primary { background-color: var(--primary-yellow); color: var(--text-dark); }
-        .btn-primary:hover { background-color: var(--primary-dark); }
-        .btn-secondary { background-color: #E0E0E0; color: var(--text-dark); }
-        .btn-secondary:hover { background-color: #BDBDBD; }
-        .btn-success { background-color: var(--success-green); color: white; }
-        .btn-success:hover { background-color: #43A047; }
         .btn-danger { background-color: var(--danger-red); color: white; }
         .btn-danger:hover { background-color: #D32F2F; }
-        .btn-small { padding: 6px 12px; font-size: 12px; margin-top: 0; width: auto; }
         
         .table-container { max-height: 400px; overflow-y: auto; }
-        /* Other styles are the same */
+        .styled-table { width: 100%; border-collapse: collapse; }
+        .styled-table thead tr { background-color: var(--primary-yellow); color: var(--text-dark); text-align: left; }
+        .styled-table th, .styled-table td { padding: 12px 15px; }
+        .styled-table tbody tr { border-bottom: 1px solid var(--divider-color); }
+        .styled-table tbody tr:last-of-type { border-bottom: 2px solid var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -149,11 +93,11 @@
         <div class="login-box">
             <h1>Tinny Fashion Store</h1>
             <p>Your Complete Business Manager</p>
-            <button id="login-button">
+            <button id="login-button" disabled>
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 48 48"><g><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><g></g></g></svg>
                 <span>Sign in with Google</span>
             </button>
-            <p id="login-error-message" style="color:var(--danger-red); margin-top:20px; min-height: 20px;"></p>
+            <p id="auth-status" style="color:var(--text-secondary); margin-top:20px; min-height: 20px;">Initializing...</p>
         </div>
     </div>
     
@@ -161,159 +105,276 @@
         <header>
             <h1>Tinny Fashion Store</h1>
             <p>Run by Rekha ChandraShekhar Mishra since 2022</p>
-
             <div id="sync-container">
-                <span id="sync-status"></span>
-                <button id="sync-button" class="btn btn-secondary">Sync to Drive</button>
-                <button id="load-button" class="btn btn-success">Load from Drive</button>
-                <button id="signout-button" class="btn btn-danger">Logout</button>
+                <span id="sync-status">Please wait...</span>
+                <button id="signout-button" class="btn btn-danger">Sign Out</button>
             </div>
         </header>
 
         <nav class="tab-nav">
              <button class="tab-button active" data-tab="operations">Operations</button>
-            <!-- ... other tabs ... -->
+             <!-- Add other tab buttons here if needed -->
         </nav>
 
         <main>
-            <!-- All your original tab content, sections, and cards go here -->
             <div id="operations" class="tab-content active">
-                <!-- ... content for operations tab ... -->
+                 <!-- Your original main content goes here -->
             </div>
-            <!-- ... other tab content divs ... -->
         </main>
         
-        <!-- Inventory Display Section (Shared) -->
-        <section class="card"><h2>Current Inventory</h2><div class="table-container">
-            <table class="styled-table" id="inventory-table"><thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead><tbody></tbody></table>
-        </div></section>
+        <section class="card">
+            <h2>Current Inventory</h2>
+            <div class="table-container">
+                <table class="styled-table" id="inventory-table">
+                    <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
-    <!-- External Libraries -->
+    <!-- External Libraries (already present) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script async defer src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
 
-    <script>
-    // --- Google API Configuration ---
-    // WARNING: Do not share these credentials. Regenerate them from Google Cloud Console.
-    const API_KEY = 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg';
-    const CLIENT_ID = '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-    const DATA_FILE_NAME = 'TinnyFashionStore_Data.json';
-    let gapi;
-    let authInstance;
+<script>
+window.onload = () => {
+    const app = {
+        // --- Configuration ---
+        CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
+        API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
+        SCOPES: 'https://www.googleapis.com/auth/drive.file',
+        APP_FOLDER_NAME: 'TinnyFashionStore_App',
+        DATA_FILE_NAME: 'TinnyFashionStore_Data.json',
+        
+        // --- GAPI & Auth State ---
+        tokenClient: null,
+        appFolderId: null,
+        driveFileId: null,
+        isSaving: false,
+        saveTimeout: null,
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const { jsPDF } = window.jspdf;
+        // --- Application State ---
+        state: {
+            inventory: [],
+            transactions: [],
+            totalProfit: 0,
+            totalRevenue: 0,
+        },
 
-        // --- STATE MANAGEMENT ---
-        let inventory = [];
-        let transactions = [];
-        let totalProfit = 0;
-        let totalRevenue = 0;
-        let googleFileId = null; 
-
-        // --- DOM ELEMENT REFERENCES ---
-        // This is a simplified version for demonstration. You would populate this fully.
-        const ui = {
+        // --- DOM Elements ---
+        ui: {
             loginScreen: document.getElementById('login-screen'),
             loginButton: document.getElementById('login-button'),
-            loginErrorMessage: document.getElementById('login-error-message'),
+            authStatus: document.getElementById('auth-status'),
             appContainer: document.getElementById('app-container'),
             inventoryTableBody: document.querySelector('#inventory-table tbody'),
-            sync: {
-                signoutButton: document.getElementById('signout-button'),
-                syncButton: document.getElementById('sync-button'),
-                loadButton: document.getElementById('load-button'),
-                status: document.getElementById('sync-status'),
-            }
-        };
+            syncStatus: document.getElementById('sync-status'),
+            signoutButton: document.getElementById('signout-button'),
+        },
 
-        // --- GOOGLE DRIVE API FUNCTIONS ---
-        window.handleClientLoad = () => {
-            // This function is called when the Google API script has loaded
-            if (typeof gapi === 'undefined') {
-                ui.loginErrorMessage.textContent = "Error: Google API script failed to load. Please disable your ad blocker for this site and refresh.";
+        // --- CORE: Initialization and Authentication ---
+        init() {
+            gapi.load('client', this.initializeGapiClient.bind(this));
+            this.tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: this.CLIENT_ID,
+                scope: this.SCOPES,
+                callback: this.handleAuthResponse.bind(this),
+            });
+
+            this.ui.loginButton.addEventListener('click', () => this.tokenClient.requestAccessToken({prompt: 'consent'}));
+            this.ui.signoutButton.addEventListener('click', this.signOut.bind(this));
+        },
+
+        async initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: this.API_KEY,
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+            });
+            this.ui.loginButton.disabled = false;
+            this.ui.authStatus.textContent = 'Ready. Please sign in.';
+        },
+
+        async handleAuthResponse(response) {
+            if (response.error) {
+                this.ui.authStatus.textContent = `Error: ${response.error}`;
                 return;
             }
-            gapi.load('client:auth2', initClient);
-        };
-
-        const initClient = () => {
-            gapi.client.init({
-                apiKey: API_KEY,
-                clientId: CLIENT_ID,
-                discoveryDocs: DISCOVERY_DOCS,
-                scope: SCOPES
-            }).then(() => {
-                authInstance = gapi.auth2.getAuthInstance();
-                authInstance.isSignedIn.listen(updateSigninStatus);
-                ui.loginButton.onclick = () => authInstance.signIn();
-                ui.sync.signoutButton.onclick = () => authInstance.signOut();
-                ui.sync.syncButton.onclick = syncDataToDrive;
-                ui.sync.loadButton.onclick = loadDataFromDrive;
-                updateSigninStatus(authInstance.isSignedIn.get());
-            }).catch(error => {
-                console.error("Error initializing Google Client", error);
-                const errorMsg = error.details || "Could not connect to Google. Please check your browser's developer console (F12) for more details.";
-                ui.loginErrorMessage.textContent = `Error: ${errorMsg}`;
-            });
-        };
-
-        const updateSigninStatus = (isSignedIn) => {
-            if (isSignedIn) {
-                const profile = authInstance.currentUser.get().getBasicProfile();
-                ui.sync.status.textContent = `Welcome, ${profile.getName()}`;
-                ui.loginScreen.style.display = 'none';
-                ui.appContainer.style.display = 'block';
-                ui.sync.signoutButton.style.display = 'inline-flex';
-                ui.sync.syncButton.style.display = 'inline-flex';
-                ui.sync.loadButton.style.display = 'inline-flex';
-            } else {
-                resetAppState();
-                ui.loginScreen.style.display = 'flex';
-                ui.appContainer.style.display = 'none';
+            this.ui.loginScreen.style.display = 'none';
+            this.ui.appContainer.style.display = 'block';
+            await this.updateUserProfile();
+            await this.loadData(); // Automatically load data on login
+            this.startAppLogic();
+        },
+        
+        signOut() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token, () => {
+                    gapi.client.setToken('');
+                    this.driveFileId = null;
+                    this.appFolderId = null;
+                    this.ui.loginScreen.style.display = 'flex';
+                    this.ui.appContainer.style.display = 'none';
+                    this.resetAppState();
+                });
             }
-        };
+        },
+
+        async updateUserProfile() {
+            try {
+                const res = await gapi.client.request({ path: 'https://www.googleapis.com/oauth2/v3/userinfo' });
+                this.ui.syncStatus.textContent = `Welcome, ${res.result.name}`;
+                this.ui.signoutButton.style.display = 'inline-flex';
+            } catch (e) { 
+                console.error("Could not fetch user profile", e);
+                this.ui.syncStatus.textContent = `Welcome!`;
+            }
+        },
         
-        // --- HELPER, RENDER, AND CORE LOGIC FUNCTIONS ---
+        startAppLogic() {
+            // This is where you would add initial event listeners for your forms, etc.
+            this.renderAll();
+        },
+
+        // --- CORE: Google Drive Data Management ---
+        async _findOrCreateAppFolder() {
+            if (this.appFolderId) return this.appFolderId;
+            try {
+                let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
+                if (res.result.files && res.result.files.length > 0) {
+                    this.appFolderId = res.result.files[0].id;
+                } else {
+                    let folder = { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' };
+                    res = await gapi.client.drive.files.create({ resource: folder, fields: 'id' });
+                    this.appFolderId = res.result.id;
+                }
+                return this.appFolderId;
+            } catch (e) { 
+                console.error('Error finding/creating app folder:', e); 
+                this.ui.syncStatus.textContent = 'Error: Could not access Drive folder.';
+            }
+        },
+
+        async loadData() {
+            this.ui.syncStatus.textContent = 'Loading data from Google Drive...';
+            try {
+                await this._findOrCreateAppFolder(); // Ensure folder exists
+                const response = await gapi.client.drive.files.list({ 
+                    q: `name='${this.DATA_FILE_NAME}' and '${this.appFolderId}' in parents and trashed=false`,
+                    spaces: 'drive', 
+                    fields: 'files(id, name)' 
+                });
+
+                if (response.result.files && response.result.files.length > 0) {
+                    this.driveFileId = response.result.files[0].id;
+                    const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
+                    
+                    if (fileContentResponse.body && fileContentResponse.body.length > 0) {
+                        const loadedState = JSON.parse(fileContentResponse.body);
+                        // Make sure to merge with defaults to avoid errors if file is malformed
+                        this.state = { ...this.state, ...loadedState };
+                        // Convert string dates back to Date objects
+                        this.state.transactions = (this.state.transactions || []).map(tx => ({...tx, date: new Date(tx.date)}));
+                        this.ui.syncStatus.textContent = `Data loaded successfully!`;
+                    } else {
+                        this.ui.syncStatus.textContent = `Data file is empty. Ready to start.`;
+                    }
+                } else {
+                    this.ui.syncStatus.textContent = "No data file found. Starting fresh.";
+                }
+            } catch (e) { 
+                console.error("Error loading data:", e);
+                this.ui.syncStatus.textContent = "Error: Failed to load data.";
+            }
+        },
+
+        triggerAutoSave() {
+            this.ui.syncStatus.textContent = "Changes detected, saving...";
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => this.saveData(), 2000); // Save 2 seconds after the last change
+        },
+
+        async saveData() {
+            if (this.isSaving) return;
+            this.isSaving = true;
+            this.ui.syncStatus.textContent = "Syncing to Drive...";
+            try {
+                if (!this.appFolderId) await this._findOrCreateAppFolder();
+                
+                const dataToSave = JSON.stringify(this.state, null, 2);
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+                let request;
+
+                if (this.driveFileId) {
+                     const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                     request = gapi.client.request({'path': `https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}`,'method': 'PATCH','params': { 'uploadType': 'multipart' },'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'},'body': multipartRequestBody});
+                } else {
+                    const metadata = {'name': this.DATA_FILE_NAME, 'parents': [this.appFolderId], 'mimeType': 'application/json'};
+                    const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                    request = gapi.client.request({'path': 'https://www.googleapis.com/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'},'body': multipartRequestBody});
+                }
+                const response = await request;
+                if (!this.driveFileId) { this.driveFileId = response.result.id; }
+                this.ui.syncStatus.textContent = `Synced at ${new Date().toLocaleTimeString()}`;
+            } catch (e) { 
+                console.error("Error saving data:", e); 
+                this.ui.syncStatus.textContent = "Error: Failed to save data.";
+            } finally {
+                this.isSaving = false;
+            }
+        },
+
+        // --- UI & CORE LOGIC ---
+        resetAppState() {
+            this.state = { inventory: [], transactions: [], totalProfit: 0, totalRevenue: 0 };
+            this.renderAll();
+        },
+
+        renderAll() {
+            this.renderInventory();
+            // Call all your other render functions here (e.g., renderTransactions, renderDashboardMetrics)
+        },
+
+        renderInventory() {
+            this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? 
+                this.state.inventory.map(item => `
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.rate.toFixed(2)}</td>
+                        <td><button class="btn-danger btn-small">Delete</button></td>
+                    </tr>
+                `).join('') : 
+                `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock to get started.</td></tr>`;
+                
+            // NOTE: You would need to add an event listener for the delete button
+            // that calls a method like `this.deleteInventoryItem(itemId)` and then `this.triggerAutoSave()`.
+        },
         
-        const resetAppState = () => {
-            // Clear all data when logging out
-            inventory = [];
-            transactions = [];
-            totalProfit = 0;
-            totalRevenue = 0;
-            googleFileId = null;
-            renderAll();
-        };
+        // --- EXAMPLE of how to modify state and trigger save ---
+        addStock(particulars, quantity, rate) {
+            // Your logic to add or update stock would go here...
+            // For example:
+            const existingItem = this.state.inventory.find(item => item.particulars === particulars);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                this.state.inventory.push({ particulars, quantity, rate });
+            }
 
-        const renderAll = () => {
-            renderInventory();
-            // You would call all your other render functions here
-        };
+            // After changing the state:
+            this.renderAll();
+            this.triggerAutoSave(); // <-- This is the crucial step
+        }
+    };
 
-        const renderInventory = () => {
-            // Simplified for brevity. This is your original function.
-            ui.inventoryTableBody.innerHTML = inventory.length ? 
-                inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.rate.toFixed(2)}</td><td>Actions...</td></tr>`).join('') : 
-                `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
-        };
+    // Start the application initialization process
+    app.init();
+};
+</script>
 
-        // All of your other functions (processSale, generateInvoice, etc.) would go here.
-        // The Google Drive functions (getFileId, syncDataToDrive, loadDataFromDrive)
-        // are also needed, exactly as they were in the previous version.
-        // For the sake of a clean answer, they are omitted here but are required for functionality.
-        const getFileId = async () => { if (googleFileId) return googleFileId; try { const response = await gapi.client.drive.files.list({q: `name='${DATA_FILE_NAME}' and trashed=false`, fields: 'files(id, name)', spaces: 'drive'}); if (response.result.files && response.result.files.length > 0) { googleFileId = response.result.files[0].id; return googleFileId; } else { const fileMetadata = { name: DATA_FILE_NAME }; const createResponse = await gapi.client.drive.files.create({ resource: fileMetadata, fields: 'id' }); googleFileId = createResponse.result.id; return googleFileId; } } catch (error) { console.error("Error finding or creating file: ", error); alert("An error occurred while accessing Google Drive."); return null; } };
-        const syncDataToDrive = async () => { if (!authInstance.isSignedIn.get()) { alert("Please log in first."); return; } ui.sync.status.textContent = "Syncing..."; const fileId = await getFileId(); if (!fileId) return; const dataToSave = { inventory, transactions, totalProfit, totalRevenue, lastSync: new Date().toISOString() }; const boundary = '-------314159265358979323846'; const delimiter = "\r\n--" + boundary + "\r\n"; const close_delim = "\r\n--" + boundary + "--"; const metadata = { 'mimeType': 'application/json' }; const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(dataToSave) + close_delim; try { await gapi.client.request({'path': `/upload/drive/v3/files/${fileId}`, 'method': 'PATCH', 'params': { 'uploadType': 'multipart' }, 'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' }, 'body': multipartRequestBody }); ui.sync.status.textContent = `Synced at ${new Date().toLocaleTimeString()}`; alert('Data saved to Google Drive!'); } catch (error) { console.error("Error syncing data: ", error); alert('Failed to save data.'); ui.sync.status.textContent = "Sync failed."; } };
-        const loadDataFromDrive = async () => { if (!authInstance.isSignedIn.get()) { alert("Please log in first."); return; } if (!confirm("This will overwrite current data. Continue?")) return; ui.sync.status.textContent = "Loading..."; const fileId = await getFileId(); if (!fileId) { ui.sync.status.textContent = "No data file found."; alert("No data file found. Sync some data first."); return; } try { const response = await gapi.client.drive.files.get({ fileId: fileId, alt: 'media' }); if (!response.body || response.body.length === 0) { alert("Data file is empty."); ui.sync.status.textContent = "Loaded empty file."; return; } const loadedData = JSON.parse(response.body); inventory = loadedData.inventory || []; transactions = (loadedData.transactions || []).map(tx => ({...tx, date: new Date(tx.date)})); totalProfit = loadedData.totalProfit || 0; totalRevenue = loadedData.totalRevenue || 0; renderAll(); ui.sync.status.textContent = `Loaded. Last sync: ${new Date(loadedData.lastSync).toLocaleString()}`; alert("Data loaded successfully!"); } catch (error) { console.error("Error loading data: ", error); alert('Failed to load data.'); ui.sync.status.textContent = "Load failed."; } };
-
-        // --- INITIALIZATION ---
-        // Initial rendering calls
-        renderAll();
-    });
-    </script>
 </body>
 </html>
