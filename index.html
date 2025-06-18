@@ -83,6 +83,32 @@
             font-size: 0.8rem; color: var(--danger-red); cursor: pointer; background: none;
             border: none; padding: 5px; font-weight: 500; text-decoration: underline;
         }
+        
+        /* NEW: Low Stock Alert in Header */
+        .low-stock-alert {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: var(--danger-red);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: none; /* Hidden by default */
+        }
+        #low-stock-counter {
+            display: inline-block;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            min-width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            font-weight: 700;
+            margin-left: 8px;
+        }
 
 
         /* Tab Navigation */
@@ -104,7 +130,7 @@
        
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; } /* NEW: .credit-layout */
+        .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 25px; } 
 
 
         .card {
@@ -119,9 +145,7 @@
         /* Form Styles */
         .form-grid, form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        /* NEW: Cosmetic Credit form grid */
         .cosmetic-credit-form-grid { display: grid; grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
 
 
@@ -139,7 +163,7 @@
         /* Control Section styles */
         .controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-items: flex-end; }
         .controls-grid label, .form-row label { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 5px; }
-        .controls-grid .btn { margin-top: 0; } /* Align buttons with inputs */
+        .controls-grid .btn { margin-top: 0; } 
 
 
         /* Button Styles */
@@ -171,6 +195,27 @@
         .styled-table td ul { margin: 0; padding-left: 20px; }
         .profit-col { font-weight: 500; color: var(--success-green); }
         .credit-label { font-size: 11px; font-weight: bold; color: var(--danger-red); display: block; margin-top: 4px; }
+        .sales-history-actions { display: flex; gap: 8px; }
+
+        /* NEW: Low Stock Inventory Styles */
+        tr.is-low-stock {
+            background-color: #fff3f3 !important; /* Light red for warning */
+        }
+        tr.is-low-stock:hover {
+            background-color: #ffe5e5 !important;
+        }
+        .low-stock-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            background-color: var(--danger-red);
+            border-radius: 10px;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
 
 
         /* Styles for Inline Editing */
@@ -198,6 +243,7 @@
         @media (max-width: 900px) {
             .main-columns, .cosmetic-form-grid, .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
             .user-profile { position: static; justify-content: center; text-align: center; margin-top: 10px; }
+            .low-stock-alert { position: static; margin: -20px auto 15px; width: fit-content; }
         }
         @media (max-width: 800px) {
             body { padding: 0; }
@@ -225,6 +271,9 @@
 
     <div id="app-container">
         <header>
+            <div id="low-stock-alert-container" class="low-stock-alert">
+                Low Stock Alert: <span id="low-stock-counter">0</span>
+            </div>
             <h1>Tinny Fashion Store</h1>
            
             <div id="user-profile-container" class="user-profile" style="display: none;">
@@ -542,7 +591,6 @@
                         const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
                         const loadedState = JSON.parse(fileContentResponse.body);
                         
-                        // IMPORTANT: Convert date strings back to Date objects
                         if (loadedState.transactions) {
                            loadedState.transactions.forEach(t => t.date = new Date(t.date));
                         }
@@ -557,7 +605,7 @@
                 } catch (e) {
                     console.error("Error loading data:", e);
                     this.showToast("Failed to load data. Starting fresh.", "error");
-                    this.state = { inventory: [], transactions: [] }; // Reset state on error
+                    this.state = { inventory: [], transactions: [] }; 
                 }
             },
 
@@ -592,7 +640,6 @@
                 finally { this.isSaving = false; }
             },
 
-            // --- ORIGINAL APP LOGIC, REFACTORED INTO app OBJECT ---
             cacheDOMElements() {
                 this.ui = {
                     signinBtn: document.getElementById('signin-btn'),
@@ -620,6 +667,8 @@
                         inventoryCost: document.getElementById('total-inventory-cost'),
                         totalUnits: document.getElementById('total-units'),
                         lowStockItems: document.getElementById('low-stock-items'),
+                        lowStockAlertContainer: document.getElementById('low-stock-alert-container'),
+                        lowStockCounter: document.getElementById('low-stock-counter'),
                     },
                     transactions: {
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
@@ -657,17 +706,22 @@
             renderInventory() {
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
                 this.ui.inventoryTableBody.innerHTML = this.state.inventory.length
-                    ? this.state.inventory.map(item => `
-                        <tr data-particulars="${item.particulars}">
+                    ? this.state.inventory.map(item => {
+                        const isLowStock = item.quantity > 0 && item.quantity <= 5;
+                        const rowClass = isLowStock ? 'is-low-stock' : '';
+                        const badgeHTML = isLowStock ? ` <span class="low-stock-badge">Low</span>` : '';
+
+                        return `<tr data-particulars="${item.particulars}" class="${rowClass}">
                             <td><span class="display-value">${item.particulars}</span><div class="edit-field"><input type="text" class="edit-input" value="${item.particulars}" readonly></div></td>
-                            <td><span class="display-value">${item.quantity}</span><div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div></td>
+                            <td><span class="display-value">${item.quantity}${badgeHTML}</span><div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div></td>
                             <td><span class="display-value">${item.rate.toFixed(2)}</span><div class="edit-field"><input type="number" class="edit-input edit-rate" value="${item.rate.toFixed(2)}" min="0" step="0.01"></div></td>
                             <td><div class="inventory-actions">
                                     <button class="btn btn-small btn-secondary edit-btn" data-particulars="${item.particulars}">Edit</button>
                                     <button class="btn btn-small btn-success save-btn" data-particulars="${item.particulars}">Save</button>
                                     <button class="btn btn-small btn-secondary cancel-btn">Cancel</button>
                                     <button class="btn btn-small btn-danger delete-btn" data-particulars="${item.particulars}">Delete</button>
-                                </div></td></tr>`).join('')
+                                </div></td></tr>`;
+                    }).join('')
                     : `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
                 this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
             },
@@ -683,7 +737,6 @@
                 const sales = this.state.transactions.filter(t => t.type === 'Sale');
                 const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-                
                 const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
                 
                 this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
@@ -694,6 +747,15 @@
                 this.ui.analytics.lowStockItems.innerHTML = lowStock.length > 0
                     ? `<ul>${lowStock.map(item => `<li>${item.particulars} - <span class="low-stock-qty">${item.quantity} left</span></li>`).join('')}</ul>`
                     : '<ul><li>No low stock items.</li></ul>';
+
+                // Update low stock header counter
+                const lowStockCount = lowStock.length;
+                if (lowStockCount > 0) {
+                    this.ui.analytics.lowStockCounter.textContent = lowStockCount;
+                    this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
+                } else {
+                    this.ui.analytics.lowStockAlertContainer.style.display = 'none';
+                }
             },
 
             renderTransactions() {
@@ -713,7 +775,10 @@
                     <tr><td>${t.date.toLocaleDateString()}</td>
                         <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul>${creditLabel}</td>
                         <td>₹${t.total.toFixed(2)}</td>
-                        <td><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button></td></tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
+                        <td><div class="sales-history-actions">
+                            <button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button>
+                            <button class="btn btn-danger btn-small delete-sale-btn" data-id="${t.id}">Delete</button>
+                        </div></td></tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
 
                 this.ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `
                     <tr><td>${t.date.toLocaleDateString()}</td>
@@ -759,6 +824,42 @@
                 };
                 reader.readAsArrayBuffer(file);
             },
+            
+            deleteSale(transactionId) {
+                if (!confirm("Are you sure you want to delete this sale record? This will return the sold items to your inventory.")) {
+                    return;
+                }
+                const transactionIndex = this.state.transactions.findIndex(t => t.id === transactionId);
+                if (transactionIndex === -1) {
+                    this.showToast("Sale not found.", "error");
+                    return;
+                }
+                const transactionToDelete = this.state.transactions[transactionIndex];
+
+                if (transactionToDelete.items) {
+                    transactionToDelete.items.forEach(soldItem => {
+                        // Don't restore stock for cosmetic or non-inventory sales
+                        if (soldItem.particulars.startsWith('(Cosmetic)')) return;
+                        
+                        const inventoryItem = this.state.inventory.find(i => i.particulars === soldItem.particulars);
+                        if (inventoryItem) {
+                            inventoryItem.quantity += soldItem.quantity;
+                        } else {
+                            // If the item was deleted from inventory after the sale, re-add it.
+                            this.state.inventory.push({
+                                particulars: soldItem.particulars,
+                                quantity: soldItem.quantity,
+                                rate: soldItem.costRate // Restore with the cost rate from the transaction
+                            });
+                        }
+                    });
+                }
+                this.state.transactions.splice(transactionIndex, 1);
+                this.showToast("Sale deleted and stock restored.", "success");
+                this.renderAll();
+                this.triggerAutoSave();
+            },
+
 
             processSale(isInvoice, isCredit = false, creditForm) {
                 const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
@@ -930,7 +1031,7 @@
                         const item = this.state.inventory.find(i => i.particulars === e.target.value);
                         const rateInput = e.target.closest('.item-entry').querySelector('.rate');
                         if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) {
-                            const sellingRate = item.sellingRate || item.rate; // Fallback to cost rate if no selling rate is defined
+                            const sellingRate = item.sellingRate || item.rate;
                             rateInput.value = sellingRate.toFixed(2);
                         }
                     }
@@ -940,6 +1041,9 @@
                     if (e.target.classList.contains('download-invoice-btn')) {
                         const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10));
                         if (tx) this.generateInvoice(tx);
+                    } else if (e.target.classList.contains('delete-sale-btn')) {
+                        const transactionId = parseInt(e.target.dataset.id, 10);
+                        this.deleteSale(transactionId);
                     }
                 });
 
