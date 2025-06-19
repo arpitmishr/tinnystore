@@ -12,6 +12,10 @@
     <!-- --- Google API & Identity Scripts --- -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- --- Chart.js Library for Graphs --- -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js" async defer></script>
+
     <!-- Embedded CSS -->
     <style>
         :root {
@@ -193,6 +197,8 @@
         .styled-table th { background-color: #fafafa; font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
         .styled-table tr:hover { background-color: #FFF8E1; }
         .styled-table td ul { margin: 0; padding-left: 20px; }
+        /* --- MODIFIED: Sales history item styling for return button --- */
+        .styled-table td li { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
         .profit-col { font-weight: 500; color: var(--success-green); }
         .credit-label { font-size: 11px; font-weight: bold; color: var(--danger-red); display: block; margin-top: 4px; }
         .sales-history-actions { display: flex; gap: 8px; }
@@ -238,7 +244,7 @@
         #toast { position: fixed; bottom: -100px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: bottom 0.5s ease-in-out; z-index: 9999; }
         #toast.show { bottom: 20px; } #toast.success { background-color: var(--success-green); } #toast.error { background-color: var(--danger-red); }
 
-        /* --- NEW: Creditor List Styles --- */
+        /* --- Creditor List Styles --- */
         .creditor-item {
             background-color: #f9f9f9; padding: 15px; border: 1px solid var(--divider-color);
             border-radius: 6px; margin-bottom: 10px; transition: background-color 0.2s;
@@ -261,7 +267,6 @@
         .creditor-details th { font-size: 13px; color: var(--text-secondary); }
         .payment-form { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
         .payment-form input { flex-grow: 1; max-width: 200px; }
-        /* --- End of New Styles --- */
 
 
         /* Responsive Design */
@@ -397,7 +402,6 @@
                         </form>
                     </section>
                     
-                    <!-- NEW: Creditor List Section -->
                     <section class="card" id="creditor-list-section">
                         <h2>Creditor List</h2>
                         <p>List of parties with outstanding credit balances. Click on a name to see details and record payments.</p>
@@ -405,21 +409,44 @@
                             <!-- Creditors will be dynamically inserted here by JavaScript -->
                         </div>
                     </section>
-                    <!-- End of Creditor List Section -->
 
                 </div>
             </div>
 
             <!-- Analytics Tab -->
             <div id="analytics" class="tab-content">
-                <section class="card"><h2>Shop Performance</h2><div class="analytics-grid">
-                    <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
-                    <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue">₹0.00</p></div>
-                    <div class="metric-card"><h3>Average Margin</h3><p id="avg-margin">0%</p></div>
-                    <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
-                    <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
-                </div></section>
-                <section class="card"><h2>Low Stock Items (5 or less)</h2><div id="low-stock-items" class="metric-card"><ul><li>No low stock items.</li></ul></div></section>
+                <section class="card">
+                    <h2>Shop Performance At a Glance</h2>
+                    <div class="analytics-grid">
+                        <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
+                        <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue">₹0.00</p></div>
+                        <div class="metric-card"><h3>Average Margin</h3><p id="avg-margin">0%</p></div>
+                        <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
+                        <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
+                    </div>
+                </section>
+                 <!-- NEW: Sales & Profit Graph Section -->
+                <section class="card">
+                    <h2>Sales & Profit Over Time</h2>
+                    <div class="controls-grid" style="margin-bottom: 20px;">
+                        <div>
+                            <label for="analytics-start-date">Start Date</label>
+                            <input type="date" id="analytics-start-date">
+                        </div>
+                        <div>
+                            <label for="analytics-end-date">End Date</label>
+                            <input type="date" id="analytics-end-date">
+                        </div>
+                        <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
+                    </div>
+                    <canvas id="salesProfitChart"></canvas>
+                </section>
+                <section class="card">
+                    <h2>Low Stock Items (5 or less)</h2>
+                    <div id="low-stock-items" class="metric-card">
+                        <ul><li>No low stock items.</li></ul>
+                    </div>
+                </section>
             </div>
 
             <!-- Profit Tab -->
@@ -509,7 +536,7 @@
 
     <div id="toast"></div>
 
-    <!-- External Libraries -->
+    <!-- External Libraries (Excluding those loaded at top) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -604,6 +631,14 @@
                 
                 this.ui.credit.inventoryDateInput.value = this.getTodayDateString();
                 this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
+                
+                // Set default dates for analytics chart (last 30 days)
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(endDate.getDate() - 30);
+                this.ui.analytics.endDateInput.value = this.getTodayDateString(endDate);
+                this.ui.analytics.startDateInput.value = this.getTodayDateString(startDate);
+
 
                 this.renderAll();
             },
@@ -636,9 +671,12 @@
                         if (loadedState.transactions) {
                            loadedState.transactions.forEach(t => {
                                t.date = new Date(t.date);
-                               // Migration for older data to include paidAmount
                                if (t.saleType === 'Credit' && t.paidAmount === undefined) {
                                    t.paidAmount = 0;
+                               }
+                               // Ensure items is an array
+                               if(t.items && !Array.isArray(t.items)) {
+                                   t.items = [t.items];
                                }
                            });
                         }
@@ -730,6 +768,11 @@
                         lowStockItems: document.getElementById('low-stock-items'),
                         lowStockAlertContainer: document.getElementById('low-stock-alert-container'),
                         lowStockCounter: document.getElementById('low-stock-counter'),
+                        // NEW Graph elements
+                        salesProfitChart: document.getElementById('salesProfitChart'),
+                        startDateInput: document.getElementById('analytics-start-date'),
+                        endDateInput: document.getElementById('analytics-end-date'),
+                        filterBtn: document.getElementById('analytics-filter-btn'),
                     },
                     transactions: {
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
@@ -751,19 +794,27 @@
                         inventoryDateInput: document.getElementById('credit-inventory-date'),
                         cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'),
                         cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
-                        creditorListContainer: document.getElementById('creditor-list-container'), // NEW
+                        creditorListContainer: document.getElementById('creditor-list-container'),
                     }
                 };
             },
             
-            getTodayDateString() { return new Date().toISOString().slice(0, 10) },
+            getTodayDateString(date = new Date()) { return date.toISOString().slice(0, 10); },
+
+            // --- NEW: Helper to parse item name from datalist value ---
+            parseItemNameFromDatalist(value) {
+                if (typeof value !== 'string') return '';
+                const match = value.match(/^(.*) \(\d+ left\)$/);
+                return match ? match[1].trim() : value.trim();
+            },
 
             renderAll() {
                 this.renderInventory();
                 this.renderAnalytics();
                 this.renderTransactions();
                 this.renderProfit();
-                this.renderCreditorList(); // NEW
+                this.renderCreditorList(); 
+                this.renderSalesProfitChart(); // Render chart on all data changes
             },
 
             renderInventory() {
@@ -786,7 +837,11 @@
                                 </div></td></tr>`;
                     }).join('')
                     : `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
-                this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join('');
+                
+                // --- MODIFIED: Show quantity in datalist ---
+                this.ui.inventoryDatalist.innerHTML = this.state.inventory
+                    .map(item => `<option value="${item.particulars} (${item.quantity} left)"></option>`)
+                    .join('');
             },
 
             renderAnalytics() {
@@ -819,6 +874,96 @@
                     this.ui.analytics.lowStockAlertContainer.style.display = 'none';
                 }
             },
+            
+            // --- NEW: Render Sales and Profit Chart ---
+            renderSalesProfitChart() {
+                if (typeof Chart === 'undefined') { return; } // Don't run if Chart.js isn't loaded yet
+
+                const startDateStr = this.ui.analytics.startDateInput.value;
+                const endDateStr = this.ui.analytics.endDateInput.value;
+                const startDate = startDateStr ? new Date(startDateStr) : null;
+                if(startDate) startDate.setHours(0, 0, 0, 0);
+                const endDate = endDateStr ? new Date(endDateStr) : null;
+                if(endDate) endDate.setHours(23, 59, 59, 999);
+
+                const sales = this.state.transactions.filter(t => 
+                    t.type === 'Sale' && 
+                    (!startDate || t.date >= startDate) && 
+                    (!endDate || t.date <= endDate)
+                );
+
+                const aggregatedData = sales.reduce((acc, t) => {
+                    const dateString = t.date.toISOString().slice(0, 10);
+                    if (!acc[dateString]) {
+                        acc[dateString] = { sales: 0, profit: 0 };
+                    }
+                    const saleTotal = t.items.reduce((sum, i) => sum + i.quantity * i.sellingRate, 0);
+                    const profitTotal = t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                    acc[dateString].sales += saleTotal;
+                    acc[dateString].profit += profitTotal;
+                    return acc;
+                }, {});
+
+                const sortedDates = Object.keys(aggregatedData).sort();
+
+                const chartData = {
+                    labels: sortedDates,
+                    datasets: [
+                        {
+                            label: 'Total Sales',
+                            data: sortedDates.map(date => aggregatedData[date].sales),
+                            borderColor: 'rgba(255, 160, 0, 1)',
+                            backgroundColor: 'rgba(255, 160, 0, 0.2)',
+                            fill: true,
+                            tension: 0.1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Total Profit',
+                            data: sortedDates.map(date => aggregatedData[date].profit),
+                            borderColor: 'rgba(76, 175, 80, 1)',
+                            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                            fill: true,
+                            tension: 0.1,
+                            yAxisID: 'y'
+                        }
+                    ]
+                };
+
+                const chartCanvas = this.ui.analytics.salesProfitChart;
+                const existingChart = Chart.getChart(chartCanvas);
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+
+                new Chart(chartCanvas, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: { unit: 'day' },
+                                title: { display: true, text: 'Date' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Amount (₹)' }
+                            }
+                        },
+                        plugins: {
+                            tooltip: { mode: 'index', intersect: false },
+                            legend: { position: 'top' },
+                        },
+                        interaction: {
+                           mode: 'index',
+                           intersect: false,
+                        }
+                    }
+                });
+            },
 
             renderTransactions() {
                 const startDateStr = this.ui.transactions.startDateInput.value;
@@ -833,9 +978,16 @@
 
                 this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
                     const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
+                    
+                    // --- MODIFIED: Add return button to each item ---
+                    const itemsHtml = t.items.map(i => {
+                        const returnButton = `<button class="btn btn-danger btn-small return-item-btn" data-transaction-id="${t.id}" data-item-particulars="${i.particulars}">Return</button>`;
+                        return `<li><span>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</span> ${returnButton}</li>`;
+                    }).join('');
+
                     return `
                     <tr><td>${t.date.toLocaleDateString()}</td>
-                        <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul>${creditLabel}</td>
+                        <td><ul>${itemsHtml}</ul>${creditLabel}</td>
                         <td>₹${t.total.toFixed(2)}</td>
                         <td><div class="sales-history-actions">
                             <button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button>
@@ -862,7 +1014,6 @@
                 this.ui.profit.profitDetailsBody.innerHTML = tableRows;
             },
             
-            // --- NEW: RENDER CREDITOR LIST ---
             renderCreditorList() {
                 const creditSales = this.state.transactions.filter(t => t.saleType === 'Credit');
                 const creditors = creditSales.reduce((acc, t) => {
@@ -944,8 +1095,9 @@
                 reader.readAsArrayBuffer(file);
             },
             
+            // --- MODIFIED: Delete whole sale ---
             deleteSale(transactionId) {
-                if (!confirm("Are you sure you want to delete this sale record? This will return the sold items to your inventory.")) {
+                if (!confirm("Are you sure you want to delete this ENTIRE sale record? All items from this sale will be returned to inventory.")) {
                     return;
                 }
                 const transactionIndex = this.state.transactions.findIndex(t => t.id === transactionId);
@@ -955,24 +1107,68 @@
                 }
                 const transactionToDelete = this.state.transactions[transactionIndex];
 
-                if (transactionToDelete.items) {
+                if (transactionToDelete.items && Array.isArray(transactionToDelete.items)) {
                     transactionToDelete.items.forEach(soldItem => {
                         if (soldItem.particulars.startsWith('(Cosmetic)')) return;
-                        
                         const inventoryItem = this.state.inventory.find(i => i.particulars === soldItem.particulars);
                         if (inventoryItem) {
                             inventoryItem.quantity += soldItem.quantity;
                         } else {
-                            this.state.inventory.push({
-                                particulars: soldItem.particulars,
-                                quantity: soldItem.quantity,
-                                rate: soldItem.costRate 
-                            });
+                            this.state.inventory.push({ particulars: soldItem.particulars, quantity: soldItem.quantity, rate: soldItem.costRate });
                         }
                     });
                 }
                 this.state.transactions.splice(transactionIndex, 1);
-                this.showToast("Sale deleted and stock restored.", "success");
+                this.showToast("Sale deleted and all stock restored.", "success");
+                this.renderAll();
+                this.triggerAutoSave();
+            },
+
+            // --- NEW: Handle single item sales return ---
+            handleSalesReturn(transactionId, itemParticulars) {
+                if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale? The item will be added back to inventory.`)) {
+                    return;
+                }
+                
+                const transaction = this.state.transactions.find(t => t.id === transactionId);
+                if (!transaction) { this.showToast("Sale not found.", "error"); return; }
+
+                const itemIndex = transaction.items.findIndex(i => i.particulars === itemParticulars);
+                if (itemIndex === -1) { this.showToast("Item not found in this sale.", "error"); return; }
+
+                const [returnedItem] = transaction.items.splice(itemIndex, 1);
+
+                // Add stock back to inventory (if not a cosmetic item)
+                if (!returnedItem.particulars.startsWith('(Cosmetic)')) {
+                    const inventoryItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars);
+                    if (inventoryItem) {
+                        inventoryItem.quantity += returnedItem.quantity;
+                    } else {
+                        // If item was deleted from inventory, add it back
+                        this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate });
+                    }
+                }
+
+                // Recalculate transaction total
+                const returnedValue = returnedItem.quantity * returnedItem.sellingRate;
+                transaction.total -= returnedValue;
+
+                // Adjust paid amount if necessary
+                if (transaction.paidAmount > transaction.total) {
+                    // This implies a refund is due. We'll cap the paid amount to the new total.
+                    // The actual cash refund is a manual process for the user.
+                    transaction.paidAmount = transaction.total;
+                }
+                
+                // If no items are left in the transaction, delete the whole transaction
+                if (transaction.items.length === 0) {
+                    const transactionIndexGlobal = this.state.transactions.findIndex(t => t.id === transactionId);
+                    this.state.transactions.splice(transactionIndexGlobal, 1);
+                    this.showToast('Item returned. The sale is now empty and has been removed.', 'success');
+                } else {
+                    this.showToast('Item returned and stock restored.', 'success');
+                }
+
                 this.renderAll();
                 this.triggerAutoSave();
             },
@@ -988,7 +1184,11 @@
 
                 const saleItems = [], errors = []; let isValid = true;
                 container.querySelectorAll('.item-entry').forEach(entry => {
-                    const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
+                    const rawParticulars = entry.querySelector('.particulars').value;
+                    const p = this.parseItemNameFromDatalist(rawParticulars); // Use helper function
+                    const q = parseInt(entry.querySelector('.quantity').value, 10);
+                    const r = parseFloat(entry.querySelector('.rate').value);
+
                     if (!p || !q || isNaN(r)) return;
                     const item = this.state.inventory.find(i => i.particulars === p);
                     if (!item) { isValid = false; errors.push(`Item not found: ${p}`); }
@@ -1014,8 +1214,7 @@
                 if (isInvoice) this.generateInvoice(newTransaction);
                 this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!', "success");
             },
-
-            // --- NEW: RECORD PAYMENT ---
+        
             recordPayment(creditorName, amount) {
                 let paymentToApply = amount;
                 const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date);
@@ -1124,7 +1323,9 @@
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
 
-                // NEW: Event Listener for Creditor List
+                // Analytics filter button
+                this.ui.analytics.filterBtn.addEventListener('click', () => this.renderSalesProfitChart());
+
                 this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
                     const creditorHeader = e.target.closest('.creditor-header');
                     const recordButton = e.target.closest('.record-payment-btn');
@@ -1189,9 +1390,10 @@
                     this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
                 }));
 
-                document.body.addEventListener('change', e => {
+                document.body.addEventListener('input', e => { // Changed to 'input' for better responsiveness
                     if (e.target.classList.contains('particulars')) {
-                        const item = this.state.inventory.find(i => i.particulars === e.target.value);
+                        const particularsValue = this.parseItemNameFromDatalist(e.target.value);
+                        const item = this.state.inventory.find(i => i.particulars === particularsValue);
                         const rateInput = e.target.closest('.item-entry').querySelector('.rate');
                         if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) {
                             const sellingRate = item.sellingRate || item.rate;
@@ -1207,6 +1409,10 @@
                     } else if (e.target.classList.contains('delete-sale-btn')) {
                         const transactionId = parseInt(e.target.dataset.id, 10);
                         this.deleteSale(transactionId);
+                    } else if (e.target.classList.contains('return-item-btn')) { // NEW event for item return
+                        const transactionId = parseInt(e.target.dataset.transactionId, 10);
+                        const itemParticulars = e.target.dataset.itemParticulars;
+                        this.handleSalesReturn(transactionId, itemParticulars);
                     }
                 });
 
