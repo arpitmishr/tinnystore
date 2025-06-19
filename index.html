@@ -238,6 +238,32 @@
         #toast { position: fixed; bottom: -100px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: bottom 0.5s ease-in-out; z-index: 9999; }
         #toast.show { bottom: 20px; } #toast.success { background-color: var(--success-green); } #toast.error { background-color: var(--danger-red); }
 
+        /* --- NEW: Creditor List Styles --- */
+        .creditor-item {
+            background-color: #f9f9f9; padding: 15px; border: 1px solid var(--divider-color);
+            border-radius: 6px; margin-bottom: 10px; transition: background-color 0.2s;
+        }
+        .creditor-header {
+            display: flex; justify-content: space-between; font-weight: 500;
+            font-size: 1.1rem; cursor: pointer;
+        }
+        .creditor-header:hover { background-color: #f1f1f1; }
+        .creditor-header .creditor-balance { color: var(--danger-red); }
+        .creditor-details {
+            display: none; margin-top: 20px; padding-top: 15px;
+            border-top: 1px solid var(--divider-color);
+        }
+        .creditor-details.visible { display: block; }
+        .creditor-details table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .creditor-details th, .creditor-details td {
+            text-align: left; padding: 8px; border-bottom: 1px solid #eee;
+        }
+        .creditor-details th { font-size: 13px; color: var(--text-secondary); }
+        .payment-form { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
+        .payment-form input { flex-grow: 1; max-width: 200px; }
+        /* --- End of New Styles --- */
+
+
         /* Responsive Design */
         @media (max-width: 900px) {
             .main-columns, .cosmetic-form-grid, .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
@@ -370,6 +396,17 @@
                             <button type="submit" class="btn btn-primary">Record Cosmetic Credit Sale</button>
                         </form>
                     </section>
+                    
+                    <!-- NEW: Creditor List Section -->
+                    <section class="card" id="creditor-list-section">
+                        <h2>Creditor List</h2>
+                        <p>List of parties with outstanding credit balances. Click on a name to see details and record payments.</p>
+                        <div id="creditor-list-container">
+                            <!-- Creditors will be dynamically inserted here by JavaScript -->
+                        </div>
+                    </section>
+                    <!-- End of Creditor List Section -->
+
                 </div>
             </div>
 
@@ -597,7 +634,13 @@
                         const loadedState = JSON.parse(fileContentResponse.body);
                         
                         if (loadedState.transactions) {
-                           loadedState.transactions.forEach(t => t.date = new Date(t.date));
+                           loadedState.transactions.forEach(t => {
+                               t.date = new Date(t.date);
+                               // Migration for older data to include paidAmount
+                               if (t.saleType === 'Credit' && t.paidAmount === undefined) {
+                                   t.paidAmount = 0;
+                               }
+                           });
                         }
 
                         const defaultState = { inventory: [], transactions: [] };
@@ -677,7 +720,7 @@
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     deleteAllDataBtn: document.getElementById('delete-all-data-btn'),
-                    manualSaveBtn: document.getElementById('manual-save-btn'), // <-- NEW
+                    manualSaveBtn: document.getElementById('manual-save-btn'),
                     analytics: {
                         totalProfit: document.getElementById('total-profit'),
                         totalRevenue: document.getElementById('total-revenue'),
@@ -708,6 +751,7 @@
                         inventoryDateInput: document.getElementById('credit-inventory-date'),
                         cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'),
                         cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
+                        creditorListContainer: document.getElementById('creditor-list-container'), // NEW
                     }
                 };
             },
@@ -719,6 +763,7 @@
                 this.renderAnalytics();
                 this.renderTransactions();
                 this.renderProfit();
+                this.renderCreditorList(); // NEW
             },
 
             renderInventory() {
@@ -787,7 +832,7 @@
                 const filteredPurchases = this.state.transactions.filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
 
                 this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
-                    const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName}</span>` : '';
+                    const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
                     return `
                     <tr><td>${t.date.toLocaleDateString()}</td>
                         <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</li>`).join('')}</ul>${creditLabel}</td>
@@ -815,6 +860,63 @@
                     return `<tr><td>${item.date.toLocaleDateString()}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
                 }).join('');
                 this.ui.profit.profitDetailsBody.innerHTML = tableRows;
+            },
+            
+            // --- NEW: RENDER CREDITOR LIST ---
+            renderCreditorList() {
+                const creditSales = this.state.transactions.filter(t => t.saleType === 'Credit');
+                const creditors = creditSales.reduce((acc, t) => {
+                    if (!t.partyName) return acc;
+                    if (!acc[t.partyName]) {
+                        acc[t.partyName] = { totalOwed: 0, totalPaid: 0, transactions: [] };
+                    }
+                    acc[t.partyName].totalOwed += t.total;
+                    acc[t.partyName].totalPaid += (t.paidAmount || 0);
+                    acc[t.partyName].transactions.push(t);
+                    return acc;
+                }, {});
+
+                this.ui.credit.creditorListContainer.innerHTML = '';
+                const creditorsWithBalance = Object.entries(creditors).filter(([name, data]) => (data.totalOwed - data.totalPaid) > 0.01);
+                
+                if (creditorsWithBalance.length === 0) {
+                    this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit balances.</p>';
+                    return;
+                }
+                
+                creditorsWithBalance.sort((a,b) => a[0].localeCompare(b[0]));
+
+                for (const [name, data] of creditorsWithBalance) {
+                    const remainingBalance = data.totalOwed - data.totalPaid;
+                    const transactionRows = data.transactions.map(tx => {
+                        const balanceOnTx = tx.total - (tx.paidAmount || 0);
+                        if (balanceOnTx <= 0.01) return '';
+                        const itemsList = tx.items.map(i => `${i.quantity}x ${i.particulars.replace('(Cosmetic)', '')}`).join(', ');
+                        return `<tr>
+                                <td>${tx.date.toLocaleDateString()}</td>
+                                <td>${itemsList}</td>
+                                <td>₹${tx.total.toFixed(2)}</td>
+                                <td>₹${balanceOnTx.toFixed(2)}</td>
+                            </tr>`;
+                    }).join('');
+
+                    const creditorElementHTML = `
+                        <div class="creditor-item" data-creditor-name="${name}">
+                            <div class="creditor-header">
+                                <span class="creditor-name">${name}</span>
+                                <span class="creditor-balance">Balance: ₹${remainingBalance.toFixed(2)}</span>
+                            </div>
+                            <div class="creditor-details">
+                                <table><thead><tr><th>Date</th><th>Items</th><th>Total Sale</th><th>Balance</th></tr></thead><tbody>${transactionRows}</tbody></table>
+                                <div class="payment-form">
+                                    <label for="payment-${name.replace(/\s+/g, '-')}" style="white-space: nowrap;">Record Payment:</label>
+                                    <input type="number" id="payment-${name.replace(/\s+/g, '-')}" class="payment-amount-input" placeholder="Enter amount" min="0.01" max="${remainingBalance.toFixed(2)}" step="0.01">
+                                    <button class="btn btn-success btn-small record-payment-btn" data-creditor-name="${name}">Pay</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', creditorElementHTML);
+                }
             },
         
             createFormItemHTML(isSale) { return isSale
@@ -902,7 +1004,7 @@
                     inventoryItem.quantity -= soldItem.quantity;
                 });
                 
-                const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName: partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, soldItem) => acc + (soldItem.sellingRate * soldItem.quantity), 0) };
+                const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName: partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, soldItem) => acc + (soldItem.sellingRate * soldItem.quantity), 0), paidAmount: 0 };
                 this.state.transactions.push(newTransaction);
                 this.renderAll(); this.triggerAutoSave();
                 
@@ -912,10 +1014,32 @@
                 if (isInvoice) this.generateInvoice(newTransaction);
                 this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!', "success");
             },
+
+            // --- NEW: RECORD PAYMENT ---
+            recordPayment(creditorName, amount) {
+                let paymentToApply = amount;
+                const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date);
+
+                if (creditorTransactions.length === 0) { this.showToast("Could not find any outstanding balance for this creditor.", "error"); return; }
+                const totalDue = creditorTransactions.reduce((sum, t) => sum + (t.total - (t.paidAmount || 0)), 0);
+                if (amount > totalDue + 0.01) { this.showToast(`Payment amount (₹${amount.toFixed(2)}) exceeds the total due amount (₹${totalDue.toFixed(2)}).`, 'error'); return; }
+
+                for (const transaction of creditorTransactions) {
+                    if (paymentToApply <= 0) break;
+                    const dueOnThisTx = transaction.total - (transaction.paidAmount || 0);
+                    const paymentForThisTx = Math.min(paymentToApply, dueOnThisTx);
+                    transaction.paidAmount = (transaction.paidAmount || 0) + paymentForThisTx;
+                    paymentToApply -= paymentForThisTx;
+                }
+                
+                this.showToast(`Payment of ₹${amount.toFixed(2)} recorded for ${creditorName}.`, 'success');
+                this.renderAll();
+                this.triggerAutoSave();
+            },
         
             exportTransactionsToExcel() {
                 if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; }
-                const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
+                const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Amount Paid": t.paidAmount, "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
                 const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
                 const profitData = salesData.map(item => ({ "Date": item["Date"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
                 const wsSales = XLSX.utils.json_to_sheet(salesData); const wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wsProfit = XLSX.utils.json_to_sheet(profitData);
@@ -964,7 +1088,7 @@
                 this.ui.credit.addInventoryItemBtn.addEventListener('click', () => this.addFormItem(this.ui.credit.inventoryItemsContainer, true));
                 this.ui.credit.inventorySaleForm.addEventListener('submit', (e) => { e.preventDefault(); this.processSale(false, true, e.target); });
 
-                this.ui.manualSaveBtn.addEventListener('click', () => this.saveData()); // <-- NEW
+                this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
 
                 this.ui.deleteAllDataBtn.addEventListener('click', () => {
                     if(confirm("ARE YOU ABSOLUTELY SURE?\n\nThis will delete all your data permanently. This action cannot be undone.")) {
@@ -990,7 +1114,7 @@
                     }
 
                     const cosmeticItem = { particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate };
-                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: partyName, date: saleDate, items: [cosmeticItem], total: sellRate * quantity });
+                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: partyName, date: saleDate, items: [cosmeticItem], total: sellRate * quantity, paidAmount: 0 });
                     this.renderAll(); this.triggerAutoSave();
                     form.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                     this.showToast(`Cosmetic credit sale to ${partyName} recorded!`, 'success');
@@ -999,6 +1123,28 @@
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
+
+                // NEW: Event Listener for Creditor List
+                this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
+                    const creditorHeader = e.target.closest('.creditor-header');
+                    const recordButton = e.target.closest('.record-payment-btn');
+
+                    if (creditorHeader) {
+                        const details = creditorHeader.nextElementSibling;
+                        details.classList.toggle('visible');
+                    } else if (recordButton) {
+                        const creditorName = recordButton.dataset.creditorName;
+                        const paymentInput = recordButton.closest('.payment-form').querySelector('.payment-amount-input');
+                        const amountToPay = parseFloat(paymentInput.value);
+
+                        if (isNaN(amountToPay) || amountToPay <= 0) {
+                            this.showToast('Please enter a valid payment amount.', 'error');
+                            return;
+                        }
+                        this.recordPayment(creditorName, amountToPay);
+                        paymentInput.value = '';
+                    }
+                });
 
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => {
                     e.preventDefault();
