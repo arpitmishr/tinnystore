@@ -347,7 +347,6 @@
                 <div class="operations-layout">
                     <section class="card">
                         <h2>Cosmetic & Non-Inventory Sale</h2>
-                        <!-- MODIFIED: Changed form inputs for clarity in profit calculation -->
                         <form id="cosmetic-sale-form">
                             <div class="cosmetic-form-grid">
                                 <input type="text" id="cosmetic-particulars" placeholder="Item Particulars" required>
@@ -464,13 +463,14 @@
                     <h2>Item-wise Profit Details</h2>
                     <div class="table-container">
                         <table class="styled-table" id="profit-details-table">
+                            <!-- MODIFIED: Updated table headers for clarity -->
                             <thead>
                                 <tr>
                                     <th>Date (DD/MM/YYYY)</th>
                                     <th>Particulars</th>
                                     <th>Qty</th>
-                                    <th>Sell Rate</th>
-                                    <th>Cost Rate</th>
+                                    <th>Total Sell Price</th>
+                                    <th>Cost Rate (per item)</th>
                                     <th>Profit</th>
                                 </tr>
                             </thead>
@@ -495,7 +495,6 @@
                             <label for="end-date">End Date</label>
                             <input type="date" id="end-date">
                         </div>
-                        <!-- MODIFIED: Added Sort By dropdown -->
                         <div>
                             <label for="transaction-sort-order">Sort By</label>
                             <select id="transaction-sort-order">
@@ -788,7 +787,7 @@
                         filterBtn: document.getElementById('filter-btn'),
                         resetFilterBtn: document.getElementById('reset-filter-btn'),
                         exportExcelBtn: document.getElementById('export-excel-btn'),
-                        transactionSortOrder: document.getElementById('transaction-sort-order'), // ADDED
+                        transactionSortOrder: document.getElementById('transaction-sort-order'),
                     },
                     profit: {
                         profitDetailsBody: document.querySelector('#profit-details-table tbody'),
@@ -921,17 +920,17 @@
                 if(startDate) startDate.setHours(0,0,0,0);
                 const endDate = endDateStr ? new Date(endDateStr) : null;
                 if(endDate) endDate.setHours(23,59,59,999);
-                const sortOrder = this.ui.transactions.transactionSortOrder.value; // GET sort order
+                const sortOrder = this.ui.transactions.transactionSortOrder.value;
                 
                 const sortFunction = (a, b) => sortOrder === 'oldest-first' ? a.date - b.date : b.date - a.date;
 
                 const filteredSales = this.state.transactions
                     .filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate))
-                    .sort(sortFunction); // APPLY sort
+                    .sort(sortFunction);
                 
                 const filteredPurchases = this.state.transactions
                     .filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate))
-                    .sort(sortFunction); // APPLY sort
+                    .sort(sortFunction);
 
                 this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
                     const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
@@ -955,17 +954,33 @@
                         <td>₹${t.total.toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
             },
         
+            // MODIFIED: Corrected profit calculation and display logic
             renderProfit() {
-                const allItemsSold = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({...item, date: t.date })));
+                const allItemsSold = this.state.transactions
+                    .filter(t => t.type === 'Sale')
+                    .flatMap(t => t.items.map(item => ({ ...item, date: t.date })));
+                
                 if (!allItemsSold.length) {
                     this.ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`;
                     return;
                 }
+
                 allItemsSold.sort((a,b) => b.date - a.date);
+                
                 const tableRows = allItemsSold.map(item => {
-                    const profit = (item.sellingRate - item.costRate) * item.quantity;
-                    return `<tr><td>${this.formatDateDDMMYYYY(item.date)}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
+                    const totalSellingPrice = item.sellingRate * item.quantity;
+                    const profit = totalSellingPrice - (item.costRate * item.quantity);
+                    
+                    return `<tr>
+                                <td>${this.formatDateDDMMYYYY(item.date)}</td>
+                                <td>${item.particulars}</td>
+                                <td>${item.quantity}</td>
+                                <td>${totalSellingPrice.toFixed(2)}</td>
+                                <td>${item.costRate.toFixed(2)}</td>
+                                <td class="profit-col">₹${profit.toFixed(2)}</td>
+                            </tr>`;
                 }).join('');
+
                 this.ui.profit.profitDetailsBody.innerHTML = tableRows;
             },
             
@@ -1271,7 +1286,6 @@
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
-                // MODIFIED: Add listener for the new sort dropdown
                 this.ui.transactions.transactionSortOrder.addEventListener('change', () => this.renderTransactions());
 
                 this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
@@ -1295,7 +1309,6 @@
                     }
                 });
 
-                // MODIFIED: Logic updated to handle per-item rates directly
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const particulars = e.target.querySelector('#cosmetic-particulars').value.trim();
