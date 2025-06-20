@@ -12,9 +12,6 @@
     <!-- --- Google API & Identity Scripts --- -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    <!-- --- Chart.js Library for Graphs --- -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js" async defer></script>
 
     <!-- Embedded CSS -->
     <style>
@@ -197,7 +194,6 @@
         .styled-table th { background-color: #fafafa; font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
         .styled-table tr:hover { background-color: #FFF8E1; }
         .styled-table td ul { margin: 0; padding-left: 20px; }
-        /* --- MODIFIED: Sales history item styling for return button --- */
         .styled-table td li { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
         .profit-col { font-weight: 500; color: var(--success-green); }
         .credit-label { font-size: 11px; font-weight: bold; color: var(--danger-red); display: block; margin-top: 4px; }
@@ -425,9 +421,10 @@
                         <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
                     </div>
                 </section>
-                 <!-- NEW: Sales & Profit Graph Section -->
+                
+                <!-- MODIFIED: Sales & Profit numerical display -->
                 <section class="card">
-                    <h2>Sales & Profit Over Time</h2>
+                    <h2>Sales & Profit by Date Range</h2>
                     <div class="controls-grid" style="margin-bottom: 20px;">
                         <div>
                             <label for="analytics-start-date">Start Date</label>
@@ -439,10 +436,23 @@
                         </div>
                         <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
                     </div>
-                    <canvas id="salesProfitChart"></canvas>
+                     <div class="analytics-grid" id="filtered-sales-profit-container">
+                        <div class="metric-card">
+                            <h3 id="filtered-sales-heading">Total Sales</h3>
+                            <p id="filtered-sales-total">₹0.00</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3 id="filtered-profit-heading">Total Profit</h3>
+                            <p id="filtered-profit-total">₹0.00</p>
+                        </div>
+                    </div>
                 </section>
+
                 <section class="card">
-                    <h2>Low Stock Items (5 or less)</h2>
+                    <!-- MODIFIED: Added download button -->
+                    <h2>Low Stock Items (5 or less)
+                        <button class="btn btn-success btn-small" id="download-low-stock-btn" style="float: right; margin-top: -5px;">Download List</button>
+                    </h2>
                     <div id="low-stock-items" class="metric-card">
                         <ul><li>No low stock items.</li></ul>
                     </div>
@@ -457,7 +467,7 @@
                         <table class="styled-table" id="profit-details-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
+                                    <th>Date (DD/MM/YYYY)</th>
                                     <th>Particulars</th>
                                     <th>Qty</th>
                                     <th>Sell Rate</th>
@@ -493,13 +503,13 @@
                 </section>
                 <section class="card"><h2>Sales History</h2><div class="table-container">
                     <table class="styled-table" id="sales-history-table">
-                        <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Date (DD/MM/YYYY)</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
                         <tbody><tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr></tbody>
                     </table>
                 </div></section>
                 <section class="card"><h2>Purchase History</h2><div class="table-container">
                     <table class="styled-table" id="purchase-history-table">
-                        <thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead>
+                        <thead><tr><th>Date (DD/MM/YYYY)</th><th>Items</th><th>Total</th></tr></thead>
                         <tbody><tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr></tbody>
                     </table>
                 </div></section>
@@ -517,10 +527,7 @@
                          <p style="color: var(--text-secondary); font-size: 14px; margin-top: 10px;">Manually save all current data to your Google Drive. The app also saves automatically after you make changes.</p>
                     </div>
 
-                    <div style="margin-top: 2.5rem; border-top: 1px solid var(--divider-color); padding-top: 1.5rem;">
-                         <button class="btn btn-danger" id="delete-all-data-btn">Delete All Data</button>
-                         <p style="color: var(--text-secondary); font-size: 14px; margin-top: 10px;">Warning: This will permanently delete all inventory and transaction data from your Google Drive.</p>
-                    </div>
+                    <!-- REMOVED: Risky "Delete All Data" button -->
                 </section>
             </div>
 
@@ -536,7 +543,7 @@
 
     <div id="toast"></div>
 
-    <!-- External Libraries (Excluding those loaded at top) -->
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -632,14 +639,6 @@
                 this.ui.credit.inventoryDateInput.value = this.getTodayDateString();
                 this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                 
-                // Set default dates for analytics chart (last 30 days)
-                const endDate = new Date();
-                const startDate = new Date();
-                startDate.setDate(endDate.getDate() - 30);
-                this.ui.analytics.endDateInput.value = this.getTodayDateString(endDate);
-                this.ui.analytics.startDateInput.value = this.getTodayDateString(startDate);
-
-
                 this.renderAll();
             },
 
@@ -674,7 +673,6 @@
                                if (t.saleType === 'Credit' && t.paidAmount === undefined) {
                                    t.paidAmount = 0;
                                }
-                               // Ensure items is an array
                                if(t.items && !Array.isArray(t.items)) {
                                    t.items = [t.items];
                                }
@@ -757,7 +755,6 @@
                     cosmeticSaleForm: document.getElementById('cosmetic-sale-form'),
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
-                    deleteAllDataBtn: document.getElementById('delete-all-data-btn'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
                     analytics: {
                         totalProfit: document.getElementById('total-profit'),
@@ -768,11 +765,15 @@
                         lowStockItems: document.getElementById('low-stock-items'),
                         lowStockAlertContainer: document.getElementById('low-stock-alert-container'),
                         lowStockCounter: document.getElementById('low-stock-counter'),
-                        // NEW Graph elements
-                        salesProfitChart: document.getElementById('salesProfitChart'),
+                        downloadLowStockBtn: document.getElementById('download-low-stock-btn'), // ADDED
+                        // NEW Numerical display elements
                         startDateInput: document.getElementById('analytics-start-date'),
                         endDateInput: document.getElementById('analytics-end-date'),
                         filterBtn: document.getElementById('analytics-filter-btn'),
+                        filteredSalesTotal: document.getElementById('filtered-sales-total'),
+                        filteredProfitTotal: document.getElementById('filtered-profit-total'),
+                        filteredSalesHeading: document.getElementById('filtered-sales-heading'),
+                        filteredProfitHeading: document.getElementById('filtered-profit-heading'),
                     },
                     transactions: {
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
@@ -801,7 +802,15 @@
             
             getTodayDateString(date = new Date()) { return date.toISOString().slice(0, 10); },
 
-            // --- NEW: Helper to parse item name from datalist value ---
+            // NEW: Date formatting helper
+            formatDateDDMMYYYY(date) {
+                if (!(date instanceof Date) || isNaN(date)) return 'N/A';
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            },
+
             parseItemNameFromDatalist(value) {
                 if (typeof value !== 'string') return '';
                 const match = value.match(/^(.*) \(\d+ left\)$/);
@@ -811,10 +820,10 @@
             renderAll() {
                 this.renderInventory();
                 this.renderAnalytics();
+                this.renderFilteredSalesAndProfit(); // NEW
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
-                this.renderSalesProfitChart(); // Render chart on all data changes
             },
 
             renderInventory() {
@@ -838,7 +847,6 @@
                     }).join('')
                     : `<tr><td colspan="4" style="text-align:center;">No inventory data. Add stock or load an Excel file.</td></tr>`;
                 
-                // --- MODIFIED: Show quantity in datalist ---
                 this.ui.inventoryDatalist.innerHTML = this.state.inventory
                     .map(item => `<option value="${item.particulars} (${item.quantity} left)"></option>`)
                     .join('');
@@ -867,6 +875,7 @@
                     : '<ul><li>No low stock items.</li></ul>';
 
                 const lowStockCount = lowStock.length;
+                this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0; // Disable download button if no items
                 if (lowStockCount > 0) {
                     this.ui.analytics.lowStockCounter.textContent = lowStockCount;
                     this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
@@ -875,10 +884,8 @@
                 }
             },
             
-            // --- NEW: Render Sales and Profit Chart ---
-            renderSalesProfitChart() {
-                if (typeof Chart === 'undefined') { return; } // Don't run if Chart.js isn't loaded yet
-
+            // NEW: Render Sales and Profit Numerical Figures
+            renderFilteredSalesAndProfit() {
                 const startDateStr = this.ui.analytics.startDateInput.value;
                 const endDateStr = this.ui.analytics.endDateInput.value;
                 const startDate = startDateStr ? new Date(startDateStr) : null;
@@ -886,83 +893,23 @@
                 const endDate = endDateStr ? new Date(endDateStr) : null;
                 if(endDate) endDate.setHours(23, 59, 59, 999);
 
+                const isFiltered = startDate || endDate;
+
                 const sales = this.state.transactions.filter(t => 
-                    t.type === 'Sale' && 
+                    t.type === 'Sale' &&
                     (!startDate || t.date >= startDate) && 
                     (!endDate || t.date <= endDate)
                 );
+                
+                const totalSales = sales.reduce((sum, t) => sum + t.total, 0);
+                const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                
+                this.ui.analytics.filteredSalesTotal.textContent = `₹${totalSales.toFixed(2)}`;
+                this.ui.analytics.filteredProfitTotal.textContent = `₹${totalProfit.toFixed(2)}`;
 
-                const aggregatedData = sales.reduce((acc, t) => {
-                    const dateString = t.date.toISOString().slice(0, 10);
-                    if (!acc[dateString]) {
-                        acc[dateString] = { sales: 0, profit: 0 };
-                    }
-                    const saleTotal = t.items.reduce((sum, i) => sum + i.quantity * i.sellingRate, 0);
-                    const profitTotal = t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-                    acc[dateString].sales += saleTotal;
-                    acc[dateString].profit += profitTotal;
-                    return acc;
-                }, {});
-
-                const sortedDates = Object.keys(aggregatedData).sort();
-
-                const chartData = {
-                    labels: sortedDates,
-                    datasets: [
-                        {
-                            label: 'Total Sales',
-                            data: sortedDates.map(date => aggregatedData[date].sales),
-                            borderColor: 'rgba(255, 160, 0, 1)',
-                            backgroundColor: 'rgba(255, 160, 0, 0.2)',
-                            fill: true,
-                            tension: 0.1,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Total Profit',
-                            data: sortedDates.map(date => aggregatedData[date].profit),
-                            borderColor: 'rgba(76, 175, 80, 1)',
-                            backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                            fill: true,
-                            tension: 0.1,
-                            yAxisID: 'y'
-                        }
-                    ]
-                };
-
-                const chartCanvas = this.ui.analytics.salesProfitChart;
-                const existingChart = Chart.getChart(chartCanvas);
-                if (existingChart) {
-                    existingChart.destroy();
-                }
-
-                new Chart(chartCanvas, {
-                    type: 'line',
-                    data: chartData,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: { unit: 'day' },
-                                title: { display: true, text: 'Date' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: 'Amount (₹)' }
-                            }
-                        },
-                        plugins: {
-                            tooltip: { mode: 'index', intersect: false },
-                            legend: { position: 'top' },
-                        },
-                        interaction: {
-                           mode: 'index',
-                           intersect: false,
-                        }
-                    }
-                });
+                // Update headings to reflect the filter status
+                this.ui.analytics.filteredSalesHeading.textContent = isFiltered ? "Filtered Sales" : "Total Sales";
+                this.ui.analytics.filteredProfitHeading.textContent = isFiltered ? "Filtered Profit" : "Total Profit";
             },
 
             renderTransactions() {
@@ -978,15 +925,13 @@
 
                 this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
                     const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
-                    
-                    // --- MODIFIED: Add return button to each item ---
                     const itemsHtml = t.items.map(i => {
                         const returnButton = `<button class="btn btn-danger btn-small return-item-btn" data-transaction-id="${t.id}" data-item-particulars="${i.particulars}">Return</button>`;
                         return `<li><span>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</span> ${returnButton}</li>`;
                     }).join('');
 
                     return `
-                    <tr><td>${t.date.toLocaleDateString()}</td>
+                    <tr><td>${this.formatDateDDMMYYYY(t.date)}</td>
                         <td><ul>${itemsHtml}</ul>${creditLabel}</td>
                         <td>₹${t.total.toFixed(2)}</td>
                         <td><div class="sales-history-actions">
@@ -995,7 +940,7 @@
                         </div></td></tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
 
                 this.ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `
-                    <tr><td>${t.date.toLocaleDateString()}</td>
+                    <tr><td>${this.formatDateDDMMYYYY(t.date)}</td>
                         <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td>
                         <td>₹${t.total.toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
             },
@@ -1009,7 +954,7 @@
                 allItemsSold.sort((a,b) => b.date - a.date);
                 const tableRows = allItemsSold.map(item => {
                     const profit = (item.sellingRate - item.costRate) * item.quantity;
-                    return `<tr><td>${item.date.toLocaleDateString()}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
+                    return `<tr><td>${this.formatDateDDMMYYYY(item.date)}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${item.sellingRate.toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${profit.toFixed(2)}</td></tr>`;
                 }).join('');
                 this.ui.profit.profitDetailsBody.innerHTML = tableRows;
             },
@@ -1044,7 +989,7 @@
                         if (balanceOnTx <= 0.01) return '';
                         const itemsList = tx.items.map(i => `${i.quantity}x ${i.particulars.replace('(Cosmetic)', '')}`).join(', ');
                         return `<tr>
-                                <td>${tx.date.toLocaleDateString()}</td>
+                                <td>${this.formatDateDDMMYYYY(tx.date)}</td>
                                 <td>${itemsList}</td>
                                 <td>₹${tx.total.toFixed(2)}</td>
                                 <td>₹${balanceOnTx.toFixed(2)}</td>
@@ -1095,7 +1040,6 @@
                 reader.readAsArrayBuffer(file);
             },
             
-            // --- MODIFIED: Delete whole sale ---
             deleteSale(transactionId) {
                 if (!confirm("Are you sure you want to delete this ENTIRE sale record? All items from this sale will be returned to inventory.")) {
                     return;
@@ -1124,7 +1068,6 @@
                 this.triggerAutoSave();
             },
 
-            // --- NEW: Handle single item sales return ---
             handleSalesReturn(transactionId, itemParticulars) {
                 if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale? The item will be added back to inventory.`)) {
                     return;
@@ -1138,29 +1081,22 @@
 
                 const [returnedItem] = transaction.items.splice(itemIndex, 1);
 
-                // Add stock back to inventory (if not a cosmetic item)
                 if (!returnedItem.particulars.startsWith('(Cosmetic)')) {
                     const inventoryItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars);
                     if (inventoryItem) {
                         inventoryItem.quantity += returnedItem.quantity;
                     } else {
-                        // If item was deleted from inventory, add it back
                         this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate });
                     }
                 }
 
-                // Recalculate transaction total
                 const returnedValue = returnedItem.quantity * returnedItem.sellingRate;
                 transaction.total -= returnedValue;
 
-                // Adjust paid amount if necessary
                 if (transaction.paidAmount > transaction.total) {
-                    // This implies a refund is due. We'll cap the paid amount to the new total.
-                    // The actual cash refund is a manual process for the user.
                     transaction.paidAmount = transaction.total;
                 }
                 
-                // If no items are left in the transaction, delete the whole transaction
                 if (transaction.items.length === 0) {
                     const transactionIndexGlobal = this.state.transactions.findIndex(t => t.id === transactionId);
                     this.state.transactions.splice(transactionIndexGlobal, 1);
@@ -1173,7 +1109,6 @@
                 this.triggerAutoSave();
             },
 
-
             processSale(isInvoice, isCredit = false, creditForm) {
                 const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
                 const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
@@ -1185,7 +1120,7 @@
                 const saleItems = [], errors = []; let isValid = true;
                 container.querySelectorAll('.item-entry').forEach(entry => {
                     const rawParticulars = entry.querySelector('.particulars').value;
-                    const p = this.parseItemNameFromDatalist(rawParticulars); // Use helper function
+                    const p = this.parseItemNameFromDatalist(rawParticulars);
                     const q = parseInt(entry.querySelector('.quantity').value, 10);
                     const r = parseFloat(entry.querySelector('.rate').value);
 
@@ -1238,9 +1173,9 @@
         
             exportTransactionsToExcel() {
                 if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; }
-                const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Amount Paid": t.paidAmount, "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
-                const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date": t.date.toLocaleDateString(), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
-                const profitData = salesData.map(item => ({ "Date": item["Date"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
+                const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Amount Paid": t.paidAmount, "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
+                const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
+                const profitData = salesData.map(item => ({ "Date (DD/MM/YYYY)": item["Date (DD/MM/YYYY)"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
                 const wsSales = XLSX.utils.json_to_sheet(salesData); const wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wsProfit = XLSX.utils.json_to_sheet(profitData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, wsSales, "Sales History"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History"); XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
@@ -1255,7 +1190,7 @@
                 y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" });
                 y += 8; doc.setFontSize(10); 
                 if (transaction.saleType === 'Credit') { doc.text(`Credit To: ${transaction.partyName}`, 20, y); }
-                doc.text(`Date: ${transaction.date.toLocaleDateString()}`, 190, y, { align: "right" });
+                doc.text(`Date: ${this.formatDateDDMMYYYY(transaction.date)}`, 190, y, { align: "right" });
                 y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold");
                 doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" });
                 y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8;
@@ -1289,13 +1224,29 @@
 
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
 
-                this.ui.deleteAllDataBtn.addEventListener('click', () => {
-                    if(confirm("ARE YOU ABSOLUTELY SURE?\n\nThis will delete all your data permanently. This action cannot be undone.")) {
-                        this.state = { inventory: [], transactions: [] };
-                        this.renderAll();
-                        this.triggerAutoSave();
-                        this.showToast("All data has been deleted.", "success");
+                // Analytics filter button
+                this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
+
+                // NEW: Download Low Stock Excel Listener
+                this.ui.analytics.downloadLowStockBtn.addEventListener('click', () => {
+                    const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
+                    
+                    if (lowStockItems.length === 0) {
+                        this.showToast("There are no low stock items to download.", "error");
+                        return;
                     }
+
+                    const dataForExcel = lowStockItems.map(item => ({
+                        'Particulars': item.particulars,
+                        'Quantity Remaining': item.quantity,
+                        'Last Cost Rate': item.rate.toFixed(2)
+                    }));
+
+                    const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Low Stock Inventory");
+                    XLSX.writeFile(wb, "Low_Stock_Inventory.xlsx");
+                    this.showToast("Low stock list downloaded!", "success");
                 });
 
                 this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => {
@@ -1322,9 +1273,6 @@
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
-
-                // Analytics filter button
-                this.ui.analytics.filterBtn.addEventListener('click', () => this.renderSalesProfitChart());
 
                 this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
                     const creditorHeader = e.target.closest('.creditor-header');
@@ -1390,7 +1338,7 @@
                     this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
                 }));
 
-                document.body.addEventListener('input', e => { // Changed to 'input' for better responsiveness
+                document.body.addEventListener('input', e => {
                     if (e.target.classList.contains('particulars')) {
                         const particularsValue = this.parseItemNameFromDatalist(e.target.value);
                         const item = this.state.inventory.find(i => i.particulars === particularsValue);
@@ -1409,7 +1357,7 @@
                     } else if (e.target.classList.contains('delete-sale-btn')) {
                         const transactionId = parseInt(e.target.dataset.id, 10);
                         this.deleteSale(transactionId);
-                    } else if (e.target.classList.contains('return-item-btn')) { // NEW event for item return
+                    } else if (e.target.classList.contains('return-item-btn')) {
                         const transactionId = parseInt(e.target.dataset.transactionId, 10);
                         const itemParticulars = e.target.dataset.itemParticulars;
                         this.handleSalesReturn(transactionId, itemParticulars);
