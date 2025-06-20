@@ -149,12 +149,12 @@
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
 
 
-        input[type="text"], input[type="number"], input[type="file"], input[type="date"] {
+        input[type="text"], input[type="number"], input[type="file"], input[type="date"], select {
             width: 100%; padding: 12px; border: 1px solid var(--divider-color); border-radius: 5px;
             box-sizing: border-box; font-size: 16px; font-family: 'Roboto', sans-serif;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
             border-color: var(--primary-dark); box-shadow: 0 0 0 2px rgba(255, 160, 0, 0.2); outline: none;
         }
         input[type="file"] { background-color: #fafafa; cursor: pointer; }
@@ -277,7 +277,7 @@
             .analytics-grid, .sales-actions, .form-row { grid-template-columns: 1fr; }
             .tab-button { padding: 15px 10px; font-size: 14px; }
             .form-grid { grid-template-columns: 1fr; }
-            .controls-grid { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -347,12 +347,13 @@
                 <div class="operations-layout">
                     <section class="card">
                         <h2>Cosmetic & Non-Inventory Sale</h2>
+                        <!-- MODIFIED: Changed form inputs for clarity in profit calculation -->
                         <form id="cosmetic-sale-form">
                             <div class="cosmetic-form-grid">
                                 <input type="text" id="cosmetic-particulars" placeholder="Item Particulars" required>
                                 <input type="number" id="cosmetic-quantity" placeholder="Quantity" min="1" required>
-                                <input type="number" id="cosmetic-cost" placeholder="Total Cost Price" min="0" step="0.01" required>
-                                <input type="number" id="cosmetic-selling" placeholder="Total Selling Price" min="0" step="0.01" required>
+                                <input type="number" id="cosmetic-cost-rate" placeholder="Cost Rate (per item)" min="0" step="0.01" required>
+                                <input type="number" id="cosmetic-sell-rate" placeholder="Selling Rate (per item)" min="0" step="0.01" required>
                             </div>
                             <button type="submit" class="btn btn-primary">Record Profit</button>
                         </form>
@@ -422,7 +423,6 @@
                     </div>
                 </section>
                 
-                <!-- MODIFIED: Sales & Profit numerical display -->
                 <section class="card">
                     <h2>Sales & Profit by Date Range</h2>
                     <div class="controls-grid" style="margin-bottom: 20px;">
@@ -449,7 +449,6 @@
                 </section>
 
                 <section class="card">
-                    <!-- MODIFIED: Added download button -->
                     <h2>Low Stock Items (5 or less)
                         <button class="btn btn-success btn-small" id="download-low-stock-btn" style="float: right; margin-top: -5px;">Download List</button>
                     </h2>
@@ -496,6 +495,14 @@
                             <label for="end-date">End Date</label>
                             <input type="date" id="end-date">
                         </div>
+                        <!-- MODIFIED: Added Sort By dropdown -->
+                        <div>
+                            <label for="transaction-sort-order">Sort By</label>
+                            <select id="transaction-sort-order">
+                                <option value="newest-first">Newest First</option>
+                                <option value="oldest-first">Oldest First</option>
+                            </select>
+                        </div>
                         <button class="btn btn-primary" id="filter-btn">Filter</button>
                         <button class="btn btn-secondary" id="reset-filter-btn">Reset</button>
                         <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
@@ -526,8 +533,6 @@
                          <button class="btn btn-success" id="manual-save-btn">Sync to Google Drive</button>
                          <p style="color: var(--text-secondary); font-size: 14px; margin-top: 10px;">Manually save all current data to your Google Drive. The app also saves automatically after you make changes.</p>
                     </div>
-
-                    <!-- REMOVED: Risky "Delete All Data" button -->
                 </section>
             </div>
 
@@ -765,8 +770,7 @@
                         lowStockItems: document.getElementById('low-stock-items'),
                         lowStockAlertContainer: document.getElementById('low-stock-alert-container'),
                         lowStockCounter: document.getElementById('low-stock-counter'),
-                        downloadLowStockBtn: document.getElementById('download-low-stock-btn'), // ADDED
-                        // NEW Numerical display elements
+                        downloadLowStockBtn: document.getElementById('download-low-stock-btn'),
                         startDateInput: document.getElementById('analytics-start-date'),
                         endDateInput: document.getElementById('analytics-end-date'),
                         filterBtn: document.getElementById('analytics-filter-btn'),
@@ -784,6 +788,7 @@
                         filterBtn: document.getElementById('filter-btn'),
                         resetFilterBtn: document.getElementById('reset-filter-btn'),
                         exportExcelBtn: document.getElementById('export-excel-btn'),
+                        transactionSortOrder: document.getElementById('transaction-sort-order'), // ADDED
                     },
                     profit: {
                         profitDetailsBody: document.querySelector('#profit-details-table tbody'),
@@ -802,11 +807,10 @@
             
             getTodayDateString(date = new Date()) { return date.toISOString().slice(0, 10); },
 
-            // NEW: Date formatting helper
             formatDateDDMMYYYY(date) {
                 if (!(date instanceof Date) || isNaN(date)) return 'N/A';
                 const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();
                 return `${day}/${month}/${year}`;
             },
@@ -820,7 +824,7 @@
             renderAll() {
                 this.renderInventory();
                 this.renderAnalytics();
-                this.renderFilteredSalesAndProfit(); // NEW
+                this.renderFilteredSalesAndProfit();
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
@@ -875,7 +879,7 @@
                     : '<ul><li>No low stock items.</li></ul>';
 
                 const lowStockCount = lowStock.length;
-                this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0; // Disable download button if no items
+                this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0;
                 if (lowStockCount > 0) {
                     this.ui.analytics.lowStockCounter.textContent = lowStockCount;
                     this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
@@ -884,7 +888,6 @@
                 }
             },
             
-            // NEW: Render Sales and Profit Numerical Figures
             renderFilteredSalesAndProfit() {
                 const startDateStr = this.ui.analytics.startDateInput.value;
                 const endDateStr = this.ui.analytics.endDateInput.value;
@@ -907,9 +910,8 @@
                 this.ui.analytics.filteredSalesTotal.textContent = `₹${totalSales.toFixed(2)}`;
                 this.ui.analytics.filteredProfitTotal.textContent = `₹${totalProfit.toFixed(2)}`;
 
-                // Update headings to reflect the filter status
-                this.ui.analytics.filteredSalesHeading.textContent = isFiltered ? "Filtered Sales" : "Total Sales";
-                this.ui.analytics.filteredProfitHeading.textContent = isFiltered ? "Filtered Profit" : "Total Profit";
+                this.ui.analytics.filteredSalesHeading.textContent = isFiltered ? "Filtered Sales" : "All-Time Sales";
+                this.ui.analytics.filteredProfitHeading.textContent = isFiltered ? "Filtered Profit" : "All-Time Profit";
             },
 
             renderTransactions() {
@@ -919,9 +921,17 @@
                 if(startDate) startDate.setHours(0,0,0,0);
                 const endDate = endDateStr ? new Date(endDateStr) : null;
                 if(endDate) endDate.setHours(23,59,59,999);
+                const sortOrder = this.ui.transactions.transactionSortOrder.value; // GET sort order
                 
-                const filteredSales = this.state.transactions.filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
-                const filteredPurchases = this.state.transactions.filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort((a,b) => b.id - a.id);
+                const sortFunction = (a, b) => sortOrder === 'oldest-first' ? a.date - b.date : b.date - a.date;
+
+                const filteredSales = this.state.transactions
+                    .filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate))
+                    .sort(sortFunction); // APPLY sort
+                
+                const filteredPurchases = this.state.transactions
+                    .filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate))
+                    .sort(sortFunction); // APPLY sort
 
                 this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
                     const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
@@ -1224,24 +1234,12 @@
 
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
 
-                // Analytics filter button
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
 
-                // NEW: Download Low Stock Excel Listener
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
-                    
-                    if (lowStockItems.length === 0) {
-                        this.showToast("There are no low stock items to download.", "error");
-                        return;
-                    }
-
-                    const dataForExcel = lowStockItems.map(item => ({
-                        'Particulars': item.particulars,
-                        'Quantity Remaining': item.quantity,
-                        'Last Cost Rate': item.rate.toFixed(2)
-                    }));
-
+                    if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
+                    const dataForExcel = lowStockItems.map(item => ({ 'Particulars': item.particulars, 'Quantity Remaining': item.quantity, 'Last Cost Rate': item.rate.toFixed(2) }));
                     const ws = XLSX.utils.json_to_sheet(dataForExcel);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Low Stock Inventory");
@@ -1273,6 +1271,8 @@
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
+                // MODIFIED: Add listener for the new sort dropdown
+                this.ui.transactions.transactionSortOrder.addEventListener('change', () => this.renderTransactions());
 
                 this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
                     const creditorHeader = e.target.closest('.creditor-header');
@@ -1295,17 +1295,25 @@
                     }
                 });
 
+                // MODIFIED: Logic updated to handle per-item rates directly
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    const particulars = e.target.querySelector('#cosmetic-particulars').value;
-                    const quantity = parseFloat(e.target.querySelector('#cosmetic-quantity').value);
-                    const totalCost = parseFloat(e.target.querySelector('#cosmetic-cost').value);
-                    const totalSelling = parseFloat(e.target.querySelector('#cosmetic-selling').value);
-                    if (!particulars || isNaN(quantity) || isNaN(totalCost) || isNaN(totalSelling) || quantity <= 0) { this.showToast("Please fill all fields correctly. Quantity must be greater than 0.", "error"); return; }
+                    const particulars = e.target.querySelector('#cosmetic-particulars').value.trim();
+                    const quantity = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10);
+                    const costRate = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value);
+                    const sellRate = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value);
+
+                    if (!particulars || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0) {
+                        this.showToast("Please fill all fields correctly. Quantity must be > 0.", "error");
+                        return;
+                    }
                     
-                    const cosmeticItem = { particulars: `(Cosmetic) ${particulars}`, quantity: quantity, sellingRate: totalSelling / quantity, costRate: totalCost / quantity };
-                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [cosmeticItem], total: totalSelling });
-                    this.renderAll(); this.triggerAutoSave();
+                    const cosmeticItem = { particulars: `(Cosmetic) ${particulars}`, quantity, sellingRate: sellRate, costRate };
+                    const totalSale = sellRate * quantity;
+
+                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [cosmeticItem], total: totalSale });
+                    this.renderAll();
+                    this.triggerAutoSave();
                     this.ui.cosmeticSaleForm.reset();
                     this.showToast(`Profit recorded successfully!`, "success");
                 });
