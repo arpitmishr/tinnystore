@@ -10,8 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    <!-- ADDED Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -116,7 +114,7 @@
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 30px; }
-        .action-forms-section { margin-top: 30px; } 
+        .action-forms-section { margin-top: 30px; } /* Space between dashboard and forms */
 
 
         .card {
@@ -230,52 +228,141 @@
         .payment-form input { max-width: 180px; }
         .payment-form label { font-size: 0.9rem; color: var(--text-on-dark-secondary); white-space: nowrap; }
 
-        .dashboard-overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .overview-card { background-color: var(--surface-dark); color: var(--text-on-dark-primary); padding: 20px 25px; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-medium); position: relative; }
-        .overview-card h4 { margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 500; color: var(--text-on-dark-secondary); text-transform: uppercase; }
-        .overview-value { font-size: 2.2rem; font-weight: 700; color: var(--accent-teal); margin: 0 0 10px 0; line-height: 1.1; }
-        #overview-low-stock .overview-value, #overview-inventory-value .overview-value { color: var(--accent-yellow); }
-        .overview-trend { font-size: 0.85rem; font-weight: 500; padding: 3px 8px; border-radius: var(--border-radius-sm); position: absolute; top: 20px; right: 20px; }
+        /* Dashboard Specific Styles ("Operations" Tab) */
+        .dashboard-overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .overview-card {
+            background-color: var(--surface-dark);
+            color: var(--text-on-dark-primary);
+            padding: 20px 25px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
+            position: relative;
+        }
+        .overview-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-on-dark-secondary);
+            text-transform: uppercase;
+        }
+        .overview-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-teal);
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+        }
+        #overview-low-stock .overview-value, #overview-inventory-value .overview-value {
+            color: var(--accent-yellow);
+        }
+        .overview-trend {
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: var(--border-radius-sm);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
         .overview-trend.positive { background-color: rgba(56, 161, 105, 0.2); color: var(--success-green); }
         .overview-trend.warning { background-color: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); }
         .overview-trend.neutral { background-color: rgba(113, 128, 150, 0.2); color: var(--text-on-dark-secondary); }
 
-        .dashboard-main-area { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px; }
-        .dashboard-chart-container.card { min-height: 350px; display: flex; flex-direction: column; } /* Adjusted min-height */
-        .dashboard-chart-container.card h2 { font-size: 1.1rem; }
-        /* Wrapper for chart canvas to control its aspect ratio / height */
-        .chart-canvas-wrapper { 
-            position: relative; 
-            height: 280px; /* Or use padding-bottom for aspect ratio */
-            width:100%; 
-            margin-top:10px; 
-            flex-grow:1; 
+        .dashboard-main-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Chart takes more space */
+            gap: 30px;
+            margin-bottom: 30px;
         }
-        .quick-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 15px; border-top: 1px solid var(--border-dark-primary); font-size: 0.9rem; }
+        .dashboard-chart-container.card { /* Inherits .card */
+             min-height: 300px; /* Example height */
+             display: flex; flex-direction: column; justify-content: space-between;
+        }
+         .dashboard-chart-container.card h2 { font-size: 1.1rem; }
+        .quick-stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            padding-top: 15px; border-top: 1px solid var(--border-dark-primary);
+            font-size: 0.9rem;
+        }
         .quick-stats-grid span { color: var(--text-on-dark-secondary); }
         .quick-stats-grid strong { color: var(--accent-teal); }
 
-        .dashboard-low-stock-list.card { padding-bottom: 15px; }
-        .dashboard-low-stock-list .list-header { display: flex; justify-content: space-between; align-items: center; }
-        .dashboard-low-stock-list .list-header h2 { border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.1rem; }
-        #dashboard-low-stock-items-ul { list-style-type: none; padding: 0; margin-top: 15px; max-height: 350px; overflow-y: auto; }
-        #dashboard-low-stock-items-ul li { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px solid var(--border-dark-primary); transition: background-color 0.2s; }
+
+        .dashboard-low-stock-list.card { /* Inherits .card */
+            padding-bottom: 15px;
+        }
+        .dashboard-low-stock-list .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* h2 inherits card h2 style */
+        }
+        .dashboard-low-stock-list .list-header h2 {
+            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.1rem;
+        }
+        #dashboard-low-stock-items-ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 15px;
+            max-height: 350px; /* Or adjust as needed */
+            overflow-y: auto;
+        }
+        #dashboard-low-stock-items-ul li {
+            display: flex;
+            align-items: center;
+            padding: 12px 5px; /* Reduced horizontal padding inside li */
+            border-bottom: 1px solid var(--border-dark-primary);
+            transition: background-color 0.2s;
+        }
         #dashboard-low-stock-items-ul li:last-child { border-bottom: none; }
         #dashboard-low-stock-items-ul li:hover { background-color: var(--surface-dark-alt); }
-        .item-icon-placeholder { width: 40px; height: 40px; background-color: var(--accent-pink); border-radius: var(--border-radius-sm); margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--surface-dark); font-weight: bold; }
+        .item-icon-placeholder {
+            width: 40px; height: 40px;
+            background-color: var(--accent-pink); /* Placeholder color */
+            border-radius: var(--border-radius-sm);
+            margin-right: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: var(--surface-dark); font-weight: bold;
+        }
+        /* You can add SVG icons or letters here if needed */
         .item-icon-placeholder::before { content: "🛍️"; }
-        .item-details { flex-grow: 1; }
-        .item-details .item-name { display: block; font-weight: 500; color: var(--text-on-dark-primary); font-size: 0.95rem; }
-        .item-details .item-sub-detail { display: block; font-size: 0.8rem; color: var(--text-on-dark-secondary); }
-        .item-details .item-sub-detail .low-stock-qty { color: var(--accent-yellow); font-weight: bold; }
-        .item-stock-level { font-size: 0.9rem; font-weight: 600; color: var(--accent-yellow); margin-left: 10px; }
 
-        @media (max-width: 992px) { .dashboard-main-area { grid-template-columns: 1fr; } }
+        .item-details { flex-grow: 1; }
+        .item-details .item-name {
+            display: block;
+            font-weight: 500;
+            color: var(--text-on-dark-primary);
+            font-size: 0.95rem;
+        }
+        .item-details .item-sub-detail {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-on-dark-secondary);
+        }
+        .item-details .item-sub-detail .low-stock-qty { color: var(--accent-yellow); font-weight: bold; }
+        .item-stock-level {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            margin-left: 10px;
+        }
+
+
+        @media (max-width: 992px) { /* Tablet and smaller */
+            .dashboard-main-area {
+                grid-template-columns: 1fr; /* Stack chart and list */
+            }
+        }
         @media (max-width: 900px) {
             .main-columns, .card .cosmetic-form-grid, .card .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
             header { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
             .low-stock-alert { margin: 10px auto; }
-            .dashboard-overview-grid { grid-template-columns: 1fr; }
+            .dashboard-overview-grid { grid-template-columns: 1fr; } /* Stack overview cards on smaller screens too */
         }
         @media (max-width: 800px) {
             #app-container { padding: 15px; }
@@ -288,14 +375,13 @@
             header .header-title-group h1 { font-size: 1.4rem; }
             .card h2 { font-size: 1.15rem; }
              .overview-value { font-size: 1.8rem; }
-             .dashboard-chart-container.card { min-height: 280px; }
-             .chart-canvas-wrapper { height: 220px; }
         }
+
     </style>
 </head>
 <body>
     <div id="login-screen">
-        <!-- Login screen HTML ... -->
+        <!-- Login screen HTML remains the same -->
         <div class="login-box">
             <div class="store-logo"><span>T</span>inny Fashion</div>
             <h1>Welcome Back!</h1>
@@ -310,8 +396,8 @@
     </div>
 
     <div id="app-container">
+        <!-- Header HTML remains the same -->
         <header>
-            <!-- Header HTML ... -->
             <div id="low-stock-alert-container" class="low-stock-alert">
                 Low Stock: <span id="low-stock-counter">0</span>
             </div>
@@ -326,8 +412,8 @@
             </div>
         </header>
 
+        <!-- Tab Navigation HTML remains the same -->
         <nav class="tab-nav">
-            <!-- Tab Navigation HTML ... -->
             <button class="tab-button active" data-tab="operations">Operations</button>
             <button class="tab-button" data-tab="credit">Credit</button>
             <button class="tab-button" data-tab="analytics">Analytics</button>
@@ -337,12 +423,14 @@
         </nav>
 
         <main>
+            <!-- Operations Tab - REDESIGNED -->
             <div id="operations" class="tab-content active">
+                <!-- Section 1: Dashboard Overview -->
                 <section class="dashboard-overview-grid">
                     <div class="overview-card" id="overview-current-stock">
                         <h4>Current Stock</h4>
                         <p class="overview-value" id="dashboard-total-units">0</p>
-                        <span class="overview-trend positive">+0.0%</span>
+                        <span class="overview-trend positive">+0.0%</span> <!-- Placeholder, update with real data if available -->
                     </div>
                     <div class="overview-card" id="overview-low-stock">
                         <h4>Low in Stock</h4>
@@ -358,11 +446,10 @@
 
                 <section class="dashboard-main-area">
                     <div class="dashboard-chart-container card">
-                        <h2>Sales Trend (Last 7 Days)</h2>
-                        <!-- MODIFIED for chart canvas -->
-                        <div class="chart-canvas-wrapper">
-                            <canvas id="salesTrendChart"></canvas>
-                        </div>
+                        <h2>Stock Levels & Sales Trend</h2>
+                        <p style="text-align:center; padding: 40px 0; color: var(--text-on-dark-secondary); flex-grow: 1;">
+                            [A chart showing stock levels or sales trends would appear here]
+                        </p>
                         <div class="quick-stats-grid">
                             <div><span>Total Revenue (All Time):</span> <strong id="dashboard-total-revenue">₹0.00</strong></div>
                             <div><span>Total Profit (All Time):</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
@@ -375,13 +462,14 @@
                             <button class="btn btn-primary btn-small" id="dashboard-download-low-stock-btn">Download</button>
                         </div>
                         <ul id="dashboard-low-stock-items-ul">
+                            <!-- JS will populate this -->
                             <li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>
                         </ul>
                     </div>
                 </section>
 
+                <!-- Section 2: Core Action Forms (Existing forms, restyled to fit the theme) -->
                 <div class="main-columns action-forms-section">
-                    <!-- Existing forms HTML ... -->
                     <section class="card">
                         <h2>Make a Sale (From Inventory)</h2>
                         <form id="sales-form">
@@ -419,13 +507,181 @@
                 </div>
             </div>
 
-            <!-- Other tabs (Credit, Analytics, Profit, Transactions, Settings) HTML remains unchanged -->
-            <div id="credit" class="tab-content"> /* ... */ </div>
-            <div id="analytics" class="tab-content"> /* ... */ </div>
-            <div id="profit" class="tab-content"> /* ... */ </div>
-            <div id="transactions" class="tab-content"> /* ... */ </div>
-            <div id="settings" class="tab-content"> /* ... */ </div>
-            
+
+            <!-- Credit Tab HTML remains the same -->
+            <div id="credit" class="tab-content">
+                <div class="credit-layout">
+                    <section class="card">
+                        <h2>Credit Sale (From Inventory)</h2>
+                        <form id="credit-inventory-sale-form">
+                            <div class="form-row">
+                                <div>
+                                    <label for="credit-inventory-party-name">Party Name</label>
+                                    <input type="text" id="credit-inventory-party-name" placeholder="Enter party's name" required>
+                                </div>
+                                <div>
+                                    <label for="credit-inventory-date">Transaction Date</label>
+                                    <input type="date" id="credit-inventory-date" required>
+                                </div>
+                            </div>
+                            <div id="credit-inventory-items-container"></div>
+                            <button type="button" id="add-credit-inventory-item-btn" class="btn">+ Add More Items</button>
+                            <button type="submit" class="btn btn-primary">Record Credit Sale</button>
+                        </form>
+                    </section>
+
+                    <section class="card">
+                        <h2>Cosmetics Sales on Credit</h2>
+                        <p>Record credit sales for items not tracked in inventory, like cosmetics.</p>
+                        <form id="credit-cosmetic-sale-form">
+                            <div class="cosmetic-credit-form-grid">
+                            <div><label>Party Name</label><input type="text" id="credit-cosmetic-party-name" placeholder="Party's Name" required></div>
+                            <div><label>Date</label><input type="date" id="credit-cosmetic-date" required></div>
+                            <div><label>Item Name</label><input type="text" id="credit-cosmetic-item-name" placeholder="e.g., Lipstick" required></div>
+                            <div><label>Quantity</label><input type="number" id="credit-cosmetic-qty" placeholder="Qty" min="1" required></div>
+                            <div><label>Cost Rate</label><input type="number" id="credit-cosmetic-cost-rate" placeholder="Cost per item" min="0" step="0.01" required></div>
+                            <div><label>Sell Rate</label><input type="number" id="credit-cosmetic-sell-rate" placeholder="Sell per item" min="0" step="0.01" required></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Record Cosmetic Credit Sale</button>
+                        </form>
+                    </section>
+                    
+                    <section class="card" id="creditor-list-section">
+                        <h2>Creditor List</h2>
+                        <p>List of parties with outstanding credit balances. Click on a name to see details and record payments.</p>
+                        <div id="creditor-list-container">
+                            <!-- Creditors will be dynamically inserted here by JavaScript -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Analytics Tab HTML remains the same -->
+            <div id="analytics" class="tab-content">
+                <section class="card">
+                    <h2>Shop Performance At a Glance</h2>
+                    <div class="analytics-grid">
+                        <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
+                        <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue">₹0.00</p></div>
+                        <div class="metric-card"><h3>Average Margin</h3><p id="avg-margin">0%</p></div>
+                        <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
+                        <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
+                    </div>
+                </section>
+                
+                <section class="card">
+                    <h2>Sales & Profit by Date Range</h2>
+                    <div class="controls-grid" style="margin-bottom: 20px;">
+                        <div>
+                            <label for="analytics-start-date">Start Date</label>
+                            <input type="date" id="analytics-start-date">
+                        </div>
+                        <div>
+                            <label for="analytics-end-date">End Date</label>
+                            <input type="date" id="analytics-end-date">
+                        </div>
+                        <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
+                    </div>
+                     <div class="analytics-grid" id="filtered-sales-profit-container">
+                        <div class="metric-card">
+                            <h3 id="filtered-sales-heading">Total Sales</h3>
+                            <p id="filtered-sales-total">₹0.00</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3 id="filtered-profit-heading">Total Profit</h3>
+                            <p id="filtered-profit-total">₹0.00</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Low Stock Items (5 or less)
+                        <button class="btn btn-success btn-small" id="download-low-stock-btn" style="float: right; margin-top: -5px;">Download List</button>
+                    </h2>
+                    <div id="low-stock-items" class="metric-card">
+                        <ul><li>No low stock items.</li></ul>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Profit Tab HTML remains the same -->
+            <div id="profit" class="tab-content">
+                <section class="card">
+                    <h2>Item-wise Profit Details</h2>
+                    <div class="table-container">
+                        <table class="styled-table" id="profit-details-table">
+                            <thead>
+                                <tr>
+                                    <th>Date (DD/MM/YYYY)</th>
+                                    <th>Particulars</th>
+                                    <th>Qty</th>
+                                    <th>Total Sell Price</th>
+                                    <th>Cost Rate (per item)</th>
+                                    <th>Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Transactions Tab HTML remains the same -->
+            <div id="transactions" class="tab-content">
+                <section class="card">
+                    <h2>Controls</h2>
+                    <div class="controls-grid">
+                        <div>
+                            <label for="start-date">Start Date</label>
+                            <input type="date" id="start-date">
+                        </div>
+                        <div>
+                            <label for="end-date">End Date</label>
+                            <input type="date" id="end-date">
+                        </div>
+                        <div>
+                            <label for="transaction-sort-order">Sort By</label>
+                            <select id="transaction-sort-order">
+                                <option value="newest-first">Newest First</option>
+                                <option value="oldest-first">Oldest First</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" id="filter-btn">Filter</button>
+                        <button class="btn btn-secondary" id="reset-filter-btn">Reset</button>
+                        <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
+                    </div>
+                </section>
+                <section class="card"><h2>Sales History</h2><div class="table-container">
+                    <table class="styled-table" id="sales-history-table">
+                        <thead><tr><th>Date (DD/MM/YYYY)</th><th>Items</th><th>Total</th><th>Action</th></tr></thead>
+                        <tbody><tr><td colspan="4" style="text-align:center;">No sales recorded yet.</td></tr></tbody>
+                    </table>
+                </div></section>
+                <section class="card"><h2>Purchase History</h2><div class="table-container">
+                    <table class="styled-table" id="purchase-history-table">
+                        <thead><tr><th>Date (DD/MM/YYYY)</th><th>Items</th><th>Total</th></tr></thead>
+                        <tbody><tr><td colspan="3" style="text-align:center;">No purchases recorded yet.</td></tr></tbody>
+                    </table>
+                </div></section>
+            </div>
+        
+            <!-- Settings Tab HTML remains the same -->
+            <div id="settings" class="tab-content">
+                <section class="card">
+                    <h2>Data Management</h2>
+                    <p>Load your existing inventory from an Excel file. The file must contain 'particulars', 'quantity', and 'rate' columns. This will overwrite your current inventory.</p>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls">
+
+                    <div style="margin-top: 2.5rem; border-top: 1px solid var(--border-dark-primary); padding-top: 1.5rem;">
+                         <button class="btn btn-success" id="manual-save-btn">Sync to Google Drive</button>
+                         <p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-top: 10px;">Manually save all current data to your Google Drive. The app also saves automatically after you make changes.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Inventory Display Section (Shared) HTML remains the same -->
             <section class="card"><h2>Current Inventory</h2><div class="table-container">
                 <table class="styled-table" id="inventory-table">
                     <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
@@ -437,96 +693,61 @@
 
     <div id="toast"></div>
 
-        <script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
     window.onload = () => {
         const { jsPDF } = window.jspdf;
-        let salesChartInstance = null; // Hold the chart instance
 
         const app = {
-            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com', // YOUR_CLIENT_ID
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', // YOUR_API_KEY
+            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
+            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
             state: { inventory: [], transactions: [] },
             ui: {},
-            gapiInitialized: false, // Flag to track GAPI client initialization
 
-            init() {
+            init() { /* ... unchanged ... */ 
                 this.cacheDOMElements();
-                // Initialize GAPI client first
-                gapi.load('client', async () => {
-                    try {
-                        await gapi.client.init({
-                            apiKey: this.API_KEY,
-                            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-                        });
-                        this.gapiInitialized = true;
-                        console.log("GAPI client initialized.");
-                        // Now that GAPI client is ready, initialize token client
-                        this.initializeTokenClient();
-                        this.ui.signinBtn.disabled = false;
-                        this.ui.authStatus.textContent = 'Ready. Please sign in.';
-                    } catch (error) {
-                        console.error("Error initializing GAPI client:", error);
-                        this.ui.authStatus.textContent = 'Error initializing. Please refresh.';
-                        this.showToast('Error initializing Google services. Please refresh.', 'error');
-                    }
-                });
-            },
-
-            initializeTokenClient() {
+                gapi.load('client', this.initializeGapiClient.bind(this));
                 this.tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: this.CLIENT_ID,
                     scope: this.SCOPES,
-                    callback: this.handleAuthResponse.bind(this), // This will be called after user grants consent
+                    callback: this.handleAuthResponse.bind(this),
                 });
-                this.ui.signinBtn.addEventListener('click', () => {
-                    if (this.gapiInitialized && this.tokenClient) {
-                        this.tokenClient.requestAccessToken({ prompt: 'consent' });
-                    } else {
-                        this.showToast('Google services not ready. Please wait or refresh.', 'error');
-                    }
-                });
+                this.ui.signinBtn.addEventListener('click', () => this.tokenClient.requestAccessToken({prompt: 'consent'}));
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
-            
-            async handleAuthResponse(response) {
+            async initializeGapiClient() { /* ... unchanged ... */ 
+                await gapi.client.init({
+                    apiKey: this.API_KEY,
+                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                });
+                this.ui.signinBtn.disabled = false;
+                this.ui.authStatus.textContent = 'Ready. Please sign in.';
+            },
+            async handleAuthResponse(response) { /* ... unchanged ... */ 
                 if (response.error) {
-                    this.showToast(`Authentication Error: ${response.error_description || response.error}`, 'error');
-                    console.error("Authentication error:", response);
-                    // Potentially reset UI or guide user
-                    this.ui.authStatus.textContent = 'Authentication failed. Please try again.';
-                    document.getElementById('login-screen').style.display = 'flex';
-                    document.getElementById('app-container').classList.remove('visible');
+                    this.showToast(`Error: ${response.error}`, 'error');
                     return;
                 }
-                // Token is now available via gapi.client.getToken()
-                this.ui.authStatus.textContent = 'Authenticated. Loading data...';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-container').classList.add('visible');
-                
                 await this.updateUserProfile();
-                await this.loadData(); // Ensure data is loaded before starting app logic
-                this.startAppLogic(); // Now safe to start app logic
+                await this.loadData();
+                this.startAppLogic();
             },
-
             signOut() { /* ... unchanged ... */ 
                 const token = gapi.client.getToken();
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token, () => {
                         gapi.client.setToken('');
                         this.driveFileId = null;
-                        this.appFolderId = null; // Reset appFolderId on sign out
-                        this.state = { inventory: [], transactions: [] }; // Clear state
-                        if (salesChartInstance) { // Destroy chart on sign out
-                            salesChartInstance.destroy();
-                            salesChartInstance = null;
-                        }
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-container').classList.remove('visible');
-                        this.ui.authStatus.textContent = 'Please sign in.'; // Update auth status on login screen
                         this.showToast('Signed out successfully.');
                     });
                 }
@@ -589,7 +810,7 @@
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
-                        await this._findOrCreateAppFolder(); // Ensure folder is created if no data file
+                        await this._findOrCreateAppFolder();
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
@@ -613,13 +834,6 @@
 
                 try {
                     if (!this.appFolderId) await this._findOrCreateAppFolder();
-                     if (!this.appFolderId) { // Double check, crucial for first save
-                        this.showToast("Could not find or create app folder on Drive. Cannot save.", "error");
-                        this.isSaving = false;
-                        this.ui.manualSaveBtn.disabled = false;
-                        this.ui.manualSaveBtn.textContent = originalBtnText;
-                        return;
-                    }
                     const dataToSave = JSON.stringify(this.state, null, 2);
                     const boundary = '-------314159265358979323846';
                     const delimiter = "\r\n--" + boundary + "\r\n";
@@ -634,9 +848,7 @@
                         request = gapi.client.request({'path': 'https://www.googleapis.com/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'},'body': multipartRequestBody});
                     }
                     const response = await request;
-                    if (!this.driveFileId && response.result && response.result.id) { 
-                        this.driveFileId = response.result.id; 
-                    }
+                    if (!this.driveFileId) { this.driveFileId = response.result.id; }
                     this.showToast("Data saved successfully!", "success");
                 } catch (e) { 
                     console.error("Error saving data:", e); 
@@ -648,7 +860,7 @@
                 }
             },
 
-            cacheDOMElements() { /* ... unchanged ... */ 
+            cacheDOMElements() {
                 this.ui = {
                     signinBtn: document.getElementById('signin-btn'),
                     signoutBtn: document.getElementById('signout-btn'),
@@ -668,7 +880,7 @@
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
-                    analytics: { 
+                    analytics: { /* ... unchanged ... */ 
                         totalProfit: document.getElementById('total-profit'),
                         totalRevenue: document.getElementById('total-revenue'),
                         avgMargin: document.getElementById('avg-margin'),
@@ -686,7 +898,7 @@
                         filteredSalesHeading: document.getElementById('filtered-sales-heading'),
                         filteredProfitHeading: document.getElementById('filtered-profit-heading'),
                     },
-                    transactions: { 
+                    transactions: { /* ... unchanged ... */ 
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
                         purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
                         transactionsTab: document.getElementById('transactions'),
@@ -697,10 +909,10 @@
                         exportExcelBtn: document.getElementById('export-excel-btn'),
                         transactionSortOrder: document.getElementById('transaction-sort-order'),
                     },
-                    profit: { 
+                    profit: { /* ... unchanged ... */ 
                         profitDetailsBody: document.querySelector('#profit-details-table tbody'),
                     },
-                    credit: { 
+                    credit: { /* ... unchanged ... */ 
                         inventorySaleForm: document.getElementById('credit-inventory-sale-form'),
                         inventoryItemsContainer: document.getElementById('credit-inventory-items-container'),
                         addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'),
@@ -709,6 +921,7 @@
                         cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
                         creditorListContainer: document.getElementById('creditor-list-container'),
                     },
+                    // ADDED: For new dashboard elements in Operations tab
                     operations: {
                         dashboardTotalUnits: document.getElementById('dashboard-total-units'),
                         dashboardLowStockCount: document.getElementById('dashboard-low-stock-count'),
@@ -717,7 +930,6 @@
                         dashboardTotalProfit: document.getElementById('dashboard-total-profit'),
                         dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
                         dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'),
-                        salesTrendChartCanvas: document.getElementById('salesTrendChart'), 
                     }
                 };
             },
@@ -736,14 +948,15 @@
                 return match ? match[1].trim() : value.trim();
             },
 
-            renderAll() { /* ... unchanged ... */ 
+            renderAll() {
                 this.renderInventory();
-                this.renderAnalytics(); 
+                this.renderAnalytics(); // This will now also update dashboard elements
                 this.renderFilteredSalesAndProfit();
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
             },
+
             renderInventory() { /* ... unchanged ... */ 
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
                 this.ui.inventoryTableBody.innerHTML = this.state.inventory.length
@@ -769,8 +982,9 @@
                     .map(item => `<option value="${item.particulars} (${item.quantity} left)"></option>`)
                     .join('');
             },
-            renderAnalytics() { /* ... unchanged (already includes chart rendering call) ... */ 
-                const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => { 
+
+            renderAnalytics() { // MODIFIED to update dashboard elements
+                const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
                     if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
@@ -782,6 +996,7 @@
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
                 
+                // Analytics Tab elements
                 this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
                 this.ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
                 this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
@@ -794,6 +1009,7 @@
                 const lowStockCount = lowStock.length;
                 this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0;
                 
+                // Update main header low stock alert
                 if (lowStockCount > 0) {
                     this.ui.analytics.lowStockCounter.textContent = lowStockCount;
                     this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
@@ -801,7 +1017,8 @@
                     this.ui.analytics.lowStockAlertContainer.style.display = 'none';
                 }
 
-                if (this.ui.operations.dashboardTotalUnits) {
+                // --- Update NEW Dashboard elements in Operations Tab ---
+                if (this.ui.operations.dashboardTotalUnits) { // Check if elements exist (e.g. if operations tab is active)
                     this.ui.operations.dashboardTotalUnits.textContent = units;
                     this.ui.operations.dashboardLowStockCount.textContent = lowStockCount;
                     this.ui.operations.dashboardInventoryValue.textContent = `₹${cost.toFixed(2)}`;
@@ -820,99 +1037,9 @@
                         : '<li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>';
                     
                     this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
-                    this.renderSalesTrendChart(); 
                 }
             },
             
-            prepareSalesChartData(days = 7) { /* ... unchanged ... */ 
-                const labels = [];
-                const data = new Array(days).fill(0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                for (let i = days - 1; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i);
-                    labels.push(date.toLocaleDateString(undefined, { weekday: 'short' }));
-                }
-
-                this.state.transactions.forEach(transaction => {
-                    if (transaction.type === 'Sale') {
-                        const transactionDate = new Date(transaction.date);
-                        transactionDate.setHours(0,0,0,0);
-                        const diffTime = today.getTime() - transactionDate.getTime(); 
-                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                        if (diffDays >= 0 && diffDays < days) {
-                            const index = (days - 1) - diffDays;
-                            if (index >= 0 && index < data.length) { 
-                                data[index] += transaction.total;
-                            }
-                        }
-                    }
-                });
-                return { labels, data };
-            },
-            renderSalesTrendChart() { /* ... unchanged ... */ 
-                if (!this.ui.operations.salesTrendChartCanvas) {
-                    console.warn("Sales trend chart canvas not found.");
-                    return;
-                }
-
-                const salesData = this.prepareSalesChartData();
-                const ctx = this.ui.operations.salesTrendChartCanvas.getContext('2d');
-
-                if (salesChartInstance) {
-                    salesChartInstance.destroy();
-                }
-
-                const cssVariables = getComputedStyle(document.documentElement);
-                salesChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: salesData.labels,
-                        datasets: [{
-                            label: 'Daily Sales',
-                            data: salesData.data,
-                            borderColor: cssVariables.getPropertyValue('--accent-teal').trim(),
-                            backgroundColor: cssVariables.getPropertyValue('--accent-teal').trim() + '33', 
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: cssVariables.getPropertyValue('--accent-teal').trim(),
-                            pointBorderColor: cssVariables.getPropertyValue('--surface-dark-alt').trim(),
-                            pointHoverBackgroundColor: cssVariables.getPropertyValue('--text-on-dark-primary').trim(),
-                            pointHoverBorderColor: cssVariables.getPropertyValue('--accent-teal').trim(),
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { color: cssVariables.getPropertyValue('--text-on-dark-secondary').trim(), callback: value => '₹' + value },
-                                grid: { color: cssVariables.getPropertyValue('--border-dark-primary').trim() + '80', borderColor: cssVariables.getPropertyValue('--border-dark-primary').trim() }
-                            },
-                            x: {
-                                ticks: { color: cssVariables.getPropertyValue('--text-on-dark-secondary').trim() },
-                                grid: { display: false }
-                            }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: cssVariables.getPropertyValue('--surface-dark-alt').trim(),
-                                titleColor: cssVariables.getPropertyValue('--accent-teal').trim(),
-                                bodyColor: cssVariables.getPropertyValue('--text-on-dark-primary').trim(),
-                                borderColor: cssVariables.getPropertyValue('--border-dark-primary').trim(),
-                                borderWidth: 1,
-                                callbacks: { label: context => `Sales: ₹${context.parsed.y.toFixed(2)}` }
-                            }
-                        }
-                    }
-                });
-            },
-
             renderFilteredSalesAndProfit() { /* ... unchanged ... */ 
                 const startDateStr = this.ui.analytics.startDateInput.value;
                 const endDateStr = this.ui.analytics.endDateInput.value;
@@ -1065,8 +1192,7 @@
                 return isSale
                 ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
                 : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`; },
-            addFormItem(container, isSale) { /* ... unchanged ... */ 
-                container.insertAdjacentHTML('beforeend', this.createFormItemHTML(isSale)) },
+            addFormItem(container, isSale) { container.insertAdjacentHTML('beforeend', this.createFormItemHTML(isSale)) },
             handleFileUpload(event) { /* ... unchanged ... */ 
                 const file = event.target.files[0];
                 if (!file) return;
@@ -1252,7 +1378,7 @@
                 setTimeout(() => toast.className = toast.className.replace('show',''), 3000);
             },
             
-            addEventListeners() { /* ... unchanged parts of this function ... */ 
+            addEventListeners() { // MODIFIED to add listener for new download button
                 this.ui.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addFormItem(this.ui.salesItemsContainer, true));
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addFormItem(this.ui.purchaseItemsContainer, false));
@@ -1263,6 +1389,7 @@
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
 
+                // Original download button
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
                     if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
@@ -1274,6 +1401,7 @@
                     this.showToast("Low stock list downloaded!", "success");
                 });
 
+                // ADDED: Listener for the new dashboard download button
                 this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
                     if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
