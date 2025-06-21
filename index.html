@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tinny Fashion Store - Complete Business Manager</title>
-    <!-- UPDATED Favicon fill color to new accent -->
     <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%2300A99D'/%3e%3cpath fill='white' d='M25 35h50l-5 40H30zM35 30v-5h30v5M30 40c0-5 5-10 10-10h20c5 0 10 5 10 10'/c%3e%3c/svg%3e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,27 +13,27 @@
 
     <style>
         :root {
-            /* Inspired by the reference image's aesthetic */
-            --background-body: #F0F2F5; /* Light grey for the overall page background */
-            --surface-dark: #1A202C; /* Dark blue-grey for cards and main surfaces */
-            --surface-dark-alt: #2D3748; /* Slightly lighter dark for nested elements or hover */
+            --background-body: #F0F2F5;
+            --surface-dark: #1A202C;
+            --surface-dark-alt: #2D3748;
             
-            --text-on-dark-primary: #E2E8F0; /* Light grey for primary text on dark surfaces */
-            --text-on-dark-secondary: #A0AEC0; /* Medium grey for secondary text on dark surfaces */
-            --text-on-dark-placeholder: #718096; /* For placeholders on dark inputs */
+            --text-on-dark-primary: #E2E8F0;
+            --text-on-dark-secondary: #A0AEC0;
+            --text-on-dark-placeholder: #718096;
 
-            --text-primary-on-light: #2D3748; /* Dark text for light backgrounds (e.g., login box title) */
+            --text-primary-on-light: #2D3748;
             --text-secondary-on-light: #4A5568;
 
-            --accent-teal: #00A99D; /* A vibrant teal/cyan as primary accent */
+            --accent-teal: #00A99D;
             --accent-teal-darker: #007A70;
-            --accent-yellow: #F59E0B; /* Bright yellow for warnings or highlights */
+            --accent-yellow: #F59E0B; /* Used for warnings, highlights */
+            --accent-pink: #EC4899; /* For some dashboard trends or highlights */
             
             --success-green: #38A169;
             --danger-red: #E53E3E;
             --info-blue: #3182CE;
 
-            --border-dark-primary: #4A5568; /* For borders on dark elements */
+            --border-dark-primary: #4A5568;
             --border-dark-focus: var(--accent-teal);
 
             --border-radius-sm: 6px;
@@ -50,103 +49,64 @@
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background-color: var(--background-body);
-            color: var(--text-primary-on-light); /* Default text color for light backgrounds */
+            color: var(--text-primary-on-light);
             margin: 0;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* --- Login Screen Styles --- */
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; width: 100%; text-align: center; padding: 2rem;
             background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-yellow) 100%);
         }
         .login-box {
-            background: var(--surface-dark-alt); /* Darker login box */
-            color: var(--text-on-dark-primary);
+            background: var(--surface-dark-alt); color: var(--text-on-dark-primary);
             padding: 2.5rem 3rem; border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-strong);
-            max-width: 480px; width: 100%;
+            box-shadow: var(--shadow-strong); max-width: 480px; width: 100%;
         }
-        .login-box .store-logo {
-            font-size: 2.5rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 0.5rem;
-        }
-        .login-box .store-logo span {
-            display: inline-block; padding: 0.1em 0.4em; background-color: var(--accent-yellow);
-            color: var(--surface-dark); border-radius: var(--border-radius-sm); margin-right: 0.1em;
-        }
+        .login-box .store-logo { font-size: 2.5rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 0.5rem; }
+        .login-box .store-logo span { display: inline-block; padding: 0.1em 0.4em; background-color: var(--accent-yellow); color: var(--surface-dark); border-radius: var(--border-radius-sm); margin-right: 0.1em; }
         .login-box h1 { color: var(--text-on-dark-primary); margin-bottom: 0.5rem; font-size: 1.8rem; font-weight: 700; }
         .login-box p { color: var(--text-on-dark-secondary); margin-bottom: 1.5rem; font-size: 0.95rem; }
-        #signin-btn {
-            background-color: #4285F4; color: white; border: none; padding: 14px 28px;
-            font-size: 1rem; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer;
-            display: inline-flex; align-items: center; gap: 1rem;
-            transition: background-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-subtle);
-        }
+        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-subtle); }
         #signin-btn:hover:not([disabled]) { background-color: #357ae8; box-shadow: var(--shadow-medium); }
         #signin-btn[disabled] { background-color: #718096; color: var(--text-on-dark-secondary); cursor: not-allowed; }
         #signin-btn svg { width: 24px; height: 24px; background: white; border-radius: 50%; padding: 2px; }
-        #auth-status { margin-top: 1.5rem; color: var(--text-on-dark-secondary); font-size: 0.9rem; }
+        #auth-status { margin-top: 1.5rem; font-size: 0.9rem; }
 
-        /* --- Main App Container --- */
         #app-container { display: none; padding: 25px; }
         #app-container.visible { display: block; }
 
-        /* Header */
         header {
-            background-color: var(--surface-dark);
-            color: var(--text-on-dark-primary);
+            background-color: var(--surface-dark); color: var(--text-on-dark-primary);
             padding: 15px 25px; border-radius: var(--border-radius-lg);
             margin-bottom: 35px; box-shadow: var(--shadow-medium);
             display: flex; justify-content: space-between; align-items: center;
         }
-        header .header-title-group h1 {
-            margin: 0; font-weight: 700; font-size: 1.6rem; color: var(--accent-yellow);
-        }
+        header .header-title-group h1 { margin: 0; font-weight: 700; font-size: 1.6rem; color: var(--accent-yellow); }
         .user-profile { display: flex; align-items: center; gap: 12px; }
         .user-profile span { font-weight: 500; font-size: 0.9rem; color: var(--text-on-dark-primary); }
-        #signout-btn {
-            font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent;
-            border: 1px solid var(--accent-yellow); border-radius: var(--border-radius-md);
-            padding: 7px 12px; font-weight: 500; transition: background-color 0.2s, color 0.2s;
-        }
+        #signout-btn { font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent; border: 1px solid var(--accent-yellow); border-radius: var(--border-radius-md); padding: 7px 12px; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
         #signout-btn:hover { background-color: var(--accent-yellow); color: var(--surface-dark); }
-        .low-stock-alert {
-            background-color: var(--accent-yellow); color: var(--surface-dark); padding: 7px 14px;
-            border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 600;
-            box-shadow: var(--shadow-subtle); display: none; margin-right: 15px;
-        }
-        #low-stock-counter {
-            display: inline-block; background-color: rgba(0,0,0,0.3); color: white;
-            border-radius: 50%; min-width: 24px; height: 24px; line-height: 24px; text-align: center;
-            font-weight: 700; margin-left: 8px; font-size: 0.8rem;
-        }
+        .low-stock-alert { background-color: var(--accent-yellow); color: var(--surface-dark); padding: 7px 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow-subtle); display: none; margin-right: 15px; }
+        #low-stock-counter { display: inline-block; background-color: rgba(0,0,0,0.3); color: white; border-radius: 50%; min-width: 24px; height: 24px; line-height: 24px; text-align: center; font-weight: 700; margin-left: 8px; font-size: 0.8rem; }
 
-        /* Tab Navigation */
         .tab-nav {
             display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 30px;
-            background-color: var(--surface-dark-alt);
-            padding: 5px; border-radius: var(--border-radius-lg);
+            background-color: var(--surface-dark-alt); padding: 5px; border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow-subtle);
         }
         .tab-button {
             padding: 10px 20px; cursor: pointer; border: none; background-color: transparent;
             font-size: 0.95rem; font-weight: 500; color: var(--text-on-dark-secondary);
-            border-radius: var(--border-radius-md);
-            transition: color 0.3s ease, background-color 0.2s ease;
+            border-radius: var(--border-radius-md); transition: color 0.3s ease, background-color 0.2s ease;
             margin: 0 3px;
         }
         .tab-button:hover { color: var(--text-on-dark-primary); background-color: rgba(255,255,255,0.05); }
-        .tab-button.active {
-            color: var(--surface-dark);
-            background-color: var(--accent-teal);
-            font-weight: 600;
-            box-shadow: var(--shadow-medium);
-        }
+        .tab-button.active { color: var(--surface-dark); background-color: var(--accent-teal); font-weight: 600; box-shadow: var(--shadow-medium); }
 
-        /* Tab Content */
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeInContent 0.4s ease-out; }
         @keyframes fadeInContent { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -154,6 +114,8 @@
         main { max-width: 1200px; margin: 0 auto; }
         .main-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .operations-layout, .credit-layout { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        .action-forms-section { margin-top: 30px; } /* Space between dashboard and forms */
+
 
         .card {
             background-color: var(--surface-dark); color: var(--text-on-dark-primary);
@@ -164,8 +126,6 @@
             color: var(--accent-teal); font-weight: 600; font-size: 1.25rem; margin-top: 0;
             border-bottom: 1px solid var(--border-dark-primary); padding-bottom: 15px; margin-bottom: 25px;
         }
-
-        /* Form Styles for Dark Cards */
         .card .form-grid, .card form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .card .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .card .cosmetic-credit-form-grid { display: grid; grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
@@ -179,32 +139,20 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .card input[type="text"]:focus, .card input[type="number"]:focus, .card input[type="date"]:focus, .card select:focus {
-            border-color: var(--border-dark-focus);
-            box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.25); /* Teal focus glow */
-            outline: none;
+            border-color: var(--border-dark-focus); box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.25); outline: none;
         }
         .card input[type="file"] { background-color: var(--surface-dark-alt); border-color: var(--accent-teal); color: var(--accent-teal); cursor: pointer; }
         .card input::placeholder { color: var(--text-on-dark-placeholder); opacity: 1; }
         #settings .card input[type="file"] { margin-top: 15px; }
-
-        .card .controls-grid label, .card .form-row label {
-            display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary);
-            margin-bottom: 6px; font-weight: 500;
-        }
+        .card .controls-grid label, .card .form-row label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
         
-        /* Add Item Buttons */
         #add-sale-item-btn, #add-purchase-item-btn, #add-credit-inventory-item-btn {
-            background-color: transparent; color: var(--accent-teal);
-            border: 2px dashed var(--accent-teal); font-weight: 500; text-transform: none;
-            padding: 10px 15px; margin-top: 10px; margin-bottom: 20px; width: 100%;
-            border-radius: var(--border-radius-md);
-            transition: background-color 0.2s, color 0.2s;
+            background-color: transparent; color: var(--accent-teal); border: 2px dashed var(--accent-teal);
+            font-weight: 500; text-transform: none; padding: 10px 15px; margin-top: 10px; margin-bottom: 20px;
+            width: 100%; border-radius: var(--border-radius-md); transition: background-color 0.2s, color 0.2s;
         }
-        #add-sale-item-btn:hover, #add-purchase-item-btn:hover, #add-credit-inventory-item-btn:hover {
-            background-color: rgba(0, 169, 157, 0.1); /* Teal transparent bg */
-        }
+        #add-sale-item-btn:hover, #add-purchase-item-btn:hover, #add-credit-inventory-item-btn:hover { background-color: rgba(0, 169, 157, 0.1); }
 
-        /* General Button Styles */
         .btn {
             width: 100%; padding: 12px 20px; border-radius: var(--border-radius-md); border: none; font-size: 0.95rem;
             font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
@@ -214,7 +162,6 @@
         .btn:hover:not([disabled]) { box-shadow: var(--shadow-medium); transform: translateY(-1px); }
         .btn:active:not([disabled]) { box-shadow: var(--shadow-subtle); transform: translateY(0px); }
         .btn[disabled] { background-color: var(--text-on-dark-placeholder); color: var(--surface-dark-alt); cursor: not-allowed; opacity: 0.8; box-shadow: none; }
-
         .btn-primary { background-color: var(--accent-teal); color: var(--surface-dark); }
         .btn-primary:hover:not([disabled]) { background-color: var(--accent-teal-darker); }
         .btn-secondary { background-color: var(--surface-dark-alt); color: var(--text-on-dark-primary); border: 1px solid var(--border-dark-primary); }
@@ -223,137 +170,199 @@
         .btn-success:hover:not([disabled]) { background-color: #2F855A; }
         .btn-danger { background-color: var(--danger-red); color: white; }
         .btn-danger:hover:not([disabled]) { background-color: #C53030; }
-        /* .btn-accent is now .btn-primary essentially (teal) */
-        
         .btn-small { padding: 8px 14px; font-size: 0.8rem; letter-spacing: 0.2px; width: auto;}
         .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
 
-        /* Table Styles (Dark Theme) */
-        .table-container {
-            max-height: 450px; overflow-y: auto; border: 1px solid var(--border-dark-primary);
-            border-radius: var(--border-radius-md); margin-top: 20px; background-color: var(--surface-dark);
-        }
+        .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-md); margin-top: 20px; background-color: var(--surface-dark); }
         .styled-table { width: 100%; border-collapse: collapse; }
-        .styled-table th, .styled-table td {
-            border-bottom: 1px solid var(--border-dark-primary); padding: 14px 16px;
-            text-align: left; font-size: 0.9rem; vertical-align: middle;
-            color: var(--text-on-dark-secondary);
-        }
-        .styled-table th {
-            background-color: var(--surface-dark-alt); color: var(--accent-teal);
-            font-weight: 600; position: sticky; top: 0; text-transform: capitalize; z-index: 1;
-        }
+        .styled-table th, .styled-table td { border-bottom: 1px solid var(--border-dark-primary); padding: 14px 16px; text-align: left; font-size: 0.9rem; vertical-align: middle; color: var(--text-on-dark-secondary); }
+        .styled-table th { background-color: var(--surface-dark-alt); color: var(--accent-teal); font-weight: 600; position: sticky; top: 0; text-transform: capitalize; z-index: 1; }
         .styled-table tr:hover td { background-color: var(--surface-dark-alt); color: var(--text-on-dark-primary); }
         .styled-table td ul { margin: 0; padding-left: 18px; list-style-type: disc; }
         .styled-table td li { padding: 3px 0; }
         .profit-col { font-weight: 600; color: var(--success-green); }
-        .credit-label {
-            font-size: 0.75rem; font-weight: 600; color: var(--surface-dark);
-            background-color: var(--info-blue); padding: 3px 8px;
-            border-radius: var(--border-radius-sm); display: inline-block; margin-top: 6px;
-        }
+        .credit-label { font-size: 0.75rem; font-weight: 600; color: var(--surface-dark); background-color: var(--info-blue); padding: 3px 8px; border-radius: var(--border-radius-sm); display: inline-block; margin-top: 6px; }
         .sales-history-actions { display: flex; gap: 8px; }
-
-        tr.is-low-stock td {
-            background-color: rgba(245, 158, 11, 0.1) !important; /* Yellow tint */
-            border-left: 3px solid var(--accent-yellow);
-            color: var(--accent-yellow) !important;
-        }
-        .low-stock-badge {
-            display: inline-block; margin-left: 8px; padding: 3px 7px; font-size: 0.7rem;
-            font-weight: 600; color: var(--surface-dark); background-color: var(--accent-yellow);
-            border-radius: 10px; text-transform: uppercase; vertical-align: middle;
-        }
-
-        /* Inline Editing in Tables */
+        tr.is-low-stock td { background-color: rgba(245, 158, 11, 0.1) !important; border-left: 3px solid var(--accent-yellow); color: var(--accent-yellow) !important; }
+        .low-stock-badge { display: inline-block; margin-left: 8px; padding: 3px 7px; font-size: 0.7rem; font-weight: 600; color: var(--surface-dark); background-color: var(--accent-yellow); border-radius: 10px; text-transform: uppercase; vertical-align: middle; }
         .inventory-actions { display: flex; gap: 6px; }
-        .edit-input { /* Styles already defined for .card input apply here if table is in a card */
-             padding: 6px 8px; font-size: 0.9rem; max-width: 90px;
-        }
+        .edit-input { padding: 6px 8px; font-size: 0.9rem; max-width: 90px; }
         tr.edit-mode .display-value { display: none; }
         tr:not(.edit-mode) .edit-field { display: none; }
         tr.edit-mode .edit-btn, tr.edit-mode .delete-btn { display: none; }
         tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
 
-        /* Analytics Section */
         .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .metric-card { /* Inherits .card styles */
-            text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
+        .metric-card { text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-strong); }
-        .metric-card h3 {
-            margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.85rem;
-            font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .metric-card p {
-            font-size: 2rem; margin: 0; color: var(--accent-yellow); font-weight: 700;
-        }
-        .metric-card #total-profit, .metric-card #total-revenue { color: var(--accent-teal);} /* Example specific coloring */
-        
+        .metric-card h3 { margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.85rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-card p { font-size: 2rem; margin: 0; color: var(--accent-yellow); font-weight: 700; }
+        .metric-card #total-profit, .metric-card #total-revenue { color: var(--accent-teal);}
         #low-stock-items ul { list-style-type: none; padding: 0; text-align: left; }
-        #low-stock-items li {
-            padding: 10px 5px; border-bottom: 1px solid var(--border-dark-primary);
-            font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;
-        }
+        #low-stock-items li { padding: 10px 5px; border-bottom: 1px solid var(--border-dark-primary); font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
         #low-stock-items li:last-child { border-bottom: none; }
         #low-stock-items li .low-stock-qty { color: var(--accent-yellow); font-weight: 600; }
-        #low-stock-items.metric-card { background-color: var(--surface-dark-alt); } /* Slightly different for list */
+        #low-stock-items.metric-card { background-color: var(--surface-dark-alt); }
         #low-stock-items.metric-card h3 { color: var(--accent-yellow); }
 
-        /* Toast Notifications */
-        #toast {
-            position: fixed; bottom: -120px; right: 25px; padding: 14px 25px;
-            border-radius: var(--border-radius-md); color: var(--surface-dark); font-weight: 600;
-            font-size: 0.95rem; box-shadow: var(--shadow-strong);
-            transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease;
-            z-index: 9999; opacity: 0;
-        }
+        #toast { position: fixed; bottom: -120px; right: 25px; padding: 14px 25px; border-radius: var(--border-radius-md); color: var(--surface-dark); font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-strong); transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease; z-index: 9999; opacity: 0; }
         #toast.show { bottom: 25px; opacity: 1; }
         #toast.success { background-color: var(--success-green); color: white; }
         #toast.error { background-color: var(--danger-red); color: white; }
         #toast.info { background-color: var(--info-blue); color: white; }
 
-        /* Creditor List Styles */
-        .creditor-item {
-            background-color: var(--surface-dark); padding: 0;
-            border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-md);
-            margin-bottom: 15px; box-shadow: var(--shadow-subtle); overflow: hidden;
-        }
-        .creditor-header {
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: 500; font-size: 1.05rem; cursor: pointer;
-            padding: 15px 20px; transition: background-color 0.2s;
-            border-bottom: 1px solid transparent; color: var(--text-on-dark-primary);
-        }
+        .creditor-item { background-color: var(--surface-dark); padding: 0; border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-md); margin-bottom: 15px; box-shadow: var(--shadow-subtle); overflow: hidden; }
+        .creditor-header { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 1.05rem; cursor: pointer; padding: 15px 20px; transition: background-color 0.2s; border-bottom: 1px solid transparent; color: var(--text-on-dark-primary); }
         .creditor-header:hover { background-color: var(--surface-dark-alt); }
         .creditor-header .creditor-balance { color: var(--accent-yellow); font-weight: 600; }
-        .creditor-header::after {
-            content: '▼'; font-size: 0.8em; color: var(--text-on-dark-secondary);
-            transition: transform 0.3s ease; margin-left: auto; padding-left: 10px;
-        }
+        .creditor-header::after { content: '▼'; font-size: 0.8em; color: var(--text-on-dark-secondary); transition: transform 0.3s ease; margin-left: auto; padding-left: 10px; }
         .creditor-header.is-open::after { transform: rotate(180deg); color: var(--accent-teal); }
         .creditor-item.is-expanded .creditor-header { border-bottom-color: var(--border-dark-primary); }
-
-        .creditor-details {
-            display: none; padding: 20px; background-color: var(--surface-dark-alt);
-        }
+        .creditor-details { display: none; padding: 20px; background-color: var(--surface-dark-alt); }
         .creditor-details.visible { display: block; animation: fadeInAccordion 0.4s ease; }
         @keyframes fadeInAccordion { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
         .creditor-details table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .creditor-details th, .creditor-details td {
-            text-align: left; padding: 10px; border-bottom: 1px solid var(--border-dark-primary);
-            font-size: 0.9rem; color: var(--text-on-dark-secondary);
-        }
+        .creditor-details th, .creditor-details td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-dark-primary); font-size: 0.9rem; color: var(--text-on-dark-secondary); }
         .creditor-details th { font-size: 0.85rem; color: var(--accent-teal); background-color: var(--surface-dark); }
         .payment-form { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
         .payment-form input { max-width: 180px; }
         .payment-form label { font-size: 0.9rem; color: var(--text-on-dark-secondary); white-space: nowrap; }
 
-        /* Responsive Design Adjustments */
+        /* Dashboard Specific Styles ("Operations" Tab) */
+        .dashboard-overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .overview-card {
+            background-color: var(--surface-dark);
+            color: var(--text-on-dark-primary);
+            padding: 20px 25px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
+            position: relative;
+        }
+        .overview-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-on-dark-secondary);
+            text-transform: uppercase;
+        }
+        .overview-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-teal);
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+        }
+        #overview-low-stock .overview-value, #overview-inventory-value .overview-value {
+            color: var(--accent-yellow);
+        }
+        .overview-trend {
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: var(--border-radius-sm);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .overview-trend.positive { background-color: rgba(56, 161, 105, 0.2); color: var(--success-green); }
+        .overview-trend.warning { background-color: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); }
+        .overview-trend.neutral { background-color: rgba(113, 128, 150, 0.2); color: var(--text-on-dark-secondary); }
+
+        .dashboard-main-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Chart takes more space */
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .dashboard-chart-container.card { /* Inherits .card */
+             min-height: 300px; /* Example height */
+             display: flex; flex-direction: column; justify-content: space-between;
+        }
+         .dashboard-chart-container.card h2 { font-size: 1.1rem; }
+        .quick-stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            padding-top: 15px; border-top: 1px solid var(--border-dark-primary);
+            font-size: 0.9rem;
+        }
+        .quick-stats-grid span { color: var(--text-on-dark-secondary); }
+        .quick-stats-grid strong { color: var(--accent-teal); }
+
+
+        .dashboard-low-stock-list.card { /* Inherits .card */
+            padding-bottom: 15px;
+        }
+        .dashboard-low-stock-list .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* h2 inherits card h2 style */
+        }
+        .dashboard-low-stock-list .list-header h2 {
+            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.1rem;
+        }
+        #dashboard-low-stock-items-ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 15px;
+            max-height: 350px; /* Or adjust as needed */
+            overflow-y: auto;
+        }
+        #dashboard-low-stock-items-ul li {
+            display: flex;
+            align-items: center;
+            padding: 12px 5px; /* Reduced horizontal padding inside li */
+            border-bottom: 1px solid var(--border-dark-primary);
+            transition: background-color 0.2s;
+        }
+        #dashboard-low-stock-items-ul li:last-child { border-bottom: none; }
+        #dashboard-low-stock-items-ul li:hover { background-color: var(--surface-dark-alt); }
+        .item-icon-placeholder {
+            width: 40px; height: 40px;
+            background-color: var(--accent-pink); /* Placeholder color */
+            border-radius: var(--border-radius-sm);
+            margin-right: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: var(--surface-dark); font-weight: bold;
+        }
+        /* You can add SVG icons or letters here if needed */
+        .item-icon-placeholder::before { content: "🛍️"; }
+
+        .item-details { flex-grow: 1; }
+        .item-details .item-name {
+            display: block;
+            font-weight: 500;
+            color: var(--text-on-dark-primary);
+            font-size: 0.95rem;
+        }
+        .item-details .item-sub-detail {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-on-dark-secondary);
+        }
+        .item-details .item-sub-detail .low-stock-qty { color: var(--accent-yellow); font-weight: bold; }
+        .item-stock-level {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            margin-left: 10px;
+        }
+
+
+        @media (max-width: 992px) { /* Tablet and smaller */
+            .dashboard-main-area {
+                grid-template-columns: 1fr; /* Stack chart and list */
+            }
+        }
         @media (max-width: 900px) {
             .main-columns, .card .cosmetic-form-grid, .card .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
             header { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
             .low-stock-alert { margin: 10px auto; }
+            .dashboard-overview-grid { grid-template-columns: 1fr; } /* Stack overview cards on smaller screens too */
         }
         @media (max-width: 800px) {
             #app-container { padding: 15px; }
@@ -365,12 +374,14 @@
             .controls-grid .btn { margin-top: 10px; }
             header .header-title-group h1 { font-size: 1.4rem; }
             .card h2 { font-size: 1.15rem; }
+             .overview-value { font-size: 1.8rem; }
         }
 
     </style>
 </head>
 <body>
     <div id="login-screen">
+        <!-- Login screen HTML remains the same -->
         <div class="login-box">
             <div class="store-logo"><span>T</span>inny Fashion</div>
             <h1>Welcome Back!</h1>
@@ -385,6 +396,7 @@
     </div>
 
     <div id="app-container">
+        <!-- Header HTML remains the same -->
         <header>
             <div id="low-stock-alert-container" class="low-stock-alert">
                 Low Stock: <span id="low-stock-counter">0</span>
@@ -400,6 +412,7 @@
             </div>
         </header>
 
+        <!-- Tab Navigation HTML remains the same -->
         <nav class="tab-nav">
             <button class="tab-button active" data-tab="operations">Operations</button>
             <button class="tab-button" data-tab="credit">Credit</button>
@@ -410,9 +423,53 @@
         </nav>
 
         <main>
-            <!-- Operations Tab -->
+            <!-- Operations Tab - REDESIGNED -->
             <div id="operations" class="tab-content active">
-                <div class="main-columns">
+                <!-- Section 1: Dashboard Overview -->
+                <section class="dashboard-overview-grid">
+                    <div class="overview-card" id="overview-current-stock">
+                        <h4>Current Stock</h4>
+                        <p class="overview-value" id="dashboard-total-units">0</p>
+                        <span class="overview-trend positive">+0.0%</span> <!-- Placeholder, update with real data if available -->
+                    </div>
+                    <div class="overview-card" id="overview-low-stock">
+                        <h4>Low in Stock</h4>
+                        <p class="overview-value" id="dashboard-low-stock-count">0</p>
+                        <span class="overview-trend warning">Alert</span>
+                    </div>
+                    <div class="overview-card" id="overview-inventory-value">
+                        <h4>Inventory Value</h4>
+                        <p class="overview-value" id="dashboard-inventory-value">₹0.00</p>
+                        <span class="overview-trend neutral">Total Cost</span>
+                    </div>
+                </section>
+
+                <section class="dashboard-main-area">
+                    <div class="dashboard-chart-container card">
+                        <h2>Stock Levels & Sales Trend</h2>
+                        <p style="text-align:center; padding: 40px 0; color: var(--text-on-dark-secondary); flex-grow: 1;">
+                            [A chart showing stock levels or sales trends would appear here]
+                        </p>
+                        <div class="quick-stats-grid">
+                            <div><span>Total Revenue (All Time):</span> <strong id="dashboard-total-revenue">₹0.00</strong></div>
+                            <div><span>Total Profit (All Time):</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-low-stock-list card">
+                        <div class="list-header">
+                            <h2>Products Low in Stock</h2>
+                            <button class="btn btn-primary btn-small" id="dashboard-download-low-stock-btn">Download</button>
+                        </div>
+                        <ul id="dashboard-low-stock-items-ul">
+                            <!-- JS will populate this -->
+                            <li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Section 2: Core Action Forms (Existing forms, restyled to fit the theme) -->
+                <div class="main-columns action-forms-section">
                     <section class="card">
                         <h2>Make a Sale (From Inventory)</h2>
                         <form id="sales-form">
@@ -434,7 +491,7 @@
                         </form>
                     </section>
                 </div>
-                <div class="operations-layout">
+                <div class="operations-layout action-forms-section">
                     <section class="card">
                         <h2>Cosmetic & Non-Inventory Sale</h2>
                         <form id="cosmetic-sale-form">
@@ -450,7 +507,8 @@
                 </div>
             </div>
 
-            <!-- Credit Tab -->
+
+            <!-- Credit Tab HTML remains the same -->
             <div id="credit" class="tab-content">
                 <div class="credit-layout">
                     <section class="card">
@@ -495,11 +553,10 @@
                             <!-- Creditors will be dynamically inserted here by JavaScript -->
                         </div>
                     </section>
-
                 </div>
             </div>
 
-            <!-- Analytics Tab -->
+            <!-- Analytics Tab HTML remains the same -->
             <div id="analytics" class="tab-content">
                 <section class="card">
                     <h2>Shop Performance At a Glance</h2>
@@ -547,7 +604,7 @@
                 </section>
             </div>
 
-            <!-- Profit Tab -->
+            <!-- Profit Tab HTML remains the same -->
             <div id="profit" class="tab-content">
                 <section class="card">
                     <h2>Item-wise Profit Details</h2>
@@ -571,7 +628,7 @@
                 </section>
             </div>
 
-            <!-- Transactions Tab -->
+            <!-- Transactions Tab HTML remains the same -->
             <div id="transactions" class="tab-content">
                 <section class="card">
                     <h2>Controls</h2>
@@ -610,7 +667,7 @@
                 </div></section>
             </div>
         
-            <!-- Settings Tab -->
+            <!-- Settings Tab HTML remains the same -->
             <div id="settings" class="tab-content">
                 <section class="card">
                     <h2>Data Management</h2>
@@ -624,7 +681,7 @@
                 </section>
             </div>
 
-            <!-- Inventory Display Section (Shared) -->
+            <!-- Inventory Display Section (Shared) HTML remains the same -->
             <section class="card"><h2>Current Inventory</h2><div class="table-container">
                 <table class="styled-table" id="inventory-table">
                     <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
@@ -636,7 +693,6 @@
 
     <div id="toast"></div>
 
-    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -645,31 +701,17 @@
         const { jsPDF } = window.jspdf;
 
         const app = {
-            // --- Configuration ---
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
             API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
-            
-            tokenClient: null,
-            driveFileId: null,
-            isSaving: false,
-            saveTimeout: null,
-
-            // --- Central Application State ---
-            state: {
-                inventory: [],
-                transactions: [],
-            },
-
-            // --- UI Element References ---
+            tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
+            state: { inventory: [], transactions: [] },
             ui: {},
 
-            // --- CORE: Initialization and Authentication ---
-            init() {
+            init() { /* ... unchanged ... */ 
                 this.cacheDOMElements();
-
                 gapi.load('client', this.initializeGapiClient.bind(this));
                 this.tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: this.CLIENT_ID,
@@ -679,8 +721,7 @@
                 this.ui.signinBtn.addEventListener('click', () => this.tokenClient.requestAccessToken({prompt: 'consent'}));
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
-
-            async initializeGapiClient() {
+            async initializeGapiClient() { /* ... unchanged ... */ 
                 await gapi.client.init({
                     apiKey: this.API_KEY,
                     discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
@@ -688,8 +729,7 @@
                 this.ui.signinBtn.disabled = false;
                 this.ui.authStatus.textContent = 'Ready. Please sign in.';
             },
-
-            async handleAuthResponse(response) {
+            async handleAuthResponse(response) { /* ... unchanged ... */ 
                 if (response.error) {
                     this.showToast(`Error: ${response.error}`, 'error');
                     return;
@@ -700,8 +740,7 @@
                 await this.loadData();
                 this.startAppLogic();
             },
-            
-            signOut() {
+            signOut() { /* ... unchanged ... */ 
                 const token = gapi.client.getToken();
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token, () => {
@@ -713,16 +752,14 @@
                     });
                 }
             },
-
-            async updateUserProfile() {
+            async updateUserProfile() { /* ... unchanged ... */ 
                 try {
                     const res = await gapi.client.request({ path: 'https://www.googleapis.com/oauth2/v3/userinfo' });
                     document.getElementById('user-name').textContent = res.result.name;
                     document.getElementById('user-profile-container').style.display = 'flex';
                 } catch (e) { console.error("Could not fetch user profile", e); }
             },
-            
-            startAppLogic() {
+            startAppLogic() { /* ... unchanged ... */ 
                 this.addEventListeners();
                 this.addFormItem(this.ui.salesItemsContainer, true);
                 this.addFormItem(this.ui.purchaseItemsContainer, false);
@@ -733,9 +770,7 @@
                 
                 this.renderAll();
             },
-
-            // --- CORE: Google Drive Data Management ---
-            async _findOrCreateAppFolder() {
+            async _findOrCreateAppFolder() { /* ... unchanged ... */ 
                 if (this.appFolderId) return this.appFolderId;
                 try {
                     let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
@@ -749,8 +784,7 @@
                     return this.appFolderId;
                 } catch (e) { console.error('Error finding/creating app folder:', e); this.showToast('Could not access Drive folder.', 'error'); }
             },
-
-            async loadData() {
+            async loadData() { /* ... unchanged ... */ 
                 this.showToast("Loading data from Google Drive...", "info");
                 try {
                     const response = await gapi.client.drive.files.list({ q: `name='${this.DATA_FILE_NAME}' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
@@ -784,13 +818,11 @@
                     this.state = { inventory: [], transactions: [] }; 
                 }
             },
-
-            triggerAutoSave() {
+            triggerAutoSave() { /* ... unchanged ... */ 
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = setTimeout(() => this.saveData(), 2000);
             },
-
-            async saveData() {
+            async saveData() { /* ... unchanged ... */ 
                 if (this.isSaving) return;
                 this.isSaving = true;
 
@@ -848,7 +880,7 @@
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
-                    analytics: {
+                    analytics: { /* ... unchanged ... */ 
                         totalProfit: document.getElementById('total-profit'),
                         totalRevenue: document.getElementById('total-revenue'),
                         avgMargin: document.getElementById('avg-margin'),
@@ -866,7 +898,7 @@
                         filteredSalesHeading: document.getElementById('filtered-sales-heading'),
                         filteredProfitHeading: document.getElementById('filtered-profit-heading'),
                     },
-                    transactions: {
+                    transactions: { /* ... unchanged ... */ 
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
                         purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
                         transactionsTab: document.getElementById('transactions'),
@@ -877,10 +909,10 @@
                         exportExcelBtn: document.getElementById('export-excel-btn'),
                         transactionSortOrder: document.getElementById('transaction-sort-order'),
                     },
-                    profit: {
+                    profit: { /* ... unchanged ... */ 
                         profitDetailsBody: document.querySelector('#profit-details-table tbody'),
                     },
-                    credit: {
+                    credit: { /* ... unchanged ... */ 
                         inventorySaleForm: document.getElementById('credit-inventory-sale-form'),
                         inventoryItemsContainer: document.getElementById('credit-inventory-items-container'),
                         addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'),
@@ -888,21 +920,29 @@
                         cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'),
                         cosmeticDateInput: document.getElementById('credit-cosmetic-date'),
                         creditorListContainer: document.getElementById('creditor-list-container'),
+                    },
+                    // ADDED: For new dashboard elements in Operations tab
+                    operations: {
+                        dashboardTotalUnits: document.getElementById('dashboard-total-units'),
+                        dashboardLowStockCount: document.getElementById('dashboard-low-stock-count'),
+                        dashboardInventoryValue: document.getElementById('dashboard-inventory-value'),
+                        dashboardTotalRevenue: document.getElementById('dashboard-total-revenue'),
+                        dashboardTotalProfit: document.getElementById('dashboard-total-profit'),
+                        dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
+                        dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'),
                     }
                 };
             },
             
             getTodayDateString(date = new Date()) { return date.toISOString().slice(0, 10); },
-
-            formatDateDDMMYYYY(date) {
+            formatDateDDMMYYYY(date) { /* ... unchanged ... */ 
                 if (!(date instanceof Date) || isNaN(date)) return 'N/A';
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();
                 return `${day}/${month}/${year}`;
             },
-
-            parseItemNameFromDatalist(value) {
+            parseItemNameFromDatalist(value) { /* ... unchanged ... */ 
                 if (typeof value !== 'string') return '';
                 const match = value.match(/^(.*) \(\d+ left\)$/);
                 return match ? match[1].trim() : value.trim();
@@ -910,14 +950,14 @@
 
             renderAll() {
                 this.renderInventory();
-                this.renderAnalytics();
+                this.renderAnalytics(); // This will now also update dashboard elements
                 this.renderFilteredSalesAndProfit();
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
             },
 
-            renderInventory() {
+            renderInventory() { /* ... unchanged ... */ 
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
                 this.ui.inventoryTableBody.innerHTML = this.state.inventory.length
                     ? this.state.inventory.map(item => {
@@ -943,7 +983,7 @@
                     .join('');
             },
 
-            renderAnalytics() {
+            renderAnalytics() { // MODIFIED to update dashboard elements
                 const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
@@ -956,6 +996,7 @@
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
                 
+                // Analytics Tab elements
                 this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
                 this.ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
                 this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
@@ -967,15 +1008,39 @@
 
                 const lowStockCount = lowStock.length;
                 this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0;
+                
+                // Update main header low stock alert
                 if (lowStockCount > 0) {
                     this.ui.analytics.lowStockCounter.textContent = lowStockCount;
                     this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
                 } else {
                     this.ui.analytics.lowStockAlertContainer.style.display = 'none';
                 }
+
+                // --- Update NEW Dashboard elements in Operations Tab ---
+                if (this.ui.operations.dashboardTotalUnits) { // Check if elements exist (e.g. if operations tab is active)
+                    this.ui.operations.dashboardTotalUnits.textContent = units;
+                    this.ui.operations.dashboardLowStockCount.textContent = lowStockCount;
+                    this.ui.operations.dashboardInventoryValue.textContent = `₹${cost.toFixed(2)}`;
+                    this.ui.operations.dashboardTotalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
+                    this.ui.operations.dashboardTotalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
+
+                    this.ui.operations.dashboardLowStockItemsUl.innerHTML = lowStock.length > 0
+                        ? lowStock.map(item => `<li>
+                            <div class="item-icon-placeholder"></div>
+                            <div class="item-details">
+                                <span class="item-name">${item.particulars}</span>
+                                <span class="item-sub-detail">Cost: ₹${item.rate.toFixed(2)} / Qty: <span class="low-stock-qty">${item.quantity}</span></span>
+                            </div>
+                            <span class="item-stock-level">${item.quantity} left</span>
+                        </li>`).join('')
+                        : '<li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>';
+                    
+                    this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
+                }
             },
             
-            renderFilteredSalesAndProfit() {
+            renderFilteredSalesAndProfit() { /* ... unchanged ... */ 
                 const startDateStr = this.ui.analytics.startDateInput.value;
                 const endDateStr = this.ui.analytics.endDateInput.value;
                 const startDate = startDateStr ? new Date(startDateStr) : null;
@@ -1000,8 +1065,7 @@
                 this.ui.analytics.filteredSalesHeading.textContent = isFiltered ? "Filtered Sales" : "All-Time Sales";
                 this.ui.analytics.filteredProfitHeading.textContent = isFiltered ? "Filtered Profit" : "All-Time Profit";
             },
-
-            renderTransactions() {
+            renderTransactions() { /* ... unchanged ... */ 
                 const startDateStr = this.ui.transactions.startDateInput.value;
                 const endDateStr = this.ui.transactions.endDateInput.value;
                 const startDate = startDateStr ? new Date(startDateStr) : null;
@@ -1041,8 +1105,7 @@
                         <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td>
                         <td>₹${t.total.toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
             },
-        
-            renderProfit() {
+            renderProfit() { /* ... unchanged ... */ 
                 const allItemsSold = this.state.transactions
                     .filter(t => t.type === 'Sale')
                     .flatMap(t => t.items.map(item => ({ ...item, date: t.date })));
@@ -1070,8 +1133,7 @@
 
                 this.ui.profit.profitDetailsBody.innerHTML = tableRows;
             },
-            
-            renderCreditorList() {
+            renderCreditorList() { /* ... unchanged ... */ 
                 const creditSales = this.state.transactions.filter(t => t.saleType === 'Credit');
                 const creditors = creditSales.reduce((acc, t) => {
                     if (!t.partyName) return acc;
@@ -1126,14 +1188,12 @@
                     this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', creditorElementHTML);
                 }
             },
-        
-            createFormItemHTML(isSale) { return isSale
+            createFormItemHTML(isSale) { /* ... unchanged ... */ 
+                return isSale
                 ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
                 : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`; },
-
             addFormItem(container, isSale) { container.insertAdjacentHTML('beforeend', this.createFormItemHTML(isSale)) },
-
-            handleFileUpload(event) {
+            handleFileUpload(event) { /* ... unchanged ... */ 
                 const file = event.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
@@ -1151,8 +1211,7 @@
                 };
                 reader.readAsArrayBuffer(file);
             },
-            
-            deleteSale(transactionId) {
+            deleteSale(transactionId) { /* ... unchanged ... */ 
                 if (!confirm("Are you sure you want to delete this ENTIRE sale record? All items from this sale will be returned to inventory.")) {
                     return;
                 }
@@ -1179,8 +1238,7 @@
                 this.renderAll();
                 this.triggerAutoSave();
             },
-
-            handleSalesReturn(transactionId, itemParticulars) {
+            handleSalesReturn(transactionId, itemParticulars) { /* ... unchanged ... */ 
                 if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale? The item will be added back to inventory.`)) {
                     return;
                 }
@@ -1220,8 +1278,7 @@
                 this.renderAll();
                 this.triggerAutoSave();
             },
-
-            processSale(isInvoice, isCredit = false, creditForm) {
+            processSale(isInvoice, isCredit = false, creditForm) { /* ... unchanged ... */ 
                 const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
                 const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
                 const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value) : new Date();
@@ -1261,8 +1318,7 @@
                 if (isInvoice) this.generateInvoice(newTransaction);
                 this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!', "success");
             },
-        
-            recordPayment(creditorName, amount) {
+            recordPayment(creditorName, amount) { /* ... unchanged ... */ 
                 let paymentToApply = amount;
                 const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date);
 
@@ -1282,8 +1338,7 @@
                 this.renderAll();
                 this.triggerAutoSave();
             },
-        
-            exportTransactionsToExcel() {
+            exportTransactionsToExcel() { /* ... unchanged ... */ 
                 if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; }
                 const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Amount Paid": t.paidAmount, "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
                 const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
@@ -1294,8 +1349,7 @@
                 XLSX.writeFile(wb, "Transaction_History.xlsx");
                 this.showToast("Transaction history exported successfully!", "success");
             },
-
-            generateInvoice(transaction) {
+            generateInvoice(transaction) { /* ... unchanged ... */ 
                 const doc = new jsPDF(); let y = 20;
                 doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" });
                 y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" });
@@ -1317,15 +1371,14 @@
                 doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" });
                 doc.save(`Invoice_${transaction.id}.pdf`);
             },
-            
-            showToast(msg, type='success') {
+            showToast(msg, type='success') { /* ... unchanged ... */ 
                 const toast = document.getElementById('toast');
                 toast.textContent = msg;
                 toast.className = `show ${type}`;
                 setTimeout(() => toast.className = toast.className.replace('show',''), 3000);
             },
             
-            addEventListeners() {
+            addEventListeners() { // MODIFIED to add listener for new download button
                 this.ui.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addFormItem(this.ui.salesItemsContainer, true));
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addFormItem(this.ui.purchaseItemsContainer, false));
@@ -1333,11 +1386,10 @@
                 this.ui.recordInvoiceBtn.addEventListener('click', () => this.processSale(true, false));
                 this.ui.credit.addInventoryItemBtn.addEventListener('click', () => this.addFormItem(this.ui.credit.inventoryItemsContainer, true));
                 this.ui.credit.inventorySaleForm.addEventListener('submit', (e) => { e.preventDefault(); this.processSale(false, true, e.target); });
-
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
-
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
 
+                // Original download button
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
                     if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
@@ -1349,7 +1401,20 @@
                     this.showToast("Low stock list downloaded!", "success");
                 });
 
-                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => {
+                // ADDED: Listener for the new dashboard download button
+                this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', () => {
+                    const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
+                    if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
+                    const dataForExcel = lowStockItems.map(item => ({ 'Particulars': item.particulars, 'Quantity Remaining': item.quantity, 'Last Cost Rate': item.rate.toFixed(2) }));
+                    const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Low Stock Inventory");
+                    XLSX.writeFile(wb, "Low_Stock_Inventory.xlsx");
+                    this.showToast("Low stock list downloaded!", "success");
+                });
+
+
+                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { /* ... unchanged ... */ 
                     e.preventDefault();
                     const form = e.target;
                     const partyName = form.querySelector('#credit-cosmetic-party-name').value.trim();
@@ -1369,13 +1434,11 @@
                     form.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                     this.showToast(`Cosmetic credit sale to ${partyName} recorded!`, 'success');
                 });
-
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
                 this.ui.transactions.transactionSortOrder.addEventListener('change', () => this.renderTransactions());
-
-                this.ui.credit.creditorListContainer.addEventListener('click', (e) => {
+                this.ui.credit.creditorListContainer.addEventListener('click', (e) => { /* ... unchanged ... */ 
                     const creditorHeader = e.target.closest('.creditor-header');
                     const recordButton = e.target.closest('.record-payment-btn');
 
@@ -1401,8 +1464,7 @@
                         paymentInput.value = '';
                     }
                 });
-
-                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => {
+                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { /* ... unchanged ... */ 
                     e.preventDefault();
                     const particulars = e.target.querySelector('#cosmetic-particulars').value.trim();
                     const quantity = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10);
@@ -1423,8 +1485,7 @@
                     this.ui.cosmeticSaleForm.reset();
                     this.showToast(`Profit recorded successfully!`, "success");
                 });
-
-                this.ui.purchaseForm.addEventListener('submit', (event) => {
+                this.ui.purchaseForm.addEventListener('submit', (event) => { /* ... unchanged ... */ 
                     event.preventDefault();
                     const { newItems, total } = Array.from(this.ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => {
                         const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value);
@@ -1446,13 +1507,11 @@
                     this.ui.purchaseItemsContainer.innerHTML = ''; this.addFormItem(this.ui.purchaseItemsContainer, false);
                     this.showToast('Stock updated!', "success");
                 });
-
-                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => {
+                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { /* ... unchanged ... */ 
                     this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active');
                     this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
                 }));
-
-                document.body.addEventListener('input', e => {
+                document.body.addEventListener('input', e => { /* ... unchanged ... */ 
                     if (e.target.classList.contains('particulars')) {
                         const particularsValue = this.parseItemNameFromDatalist(e.target.value);
                         const item = this.state.inventory.find(i => i.particulars === particularsValue);
@@ -1463,8 +1522,7 @@
                         }
                     }
                 });
-            
-                this.ui.transactions.transactionsTab.addEventListener('click', e => {
+                this.ui.transactions.transactionsTab.addEventListener('click', e => { /* ... unchanged ... */ 
                     if (e.target.classList.contains('download-invoice-btn')) {
                         const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10));
                         if (tx) this.generateInvoice(tx);
@@ -1477,8 +1535,7 @@
                         this.handleSalesReturn(transactionId, itemParticulars);
                     }
                 });
-
-                this.ui.inventoryTableBody.addEventListener('click', (e) => {
+                this.ui.inventoryTableBody.addEventListener('click', (e) => { /* ... unchanged ... */ 
                     const particulars = e.target.dataset.particulars; const targetRow = e.target.closest('tr');
                     if (!targetRow) return;
                     if (e.target.classList.contains('edit-btn')) {
@@ -1505,7 +1562,6 @@
                 });
             }
         };
-
         app.init();
     };
     </script>
