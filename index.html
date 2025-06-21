@@ -437,60 +437,96 @@
 
     <div id="toast"></div>
 
-    <script>
+        <script>
     window.onload = () => {
         const { jsPDF } = window.jspdf;
         let salesChartInstance = null; // Hold the chart instance
 
         const app = {
-            // ... (Configuration, State, other UI refs remain the same)
-            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
+            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com', // YOUR_CLIENT_ID
+            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', // YOUR_API_KEY
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
             state: { inventory: [], transactions: [] },
             ui: {},
+            gapiInitialized: false, // Flag to track GAPI client initialization
 
-            init() { /* ... unchanged ... */ 
+            init() {
                 this.cacheDOMElements();
-                gapi.load('client', this.initializeGapiClient.bind(this));
+                // Initialize GAPI client first
+                gapi.load('client', async () => {
+                    try {
+                        await gapi.client.init({
+                            apiKey: this.API_KEY,
+                            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                        });
+                        this.gapiInitialized = true;
+                        console.log("GAPI client initialized.");
+                        // Now that GAPI client is ready, initialize token client
+                        this.initializeTokenClient();
+                        this.ui.signinBtn.disabled = false;
+                        this.ui.authStatus.textContent = 'Ready. Please sign in.';
+                    } catch (error) {
+                        console.error("Error initializing GAPI client:", error);
+                        this.ui.authStatus.textContent = 'Error initializing. Please refresh.';
+                        this.showToast('Error initializing Google services. Please refresh.', 'error');
+                    }
+                });
+            },
+
+            initializeTokenClient() {
                 this.tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: this.CLIENT_ID,
                     scope: this.SCOPES,
-                    callback: this.handleAuthResponse.bind(this),
+                    callback: this.handleAuthResponse.bind(this), // This will be called after user grants consent
                 });
-                this.ui.signinBtn.addEventListener('click', () => this.tokenClient.requestAccessToken({prompt: 'consent'}));
+                this.ui.signinBtn.addEventListener('click', () => {
+                    if (this.gapiInitialized && this.tokenClient) {
+                        this.tokenClient.requestAccessToken({ prompt: 'consent' });
+                    } else {
+                        this.showToast('Google services not ready. Please wait or refresh.', 'error');
+                    }
+                });
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
-            async initializeGapiClient() { /* ... unchanged ... */ 
-                await gapi.client.init({
-                    apiKey: this.API_KEY,
-                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-                });
-                this.ui.signinBtn.disabled = false;
-                this.ui.authStatus.textContent = 'Ready. Please sign in.';
-            },
-            async handleAuthResponse(response) { /* ... unchanged ... */ 
+            
+            async handleAuthResponse(response) {
                 if (response.error) {
-                    this.showToast(`Error: ${response.error}`, 'error');
+                    this.showToast(`Authentication Error: ${response.error_description || response.error}`, 'error');
+                    console.error("Authentication error:", response);
+                    // Potentially reset UI or guide user
+                    this.ui.authStatus.textContent = 'Authentication failed. Please try again.';
+                    document.getElementById('login-screen').style.display = 'flex';
+                    document.getElementById('app-container').classList.remove('visible');
                     return;
                 }
+                // Token is now available via gapi.client.getToken()
+                this.ui.authStatus.textContent = 'Authenticated. Loading data...';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-container').classList.add('visible');
+                
                 await this.updateUserProfile();
-                await this.loadData();
-                this.startAppLogic();
+                await this.loadData(); // Ensure data is loaded before starting app logic
+                this.startAppLogic(); // Now safe to start app logic
             },
+
             signOut() { /* ... unchanged ... */ 
                 const token = gapi.client.getToken();
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token, () => {
                         gapi.client.setToken('');
                         this.driveFileId = null;
+                        this.appFolderId = null; // Reset appFolderId on sign out
+                        this.state = { inventory: [], transactions: [] }; // Clear state
+                        if (salesChartInstance) { // Destroy chart on sign out
+                            salesChartInstance.destroy();
+                            salesChartInstance = null;
+                        }
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-container').classList.remove('visible');
+                        this.ui.authStatus.textContent = 'Please sign in.'; // Update auth status on login screen
                         this.showToast('Signed out successfully.');
                     });
                 }
@@ -553,7 +589,7 @@
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
-                        await this._findOrCreateAppFolder();
+                        await this._findOrCreateAppFolder(); // Ensure folder is created if no data file
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
@@ -577,6 +613,13 @@
 
                 try {
                     if (!this.appFolderId) await this._findOrCreateAppFolder();
+                     if (!this.appFolderId) { // Double check, crucial for first save
+                        this.showToast("Could not find or create app folder on Drive. Cannot save.", "error");
+                        this.isSaving = false;
+                        this.ui.manualSaveBtn.disabled = false;
+                        this.ui.manualSaveBtn.textContent = originalBtnText;
+                        return;
+                    }
                     const dataToSave = JSON.stringify(this.state, null, 2);
                     const boundary = '-------314159265358979323846';
                     const delimiter = "\r\n--" + boundary + "\r\n";
@@ -591,7 +634,9 @@
                         request = gapi.client.request({'path': 'https://www.googleapis.com/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'},'body': multipartRequestBody});
                     }
                     const response = await request;
-                    if (!this.driveFileId) { this.driveFileId = response.result.id; }
+                    if (!this.driveFileId && response.result && response.result.id) { 
+                        this.driveFileId = response.result.id; 
+                    }
                     this.showToast("Data saved successfully!", "success");
                 } catch (e) { 
                     console.error("Error saving data:", e); 
@@ -603,7 +648,7 @@
                 }
             },
 
-            cacheDOMElements() { // MODIFIED
+            cacheDOMElements() { /* ... unchanged ... */ 
                 this.ui = {
                     signinBtn: document.getElementById('signin-btn'),
                     signoutBtn: document.getElementById('signout-btn'),
@@ -623,7 +668,7 @@
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
-                    analytics: { /* ... unchanged ... */ 
+                    analytics: { 
                         totalProfit: document.getElementById('total-profit'),
                         totalRevenue: document.getElementById('total-revenue'),
                         avgMargin: document.getElementById('avg-margin'),
@@ -641,7 +686,7 @@
                         filteredSalesHeading: document.getElementById('filtered-sales-heading'),
                         filteredProfitHeading: document.getElementById('filtered-profit-heading'),
                     },
-                    transactions: { /* ... unchanged ... */ 
+                    transactions: { 
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
                         purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
                         transactionsTab: document.getElementById('transactions'),
@@ -652,10 +697,10 @@
                         exportExcelBtn: document.getElementById('export-excel-btn'),
                         transactionSortOrder: document.getElementById('transaction-sort-order'),
                     },
-                    profit: { /* ... unchanged ... */ 
+                    profit: { 
                         profitDetailsBody: document.querySelector('#profit-details-table tbody'),
                     },
-                    credit: { /* ... unchanged ... */ 
+                    credit: { 
                         inventorySaleForm: document.getElementById('credit-inventory-sale-form'),
                         inventoryItemsContainer: document.getElementById('credit-inventory-items-container'),
                         addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'),
@@ -672,7 +717,7 @@
                         dashboardTotalProfit: document.getElementById('dashboard-total-profit'),
                         dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
                         dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'),
-                        salesTrendChartCanvas: document.getElementById('salesTrendChart'), // ADDED
+                        salesTrendChartCanvas: document.getElementById('salesTrendChart'), 
                     }
                 };
             },
@@ -724,8 +769,8 @@
                     .map(item => `<option value="${item.particulars} (${item.quantity} left)"></option>`)
                     .join('');
             },
-            renderAnalytics() { // MODIFIED
-                const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => { /* ... */ 
+            renderAnalytics() { /* ... unchanged (already includes chart rendering call) ... */ 
+                const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => { 
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
                     if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
@@ -775,11 +820,11 @@
                         : '<li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>';
                     
                     this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
-                    this.renderSalesTrendChart(); // ADDED: Call to render chart
+                    this.renderSalesTrendChart(); 
                 }
             },
             
-            prepareSalesChartData(days = 7) { // ADDED
+            prepareSalesChartData(days = 7) { /* ... unchanged ... */ 
                 const labels = [];
                 const data = new Array(days).fill(0);
                 const today = new Date();
@@ -795,12 +840,12 @@
                     if (transaction.type === 'Sale') {
                         const transactionDate = new Date(transaction.date);
                         transactionDate.setHours(0,0,0,0);
-                        const diffTime = today.getTime() - transactionDate.getTime(); // Use getTime() for reliable difference
+                        const diffTime = today.getTime() - transactionDate.getTime(); 
                         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
                         if (diffDays >= 0 && diffDays < days) {
                             const index = (days - 1) - diffDays;
-                            if (index >= 0 && index < data.length) { // Ensure index is within bounds
+                            if (index >= 0 && index < data.length) { 
                                 data[index] += transaction.total;
                             }
                         }
@@ -808,8 +853,7 @@
                 });
                 return { labels, data };
             },
-
-            renderSalesTrendChart() { // ADDED
+            renderSalesTrendChart() { /* ... unchanged ... */ 
                 if (!this.ui.operations.salesTrendChartCanvas) {
                     console.warn("Sales trend chart canvas not found.");
                     return;
@@ -831,7 +875,7 @@
                             label: 'Daily Sales',
                             data: salesData.data,
                             borderColor: cssVariables.getPropertyValue('--accent-teal').trim(),
-                            backgroundColor: cssVariables.getPropertyValue('--accent-teal').trim() + '33', // Teal with transparency
+                            backgroundColor: cssVariables.getPropertyValue('--accent-teal').trim() + '33', 
                             tension: 0.3,
                             fill: true,
                             pointBackgroundColor: cssVariables.getPropertyValue('--accent-teal').trim(),
