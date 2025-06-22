@@ -1046,7 +1046,7 @@
                 const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
-                    if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
+                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStock.push(item);
                     return acc;
                 }, { cost: 0, units: 0, lowStock: [] });
 
