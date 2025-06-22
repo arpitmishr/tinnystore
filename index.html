@@ -10,7 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Added Chart.js -->
+    <!-- Removed Chart.js from initial load as it's not needed for the login page -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 
     <style>
         :root {
@@ -44,6 +45,10 @@
             --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
             --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
             --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         html { height: 100%; scroll-behavior: smooth; }
@@ -134,7 +139,7 @@
         
         .card input[type="text"], .card input[type="number"], .card input[type="file"], .card input[type="date"], .card select {
             width: 100%; padding: 12px 15px; border: 1px solid var(--border-dark-primary);
-            border-radius: var(--border-radius-md); box-sizing: border-box; font-size: 0.95rem;
+            border-radius: var(--border-radius-md); /* box-sizing: border-box; */ font-size: 0.95rem; /* box-sizing handled globally */
             font-family: 'Roboto', sans-serif; background-color: var(--surface-dark-alt);
             color: var(--text-on-dark-primary);
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -349,6 +354,39 @@
             font-weight: 600;
             color: var(--accent-yellow);
             margin-left: 10px;
+        }
+
+        /* Responsive adjustments for login screen on smaller devices */
+        @media (max-width: 400px) {
+            #login-screen {
+                padding: 1rem; /* Reduce outer padding */
+            }
+            .login-box {
+                padding: 2rem 1.5rem; /* Reduce internal padding */
+            }
+            .login-box .store-logo {
+                font-size: 2rem; /* Reduce logo size */
+            }
+            .login-box h1 {
+                font-size: 1.5rem; /* Reduce heading size */
+            }
+            .login-box p { /* This targets the first p tag primarily */
+                font-size: 0.85rem; /* Adjust paragraph font size */
+                margin-bottom: 1rem; /* Adjust margin for the first p */
+            }
+            /* If the second p tag also needs adjustment, it can be targeted more specifically or its inline styles ensure it behaves */
+            .login-box p:nth-of-type(2) { /* Example for second p if needed, it already has inline styles */
+                 margin-bottom: 1.5rem; /* Adjusted from 2rem if needed */
+            }
+            #signin-btn {
+                padding: 12px 20px; /* Adjust button padding */
+                font-size: 0.9rem; /* Adjust button font size */
+                gap: 0.5rem; /* Reduce gap for smaller button */
+            }
+            #signin-btn svg {
+                width: 20px; /* Slightly smaller Google icon */
+                height: 20px;
+            }
         }
 
 
@@ -682,9 +720,18 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- If Chart.js is needed, consider loading it dynamically or just before rendering the chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script> <!-- Example of loading a specific version -->
+
 
     <script>
     window.onload = () => {
+        // It's good practice to ensure Chart.js is available if you plan to use it.
+        // For dynamic loading, you'd have a more complex setup.
+        // For now, if #salesTrendChart exists, we assume Chart.js should be available.
+        // The script tag for Chart.js was moved to the bottom, just before this main script.
+        // This ensures it loads but doesn't block initial page rendering as much as in <head>.
+
         const { jsPDF } = window.jspdf;
 
         const app = {
@@ -757,6 +804,12 @@
                 this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                 
                 this.renderAll();
+                 // Initialize chart after app logic starts and data is potentially loaded
+                if (typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart) {
+                    this.renderSalesTrendChart();
+                } else if (this.ui.operations.salesTrendChart) {
+                    console.warn("Chart.js is not loaded, but chart canvas exists. Sales trend chart will not be rendered.");
+                }
             },
             async _findOrCreateAppFolder() { 
                 if (this.appFolderId) return this.appFolderId;
@@ -932,7 +985,7 @@
                         dashboardTotalProfit: document.getElementById('dashboard-total-profit'),
                         dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
                         dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'),
-                        salesTrendChart: document.getElementById('salesTrendChart'), // Added
+                        salesTrendChart: document.getElementById('salesTrendChart'), 
                     }
                 };
             },
@@ -958,6 +1011,9 @@
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
+                if (typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart && document.getElementById('operations').classList.contains('active')) {
+                     this.renderSalesTrendChart(); // Re-render chart if operations tab is active
+                }
             },
 
             renderInventory() { 
@@ -990,7 +1046,7 @@
                 const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
-                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStock.push(item);
+                    if (item.quantity > 0 && item.quantity <= 5) acc.lowStock.push(item);
                     return acc;
                 }, { cost: 0, units: 0, lowStock: [] });
 
@@ -1038,10 +1094,17 @@
                     
                     this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
                 }
-                this.renderSalesTrendChart(); // Call chart rendering
             },
             
             renderSalesTrendChart() {
+                if (typeof Chart === 'undefined') {
+                    console.warn("Chart.js is not defined. Cannot render sales trend chart.");
+                    // Optionally, display a message in the chart container
+                    if(this.ui.operations.salesTrendChart) {
+                        this.ui.operations.salesTrendChart.parentElement.innerHTML = '<p style="text-align:center; color: var(--text-on-dark-secondary); padding-top: 20px;">Chart library not loaded.</p>';
+                    }
+                    return;
+                }
                 if (!this.ui.operations.salesTrendChart) {
                     console.warn("Sales trend chart canvas not found.");
                     return;
@@ -1502,7 +1565,9 @@
                 };
 
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
-                this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
+                if (this.ui.operations.dashboardDownloadLowStockBtn) { // Ensure element exists
+                    this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
+                }
 
 
                 this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { 
@@ -1601,7 +1666,7 @@
                 this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { 
                     this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active');
                     this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
-                    if (button.dataset.tab === 'operations') { // Re-render chart if operations tab becomes active
+                    if (button.dataset.tab === 'operations' && typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart) { 
                         this.renderSalesTrendChart();
                     }
                 }));
