@@ -964,7 +964,7 @@
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
                 this.ui.inventoryTableBody.innerHTML = this.state.inventory.length
                     ? this.state.inventory.map(item => {
-                        const isLowStock = item.quantity > 0 && item.quantity <= 5;
+                        const isLowStock = item.quantity > 0 && item.quantity <= 3;
                         const rowClass = isLowStock ? 'is-low-stock' : '';
                         const badgeHTML = isLowStock ? ` <span class="low-stock-badge">Low</span>` : '';
 
