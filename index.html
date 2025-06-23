@@ -96,7 +96,14 @@
         .user-profile span { font-weight: 500; font-size: 0.9rem; color: var(--text-on-dark-primary); }
         #signout-btn { font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent; border: 1px solid var(--accent-yellow); border-radius: var(--border-radius-md); padding: 7px 12px; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
         #signout-btn:hover { background-color: var(--accent-yellow); color: var(--surface-dark); }
-        .low-stock-alert { background-color: var(--accent-yellow); color: var(--surface-dark); padding: 7px 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; font-weight: 600; box-shadow: var(--shadow-subtle); display: none; margin-right: 15px; }
+        .low-stock-alert { 
+            background-color: var(--accent-yellow); color: var(--surface-dark); 
+            padding: 7px 14px; border-radius: var(--border-radius-md); 
+            font-size: 0.85rem; font-weight: 600; 
+            box-shadow: var(--shadow-subtle); 
+            display: none; /* Kept as none by default, JS will not show it anymore */
+            margin-right: 15px; 
+        }
         #low-stock-counter { display: inline-block; background-color: rgba(0,0,0,0.3); color: white; border-radius: 50%; min-width: 24px; height: 24px; line-height: 24px; text-align: center; font-weight: 700; margin-left: 8px; font-size: 0.8rem; }
 
         .tab-nav {
@@ -204,12 +211,48 @@
         .metric-card h3 { margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.85rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         .metric-card p { font-size: 2rem; margin: 0; color: var(--accent-yellow); font-weight: 700; }
         .metric-card #total-profit, .metric-card #total-revenue { color: var(--accent-teal);}
-        #low-stock-items ul { list-style-type: none; padding: 0; text-align: left; }
-        #low-stock-items li { padding: 10px 5px; border-bottom: 1px solid var(--border-dark-primary); font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
-        #low-stock-items li:last-child { border-bottom: none; }
-        #low-stock-items li .low-stock-qty { color: var(--accent-yellow); font-weight: 600; }
-        #low-stock-items.metric-card { background-color: var(--surface-dark-alt); }
-        #low-stock-items.metric-card h3 { color: var(--accent-yellow); }
+        
+        /* Styles for categorized low stock in Analytics Tab */
+        #low-stock-items { background-color: var(--surface-dark-alt); padding-bottom: 15px; /* Ensure padding if all content is dynamic */ }
+        #low-stock-items.metric-card h3 { color: var(--accent-yellow); } /* Original title, if any, or general h3s inside */
+        .categorized-low-stock-container .low-stock-category-group { margin-bottom: 15px; }
+        .categorized-low-stock-container .low-stock-category-group:last-child { margin-bottom: 0; }
+        .low-stock-category-title { /* Handled by inline styles for now or can be a class */
+            color: var(--accent-teal); 
+            font-size: 1rem; /* Adjust as needed */
+            font-weight: 600;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-dark-primary);
+        }
+        .categorized-low-stock-container .low-stock-category-group:first-child .low-stock-category-title { margin-top: 0; }
+
+        .low-stock-items-in-category {
+            list-style-type: none;
+            padding-left: 5px; /* Slightly indent items under category */
+            margin-top: 5px;
+        }
+        .low-stock-items-in-category li {
+            padding: 8px 5px;
+            border-bottom: 1px dashed var(--border-dark-primary); /* Lighter border for items */
+            font-size: 0.9rem;
+            color: var(--text-on-dark-secondary);
+        }
+        .low-stock-items-in-category li:last-child {
+            border-bottom: none;
+        }
+        .low-stock-items-in-category li .low-stock-qty {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+         #low-stock-items .metric-card p { /* For the "No low stock items" text */
+            font-size: 0.95rem; /* Match item font size */
+            color: var(--text-on-dark-secondary);
+            text-align: center;
+            padding-top: 10px;
+        }
+
 
         #toast { position: fixed; bottom: -120px; right: 25px; padding: 14px 25px; border-radius: var(--border-radius-md); color: var(--surface-dark); font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-strong); transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease; z-index: 9999; opacity: 0; }
         #toast.show { bottom: 25px; opacity: 1; }
@@ -317,7 +360,7 @@
             max-height: 350px; 
             overflow-y: auto;
         }
-        #dashboard-low-stock-items-ul li {
+        #dashboard-low-stock-items-ul li { /* Default for items */
             display: flex;
             align-items: center;
             padding: 12px 5px; 
@@ -325,7 +368,24 @@
             transition: background-color 0.2s;
         }
         #dashboard-low-stock-items-ul li:last-child { border-bottom: none; }
-        #dashboard-low-stock-items-ul li:hover { background-color: var(--surface-dark-alt); }
+        #dashboard-low-stock-items-ul li:not(.category-header-li):hover { background-color: var(--surface-dark-alt); }
+        
+        #dashboard-low-stock-items-ul li.category-header-li { /* Style for category headers */
+            display: block; /* Override flex for header */
+            padding: 10px 5px 5px; 
+            background-color: var(--surface-dark-alt); 
+            border-bottom: 1px solid var(--border-dark-primary);
+            cursor: default;
+        }
+         #dashboard-low-stock-items-ul li.category-header-li h5 {
+            margin: 0; 
+            color: var(--accent-pink); 
+            font-size: 1rem; 
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+
         .item-icon-placeholder {
             width: 40px; height: 40px;
             background-color: var(--accent-pink); 
@@ -398,7 +458,7 @@
         @media (max-width: 900px) {
             .main-columns, .card .cosmetic-form-grid, .card .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
             header { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
-            .low-stock-alert { margin: 10px auto; }
+            /* .low-stock-alert { margin: 10px auto; } */ /* Commented out as it's now hidden */
             .dashboard-overview-grid { grid-template-columns: 1fr; } 
         }
         @media (max-width: 800px) {
@@ -433,6 +493,7 @@
 
     <div id="app-container">
         <header>
+            <!-- Low stock alert container is now permanently hidden by CSS and JS logic removed -->
             <div id="low-stock-alert-container" class="low-stock-alert">
                 Low Stock: <span id="low-stock-counter">0</span>
             </div>
@@ -628,7 +689,8 @@
                         <button class="btn btn-success btn-small" id="download-low-stock-btn" style="float: right; margin-top: -5px;">Download List</button>
                     </h2>
                     <div id="low-stock-items" class="metric-card">
-                        <ul><li>No low stock items.</li></ul>
+                        <!-- Content will be rendered by JS -->
+                         <p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p>
                     </div>
                 </section>
             </div>
@@ -943,8 +1005,8 @@
                         inventoryCost: document.getElementById('total-inventory-cost'),
                         totalUnits: document.getElementById('total-units'),
                         lowStockItems: document.getElementById('low-stock-items'),
-                        lowStockAlertContainer: document.getElementById('low-stock-alert-container'),
-                        lowStockCounter: document.getElementById('low-stock-counter'),
+                        // lowStockAlertContainer: document.getElementById('low-stock-alert-container'), // No longer directly managed for visibility
+                        // lowStockCounter: document.getElementById('low-stock-counter'), // No longer directly managed for visibility
                         downloadLowStockBtn: document.getElementById('download-low-stock-btn'),
                         startDateInput: document.getElementById('analytics-start-date'),
                         endDateInput: document.getElementById('analytics-end-date'),
@@ -1004,6 +1066,19 @@
                 return match ? match[1].trim() : value.trim();
             },
 
+            getCategoryFromParticulars(particulars) {
+                const pTrimmed = particulars.trim();
+                const parts = pTrimmed.split(' ');
+                if (parts.length > 1) {
+                    const lastPart = parts[parts.length - 1];
+                    // Check if the last part is a number (integer or decimal)
+                    if (/^\d+(\.\d+)?$/.test(lastPart)) { 
+                        return parts.slice(0, -1).join(' ');
+                    }
+                }
+                return pTrimmed; // If not "NAME ... NUMBER", the whole thing is the category.
+            },
+
             renderAll() {
                 this.renderInventory();
                 this.renderAnalytics(); 
@@ -1043,12 +1118,68 @@
             },
 
             renderAnalytics() { 
-                const { cost, units, lowStock } = this.state.inventory.reduce((acc, item) => {
+                const { cost, units, lowStockItemsArr } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     acc.units += item.quantity;
-                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStock.push(item);
+                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStockItemsArr.push(item); // Low stock condition
                     return acc;
-                }, { cost: 0, units: 0, lowStock: [] });
+                }, { cost: 0, units: 0, lowStockItemsArr: [] });
+
+                lowStockItemsArr.sort((a, b) => a.particulars.localeCompare(b.particulars));
+
+                const categorizedLowStock = {};
+                if (lowStockItemsArr.length > 0) {
+                    lowStockItemsArr.forEach(item => {
+                        const category = this.getCategoryFromParticulars(item.particulars);
+                        if (!categorizedLowStock[category]) {
+                            categorizedLowStock[category] = [];
+                        }
+                        categorizedLowStock[category].push(item);
+                    });
+                }
+                const sortedCategories = Object.keys(categorizedLowStock).sort((a, b) => a.localeCompare(b));
+                
+                // For Analytics Tab (#low-stock-items)
+                let analyticsLowStockHtml = '';
+                if (sortedCategories.length > 0) {
+                    analyticsLowStockHtml = '<div class="categorized-low-stock-container">';
+                    sortedCategories.forEach(category => {
+                        analyticsLowStockHtml += `<div class="low-stock-category-group">`;
+                        analyticsLowStockHtml += `<h4 class="low-stock-category-title">${category.toUpperCase()}</h4>`;
+                        analyticsLowStockHtml += `<ul class="low-stock-items-in-category">`;
+                        categorizedLowStock[category].forEach(item => {
+                            analyticsLowStockHtml += `<li>${item.particulars} - <span class="low-stock-qty">${item.quantity} left</span></li>`;
+                        });
+                        analyticsLowStockHtml += `</ul></div>`;
+                    });
+                    analyticsLowStockHtml += '</div>';
+                } else {
+                    analyticsLowStockHtml = '<p style="text-align:center; color: var(--text-on-dark-secondary); padding-top: 10px;">No low stock items.</p>';
+                }
+                this.ui.analytics.lowStockItems.innerHTML = analyticsLowStockHtml;
+                
+                // For Operations Tab Dashboard (#dashboard-low-stock-items-ul)
+                let dashboardLowStockHtml = '';
+                if (sortedCategories.length > 0) {
+                    sortedCategories.forEach(category => {
+                        dashboardLowStockHtml += `<li class="category-header-li"><h5>${category}</h5></li>`;
+                        categorizedLowStock[category].forEach(item => {
+                            dashboardLowStockHtml += `<li>
+                                <div class="item-icon-placeholder"></div>
+                                <div class="item-details">
+                                    <span class="item-name">${item.particulars}</span>
+                                    <span class="item-sub-detail">Cost: ₹${item.rate.toFixed(2)} / Qty: <span class="low-stock-qty">${item.quantity}</span></span>
+                                </div>
+                                <span class="item-stock-level">${item.quantity} left</span>
+                            </li>`;
+                        });
+                    });
+                } else {
+                    dashboardLowStockHtml = '<li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>';
+                }
+                if (this.ui.operations.dashboardLowStockItemsUl) {
+                    this.ui.operations.dashboardLowStockItemsUl.innerHTML = dashboardLowStockHtml;
+                }
 
                 const sales = this.state.transactions.filter(t => t.type === 'Sale');
                 const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
@@ -1060,39 +1191,22 @@
                 this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
                 this.ui.analytics.inventoryCost.textContent = `₹${cost.toFixed(2)}`;
                 this.ui.analytics.totalUnits.textContent = units;
-                this.ui.analytics.lowStockItems.innerHTML = lowStock.length > 0
-                    ? `<ul>${lowStock.map(item => `<li>${item.particulars} - <span class="low-stock-qty">${item.quantity} left</span></li>`).join('')}</ul>`
-                    : '<ul><li>No low stock items.</li></ul>';
-
-                const lowStockCount = lowStock.length;
+                
+                const lowStockCount = lowStockItemsArr.length;
                 this.ui.analytics.downloadLowStockBtn.disabled = lowStockCount === 0;
                 
-                if (lowStockCount > 0) {
-                    this.ui.analytics.lowStockCounter.textContent = lowStockCount;
-                    this.ui.analytics.lowStockAlertContainer.style.display = 'flex';
-                } else {
-                    this.ui.analytics.lowStockAlertContainer.style.display = 'none';
-                }
+                // Header low stock alert is removed, so no need to update its counter or visibility.
+                // The #low-stock-alert-container div will remain hidden by its CSS `display: none;`.
 
                 if (this.ui.operations.dashboardTotalUnits) { 
                     this.ui.operations.dashboardTotalUnits.textContent = units;
-                    this.ui.operations.dashboardLowStockCount.textContent = lowStockCount;
+                    this.ui.operations.dashboardLowStockCount.textContent = lowStockCount; // This is the count for the overview card
                     this.ui.operations.dashboardInventoryValue.textContent = `₹${cost.toFixed(2)}`;
                     this.ui.operations.dashboardTotalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`;
                     this.ui.operations.dashboardTotalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
-
-                    this.ui.operations.dashboardLowStockItemsUl.innerHTML = lowStock.length > 0
-                        ? lowStock.map(item => `<li>
-                            <div class="item-icon-placeholder"></div>
-                            <div class="item-details">
-                                <span class="item-name">${item.particulars}</span>
-                                <span class="item-sub-detail">Cost: ₹${item.rate.toFixed(2)} / Qty: <span class="low-stock-qty">${item.quantity}</span></span>
-                            </div>
-                            <span class="item-stock-level">${item.quantity} left</span>
-                        </li>`).join('')
-                        : '<li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>';
-                    
-                    this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
+                    if(this.ui.operations.dashboardDownloadLowStockBtn) {
+                        this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
+                    }
                 }
             },
             
@@ -1554,8 +1668,9 @@
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
 
                 const downloadLowStockLogic = () => {
+                    // This logic uses a threshold of 5, while display uses 3. This was existing behavior.
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
-                    if (lowStockItems.length === 0) { this.showToast("There are no low stock items to download.", "error"); return; }
+                    if (lowStockItems.length === 0) { this.showToast("There are no low stock items (qty <= 5) to download.", "info"); return; }
                     const dataForExcel = lowStockItems.map(item => ({ 'Particulars': item.particulars, 'Quantity Remaining': item.quantity, 'Last Cost Rate': item.rate.toFixed(2) }));
                     const ws = XLSX.utils.json_to_sheet(dataForExcel);
                     const wb = XLSX.utils.book_new();
@@ -1565,7 +1680,7 @@
                 };
 
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
-                if (this.ui.operations.dashboardDownloadLowStockBtn) { // Ensure element exists
+                if (this.ui.operations.dashboardDownloadLowStockBtn) { 
                     this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
                 }
 
@@ -1580,8 +1695,8 @@
                     const costRate = parseFloat(form.querySelector('#credit-cosmetic-cost-rate').value);
                     const sellRate = parseFloat(form.querySelector('#credit-cosmetic-sell-rate').value);
                     
-                    if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0) {
-                        this.showToast("Please fill all fields correctly for the cosmetic credit sale.", "error"); return;
+                    if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0 || isNaN(saleDate.getTime())) {
+                        this.showToast("Please fill all fields correctly (including a valid date) for the cosmetic credit sale.", "error"); return;
                     }
 
                     const cosmeticItem = { particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate };
