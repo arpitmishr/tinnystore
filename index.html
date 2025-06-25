@@ -150,7 +150,7 @@
         .card input[type="file"] { background-color: var(--surface-dark-alt); border-color: var(--accent-teal); color: var(--accent-teal); cursor: pointer; }
         .card input::placeholder { color: var(--text-on-dark-placeholder); opacity: 1; }
         #settings .card input[type="file"] { margin-top: 15px; }
-        .card .controls-grid label, .card .form-row label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
+        .card .controls-grid label, .card .form-row label, #holiday-management-section label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
         
         #add-sale-item-btn, #add-purchase-item-btn, #add-credit-inventory-item-btn {
             background-color: transparent; color: var(--accent-teal); border: 2px dashed var(--accent-teal);
@@ -464,6 +464,24 @@
             margin-left: 10px;
             white-space: nowrap; /* Prevent "X left" from wrapping */
         }
+        
+        /* Holiday Management Styles */
+        #holiday-management-section { margin-top: 20px; }
+        #holiday-management-section .holiday-input-group { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 15px; }
+        #holiday-management-section .holiday-input-group input[type="date"] { flex-grow: 1; }
+        #holiday-list { list-style-type: none; padding-left: 0; margin-top: 10px; max-height: 200px; overflow-y: auto;}
+        #holiday-list li {
+            background-color: var(--surface-dark-alt);
+            padding: 10px 15px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            color: var(--text-on-dark-secondary);
+        }
+         #holiday-list li .holiday-date-text { color: var(--text-on-dark-primary); }
 
         /* Responsive adjustments */
         @media (max-width: 400px) {
@@ -492,7 +510,12 @@
             .controls-grid .btn { margin-top: 10px; }
             header .header-title-group h1 { font-size: 1.4rem; }
             .card h2 { font-size: 1.15rem; }
-             .overview-value { font-size: 1.8rem; }
+            .overview-value { font-size: 1.8rem; }
+            #sales-trend-controls { flex-direction: column; align-items: stretch;}
+            #sales-trend-custom-range-inputs { flex-direction: column; }
+            #holiday-management-section .holiday-input-group { flex-direction: column; align-items: stretch; }
+            #holiday-management-section .holiday-input-group button { width: 100%; margin-top: 5px; }
+
         }
 
     </style>
@@ -560,7 +583,21 @@
 
                 <section class="dashboard-main-area">
                     <div class="dashboard-chart-container card">
-                        <h2>Sales Trend (Last 7 Days)</h2>
+                        <h2>Sales Trend</h2>
+                         <div id="sales-trend-controls" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <label for="sales-trend-mode" style="margin-bottom: 0; color: var(--text-on-dark-secondary);">View:</label>
+                            <select id="sales-trend-mode" style="padding: 8px 10px; font-size: 0.9rem; max-width: 150px;">
+                                <option value="last7days" selected>Last 7 Days</option>
+                                <option value="currentMonth">Current Month</option>
+                                <option value="customRange">Custom Range</option>
+                            </select>
+                            <div id="sales-trend-custom-range-inputs" style="display:none; gap: 10px; align-items: center;">
+                                <input type="date" id="sales-trend-start-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                                <span style="color: var(--text-on-dark-secondary);">-</span>
+                                <input type="date" id="sales-trend-end-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                            </div>
+                            <button id="refresh-sales-trend-btn" class="btn btn-secondary btn-small" style="margin-left:auto;">Refresh</button>
+                        </div>
                         <div style="flex-grow: 1; position: relative; min-height: 250px; padding-bottom: 15px;">
                             <canvas id="salesTrendChart"></canvas>
                         </div>
@@ -789,6 +826,22 @@
                          <p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-top: 10px;">Manually save all current data to your Google Drive. The app also saves automatically after you make changes.</p>
                     </div>
                 </section>
+                <section class="card" id="holiday-management-section">
+                    <h2>Holiday Management</h2>
+                    <p>Mark specific dates as holidays. This information is saved with your data.</p>
+                    <div class="holiday-input-group">
+                        <div>
+                            <label for="holiday-date">Select Holiday Date:</label>
+                            <input type="date" id="holiday-date">
+                        </div>
+                        <button id="add-holiday-btn" class="btn btn-primary btn-small" style="width:auto; align-self: flex-end;">Add Holiday</button>
+                    </div>
+                    <h3>Marked Holidays:</h3>
+                    <ul id="holiday-list">
+                        <!-- Holidays will be listed here -->
+                        <li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>
+                    </ul>
+                </section>
             </div>
 
             <section class="card"><h2>Current Inventory</h2><div class="table-container">
@@ -816,7 +869,7 @@
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { inventory: [], transactions: [] },
+            state: { inventory: [], transactions: [], holidays: [] }, // Added holidays to state
             ui: {},
             salesChartInstance: null, 
 
@@ -880,7 +933,7 @@
                 
                 this.renderAll();
                 if (typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart) {
-                    this.renderSalesTrendChart();
+                    this.renderSalesTrendChart(); // Initial render with default (last 7 days)
                 } else if (this.ui.operations.salesTrendChart) {
                     console.warn("Chart.js is not loaded, but chart canvas exists. Sales trend chart will not be rendered.");
                 }
@@ -920,17 +973,20 @@
                            });
                         }
 
-                        const defaultState = { inventory: [], transactions: [] };
+                        const defaultState = { inventory: [], transactions: [], holidays: [] };
                         this.state = { ...defaultState, ...loadedState };
+                        this.state.holidays = loadedState.holidays || []; // Ensure holidays array exists
+
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
+                        this.state.holidays = []; // Initialize holidays for fresh start
                         await this._findOrCreateAppFolder(); // Ensure folder exists for new data
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
                     this.showToast("Failed to load data. Starting fresh.", "error");
-                    this.state = { inventory: [], transactions: [] }; 
+                    this.state = { inventory: [], transactions: [], holidays: [] }; 
                 }
             },
             triggerAutoSave() { 
@@ -1056,6 +1112,16 @@
                         dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
                         dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'),
                         salesTrendChart: document.getElementById('salesTrendChart'), 
+                        salesTrendModeSelect: document.getElementById('sales-trend-mode'),
+                        salesTrendCustomRangeInputs: document.getElementById('sales-trend-custom-range-inputs'),
+                        salesTrendStartDateInput: document.getElementById('sales-trend-start-date'),
+                        salesTrendEndDateInput: document.getElementById('sales-trend-end-date'),
+                        refreshSalesTrendBtn: document.getElementById('refresh-sales-trend-btn'),
+                    },
+                    settings: {
+                        holidayDateInput: document.getElementById('holiday-date'),
+                        addHolidayBtn: document.getElementById('add-holiday-btn'),
+                        holidayList: document.getElementById('holiday-list'),
                     }
                 };
             },
@@ -1101,6 +1167,17 @@
                     return "Other Items"; // Fallback category
                 }
             },
+            
+            _getFirstDayOfMonth(date) {
+                return new Date(date.getFullYear(), date.getMonth(), 1);
+            },
+            _getLastDayOfMonth(date) {
+                return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            },
+            _getDaysInMonth(year, month) { // month is 0-indexed
+                return new Date(year, month + 1, 0).getDate();
+            },
+
 
             renderAll() {
                 this.renderInventory();
@@ -1109,6 +1186,7 @@
                 this.renderTransactions();
                 this.renderProfit();
                 this.renderCreditorList(); 
+                this.renderHolidays();
                 if (typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart && document.getElementById('operations').classList.contains('active')) {
                      this.renderSalesTrendChart(); 
                 }
@@ -1240,6 +1318,87 @@
                 }
             },
             
+            _prepareSalesDataForMode(mode, customStartDate, customEndDate) {
+                let startDate, endDate;
+                let labels = [];
+                const salesDataAggregated = {};
+                let titleSuffix = "";
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (mode === 'last7days') {
+                    titleSuffix = "Last 7 Days";
+                    endDate = new Date(today);
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 6);
+
+                    for (let i = 0; i < 7; i++) {
+                        const date = new Date(startDate);
+                        date.setDate(startDate.getDate() + i);
+                        const dateString = date.toISOString().split('T')[0];
+                        labels.push(this.formatDateDDMMYYYY(date).substring(0, 5)); // DD/MM
+                        salesDataAggregated[dateString] = 0;
+                    }
+                } else if (mode === 'currentMonth') {
+                    titleSuffix = "Current Month";
+                    startDate = this._getFirstDayOfMonth(today);
+                    endDate = this._getLastDayOfMonth(today);
+                    const daysInMonth = endDate.getDate();
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const date = new Date(today.getFullYear(), today.getMonth(), day);
+                        const dateString = date.toISOString().split('T')[0];
+                        labels.push(String(day)); // Day number
+                        salesDataAggregated[dateString] = 0;
+                    }
+                } else if (mode === 'customRange') {
+                    if (!customStartDate || !customEndDate) {
+                        this.showToast("Please select both start and end dates for custom range.", "error");
+                        return this._prepareSalesDataForMode('last7days'); // Fallback to default
+                    }
+                    startDate = new Date(customStartDate);
+                    startDate.setHours(0,0,0,0);
+                    endDate = new Date(customEndDate);
+                    endDate.setHours(23,59,59,999);
+
+                    if (startDate > endDate) {
+                        this.showToast("Start date cannot be after end date.", "error");
+                        return this._prepareSalesDataForMode('last7days'); // Fallback
+                    }
+                    titleSuffix = `Custom: ${this.formatDateDDMMYYYY(startDate)} - ${this.formatDateDDMMYYYY(endDate)}`;
+
+                    let currentDate = new Date(startDate);
+                    while(currentDate <= endDate) {
+                        const dateString = currentDate.toISOString().split('T')[0];
+                        labels.push(this.formatDateDDMMYYYY(currentDate).substring(0,5));
+                        salesDataAggregated[dateString] = 0;
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+                     if (labels.length === 0 && startDate.getTime() === endDate.setHours(0,0,0,0)) { // Handle single day range
+                        const dateString = startDate.toISOString().split('T')[0];
+                        labels.push(this.formatDateDDMMYYYY(startDate).substring(0,5));
+                        salesDataAggregated[dateString] = 0;
+                    }
+                }
+
+                this.state.transactions.forEach(transaction => {
+                    if (transaction.type === 'Sale') {
+                        const transactionDate = new Date(transaction.date);
+                        transactionDate.setHours(0, 0, 0, 0);
+                        if (transactionDate >= startDate && transactionDate <= endDate) {
+                            const transactionDateString = transactionDate.toISOString().split('T')[0];
+                            if (salesDataAggregated.hasOwnProperty(transactionDateString)) {
+                                salesDataAggregated[transactionDateString] += transaction.total;
+                            }
+                        }
+                    }
+                });
+                
+                const dataPoints = Object.values(salesDataAggregated);
+                return { labels, dataPoints, titleSuffix, salesDataAggregated };
+            },
+
             renderSalesTrendChart() {
                 if (typeof Chart === 'undefined') {
                     console.warn("Chart.js is not defined. Cannot render sales trend chart.");
@@ -1249,47 +1408,21 @@
                     return;
                 }
                 if (!this.ui.operations.salesTrendChart) {
-                    console.warn("Sales trend chart canvas not found.");
-                    return;
+                    console.warn("Sales trend chart canvas not found."); return;
                 }
-
                 const ctx = this.ui.operations.salesTrendChart.getContext('2d');
-                if (!ctx) {
-                    console.error("Failed to get 2D context for sales trend chart.");
-                    return;
-                }
+                if (!ctx) { console.error("Failed to get 2D context for sales trend chart."); return; }
 
                 const style = getComputedStyle(document.documentElement);
                 const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim();
                 const borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim();
                 const accentTeal = style.getPropertyValue('--accent-teal').trim();
 
-                const salesDataAggregated = {};
-                const labels = [];
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+                const mode = this.ui.operations.salesTrendModeSelect.value;
+                const customStartDate = this.ui.operations.salesTrendStartDateInput.value;
+                const customEndDate = this.ui.operations.salesTrendEndDateInput.value;
 
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() - i);
-                    const dateString = date.toISOString().split('T')[0];
-                    labels.push(this.formatDateDDMMYYYY(date).substring(0,5)); // DD/MM
-                    salesDataAggregated[dateString] = 0;
-                }
-
-                this.state.transactions.forEach(transaction => {
-                    if (transaction.type === 'Sale') {
-                        const transactionDate = new Date(transaction.date);
-                        transactionDate.setHours(0, 0, 0, 0);
-                        const transactionDateString = transactionDate.toISOString().split('T')[0];
-
-                        if (salesDataAggregated.hasOwnProperty(transactionDateString)) {
-                            salesDataAggregated[transactionDateString] += transaction.total;
-                        }
-                    }
-                });
-
-                const dataPoints = Object.values(salesDataAggregated);
+                const { labels, dataPoints, titleSuffix } = this._prepareSalesDataForMode(mode, customStartDate, customEndDate);
 
                 if (this.salesChartInstance) {
                     this.salesChartInstance.destroy();
@@ -1327,6 +1460,12 @@
                         },
                         plugins: {
                             legend: { labels: { color: textOnDarkSecondary } },
+                            title: { // Dynamic title
+                                display: true,
+                                text: 'Sales Trend (' + titleSuffix + ')',
+                                color: textOnDarkSecondary,
+                                font: { size: 16 }
+                            },
                             tooltip: {
                                 backgroundColor: 'rgba(0,0,0,0.8)',
                                 titleColor: 'white',
@@ -1495,6 +1634,36 @@
                     this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', creditorElementHTML);
                 }
             },
+             renderHolidays() {
+                const holidayListEl = this.ui.settings.holidayList;
+                holidayListEl.innerHTML = ''; // Clear existing list
+
+                if (this.state.holidays.length === 0) {
+                    holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>';
+                    return;
+                }
+                
+                // Sort holidays for consistent display
+                const sortedHolidays = [...this.state.holidays].sort();
+
+                sortedHolidays.forEach(holidayDateStr => {
+                    const listItem = document.createElement('li');
+                    const dateObj = new Date(holidayDateStr + 'T00:00:00'); // Ensure parsing as local date
+                    
+                    const dateTextSpan = document.createElement('span');
+                    dateTextSpan.className = 'holiday-date-text';
+                    dateTextSpan.textContent = this.formatDateDDMMYYYY(dateObj);
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'btn btn-danger btn-small delete-holiday-btn';
+                    deleteButton.textContent = 'Remove';
+                    deleteButton.dataset.date = holidayDateStr;
+                    
+                    listItem.appendChild(dateTextSpan);
+                    listItem.appendChild(deleteButton);
+                    holidayListEl.appendChild(listItem);
+                });
+            },
             createFormItemHTML(isSale) { 
                 return isSale
                 ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
@@ -1588,7 +1757,7 @@
             processSale(isInvoice, isCredit = false, creditForm) { 
                 const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
                 const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
-                const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value) : new Date();
+                const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); // Ensure local time
 
                 if (isCredit && !partyName) { this.showToast("Party Name is required for credit sales.", "error"); return null; }
                 if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Please select a valid date for the credit sale.", "error"); return null; }
@@ -1749,20 +1918,66 @@
                         }
                     });
                 }
+                
+                // Sales Trend Controls
+                this.ui.operations.salesTrendModeSelect.addEventListener('change', () => {
+                    const mode = this.ui.operations.salesTrendModeSelect.value;
+                    if (mode === 'customRange') {
+                        this.ui.operations.salesTrendCustomRangeInputs.style.display = 'flex';
+                    } else {
+                        this.ui.operations.salesTrendCustomRangeInputs.style.display = 'none';
+                    }
+                    this.renderSalesTrendChart(); // Re-render on mode change
+                });
+                this.ui.operations.refreshSalesTrendBtn.addEventListener('click', () => this.renderSalesTrendChart());
+
+
+                // Holiday Management Event Listeners
+                this.ui.settings.addHolidayBtn.addEventListener('click', () => {
+                    const holidayDateStr = this.ui.settings.holidayDateInput.value;
+                    if (!holidayDateStr) {
+                        this.showToast("Please select a date for the holiday.", "error");
+                        return;
+                    }
+                    if (this.state.holidays.includes(holidayDateStr)) {
+                        this.showToast("This date is already marked as a holiday.", "info");
+                        return;
+                    }
+                    this.state.holidays.push(holidayDateStr);
+                    this.renderHolidays();
+                    this.triggerAutoSave();
+                    this.showToast("Holiday added successfully!", "success");
+                    this.ui.settings.holidayDateInput.value = ''; // Clear input
+                });
+
+                this.ui.settings.holidayList.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-holiday-btn')) {
+                        const holidayDateToDelete = e.target.dataset.date;
+                        this.state.holidays = this.state.holidays.filter(dateStr => dateStr !== holidayDateToDelete);
+                        this.renderHolidays();
+                        this.triggerAutoSave();
+                        this.showToast("Holiday removed.", "success");
+                    }
+                });
 
 
                 this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { 
                     e.preventDefault();
                     const form = e.target;
                     const partyName = form.querySelector('#credit-cosmetic-party-name').value.trim();
-                    const saleDate = new Date(form.querySelector('#credit-cosmetic-date').value);
+                    const saleDateStr = form.querySelector('#credit-cosmetic-date').value;
                     const itemName = form.querySelector('#credit-cosmetic-item-name').value.trim();
                     const quantity = parseInt(form.querySelector('#credit-cosmetic-qty').value, 10);
                     const costRate = parseFloat(form.querySelector('#credit-cosmetic-cost-rate').value);
                     const sellRate = parseFloat(form.querySelector('#credit-cosmetic-sell-rate').value);
                     
+                    if (!saleDateStr) {
+                        this.showToast("Please select a valid date for the cosmetic credit sale.", "error"); return;
+                    }
+                    const saleDate = new Date(saleDateStr + 'T00:00:00'); // Ensure local time
+
                     if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0 || isNaN(saleDate.getTime())) {
-                        this.showToast("Please fill all fields correctly (including a valid date) for the cosmetic credit sale.", "error"); return;
+                        this.showToast("Please fill all fields correctly for the cosmetic credit sale.", "error"); return;
                     }
 
                     const cosmeticItem = { particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate };
