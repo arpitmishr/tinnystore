@@ -214,8 +214,8 @@
         tr.edit-mode .edit-btn, tr.edit-mode .delete-btn { display: none; }
         tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
 
-        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; } /* Slightly increased gap */
-        .metric-card { /* This now also applies to #low-stock-items if it has .metric-card */
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; } 
+        .metric-card { 
             text-align: left; 
             transition: transform 0.2s ease, box-shadow 0.2s ease; 
             background-color: var(--surface-dark); 
@@ -228,13 +228,12 @@
         .metric-card h3 { margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         .metric-card p { font-size: 2.2rem; margin: 0; color: var(--accent-bright-yellow); font-weight: 700; } 
         
-        /* Ensure specific p tags for profit/revenue get their color */
         #total-profit p, #total-revenue p, #filtered-sales-total, #filtered-profit-total { 
-            color: var(--accent-lime-green) !important; /* Make sure this overrides general p */
+            color: var(--accent-lime-green) !important; 
         }
         
-        #low-stock-items.metric-card { background-color: var(--surface-dark); padding-bottom: 25px; } /* Align with other cards */
-        #low-stock-items.metric-card h3 { color: var(--accent-bright-yellow); } /* Low stock specific title color */
+        #low-stock-items.metric-card { background-color: var(--surface-dark); padding-bottom: 25px; } 
+        #low-stock-items.metric-card h3 { color: var(--accent-bright-yellow); } 
         .categorized-low-stock-container .low-stock-category-group { margin-bottom: 15px; }
         .categorized-low-stock-container .low-stock-category-group:last-child { margin-bottom: 0; }
         
@@ -243,7 +242,7 @@
             font-size: 1rem; 
             font-weight: 600;
             margin-top: 15px;
-            margin-bottom: 0; /* Remove bottom margin to connect with list */
+            margin-bottom: 0; 
             padding: 12px 15px; 
             border-bottom: 1px solid var(--border-dark-primary);
             cursor: pointer; 
@@ -251,7 +250,7 @@
             justify-content: space-between; 
             align-items: center;
             transition: background-color 0.2s;
-            background-color: var(--surface-dark-alt); /* Category header slightly different bg */
+            background-color: var(--surface-dark-alt); 
             border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
         }
         .low-stock-category-title:hover {
@@ -280,7 +279,7 @@
         }
         .low-stock-items-in-category li:last-child { border-bottom: none; }
         .low-stock-items-in-category li .low-stock-qty { color: var(--accent-bright-yellow); font-weight: 600; }
-        #low-stock-items > p[style*="text-align:center"] { /* For the "No low stock items" text if not in categorized structure */
+        #low-stock-items > p[style*="text-align:center"] { 
             font-size: 0.95rem; 
             color: var(--text-on-dark-secondary);
             text-align: center;
@@ -313,31 +312,31 @@
 
         .dashboard-overview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Adjusted minmax for better fit */
-            gap: 25px; /* Increased gap */
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
+            gap: 25px; 
             margin-bottom: 30px;
         }
         .overview-card { 
             background-color: var(--surface-dark);
             color: var(--text-on-dark-primary);
-            padding: 25px; /* Increased padding */
-            border-radius: var(--border-radius-lg); /* More rounded */
+            padding: 25px; 
+            border-radius: var(--border-radius-lg); 
             box-shadow: var(--shadow-medium);
             position: relative;
             border: 1px solid var(--border-dark-primary);
-            display: flex; /* For better internal alignment if needed */
+            display: flex; 
             flex-direction: column;
-            justify-content: space-between; /* Pushes trend to bottom if not absolutely positioned */
+            justify-content: space-between; 
         }
-        .overview-card h4 { /* Title like "TODAY'S SALE" */
+        .overview-card h4 { 
             margin: 0 0 10px 0;
             font-size: 0.9rem;
             font-weight: 500;
             color: var(--text-on-dark-secondary);
             text-transform: uppercase;
         }
-        .overview-value { /* The large number like "₹ 14.5 K" */
-            font-size: 2.4rem; /* Larger font */
+        .overview-value { 
+            font-size: 2.4rem; 
             font-weight: 700;
             color: var(--accent-lime-green); 
             margin: 0 0 12px 0;
@@ -356,9 +355,8 @@
             font-weight: 500;
             padding: 4px 10px;
             border-radius: var(--border-radius-sm);
-            /* Removed absolute positioning to let it flow naturally or be part of flex */
-             margin-top: auto; /* Pushes to bottom if card is flex column */
-             align-self: flex-start; /* Aligns to left if card is flex column */
+             margin-top: auto; 
+             align-self: flex-start; 
         }
         .overview-trend.positive { background-color: rgba(168, 224, 99, 0.15); color: var(--accent-lime-green); } 
         .overview-trend.warning { background-color: rgba(249, 212, 35, 0.15); color: var(--accent-bright-yellow); } 
@@ -371,7 +369,7 @@
             margin-bottom: 30px;
         }
         .dashboard-chart-container.card { 
-             min-height: 380px; /* Slightly taller chart */
+             min-height: 380px; 
              display: flex; flex-direction: column; justify-content: space-between;
         }
          .dashboard-chart-container.card h2 { font-size: 1.2rem; }
@@ -393,15 +391,15 @@
             align-items: center;
         }
         .dashboard-low-stock-list .list-header h2 {
-            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.2rem; /* Consistent with chart */
+            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.2rem; 
             color: var(--accent-bright-yellow); 
         }
         
         #dashboard-low-stock-items-ul {
             list-style-type: none;
             padding: 0;
-            margin-top: 20px; /* More space */
-            max-height: 380px; /* Match chart height potential */
+            margin-top: 20px; 
+            max-height: 380px; 
             overflow-y: auto;
         }
         #dashboard-low-stock-items-ul li.dashboard-category-item {
@@ -410,7 +408,7 @@
             padding: 0; 
             margin-bottom: 8px; 
             background-color: var(--surface-dark); 
-            border-radius: var(--border-radius-md); /* Consistent rounding */
+            border-radius: var(--border-radius-md); 
             overflow: hidden; 
             border: 1px solid var(--border-dark-primary);
         }
@@ -511,7 +509,7 @@
         #holiday-list li {
             background-color: var(--surface-dark-alt);
             padding: 10px 15px;
-            border-radius: var(--border-radius-md); /* Consistent rounding */
+            border-radius: var(--border-radius-md); 
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -813,7 +811,7 @@
                     <h2>Low Stock Items
                         <button class="btn btn-success btn-small" id="download-low-stock-btn" style="float: right; margin-top: -5px;">Download List</button>
                     </h2>
-                    <div id="low-stock-items" class="metric-card"> <!-- Added .metric-card here -->
+                    <div id="low-stock-items" class="metric-card">
                          <p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p>
                     </div>
                 </section>
@@ -952,16 +950,24 @@
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
             async initializeGapiClient() { 
-                await gapi.client.init({
-                    apiKey: this.API_KEY,
-                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-                });
-                this.ui.signinBtn.disabled = false;
-                this.ui.authStatus.textContent = 'Ready. Please sign in.';
+                try {
+                    await gapi.client.init({
+                        apiKey: this.API_KEY,
+                        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                    });
+                    this.ui.signinBtn.disabled = false;
+                    this.ui.authStatus.textContent = 'Ready. Please sign in.';
+                } catch (error) {
+                    console.error("Error during GAPI client initialization:", error);
+                    this.ui.authStatus.textContent = 'Initialization Error. Check console.';
+                    this.showToast("GAPI Client Init Failed: " + (error.details || error.message || "Unknown error"), "error");
+                }
             },
             async handleAuthResponse(response) { 
                 if (response.error) {
-                    this.showToast(`Error: ${response.error}`, 'error');
+                    this.showToast(`Auth Error: ${response.error}`, 'error');
+                    console.error("Auth Error:", response);
+                     this.ui.authStatus.textContent = 'Authentication Failed. Please try again.';
                     return;
                 }
                 document.getElementById('login-screen').style.display = 'none';
@@ -979,6 +985,8 @@
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-container').classList.remove('visible');
                         this.showToast('Signed out successfully.');
+                         this.ui.authStatus.textContent = 'Initializing...'; // Reset status for next login
+                         this.ui.signinBtn.disabled = true; // Disable until GAPI is re-initialized effectively on next load
                     });
                 }
             },
@@ -1331,18 +1339,15 @@
                         analyticsLowStockHtml += `</ul></div>`;
                     });
                     analyticsLowStockHtml += '</div>';
-                } else { // Ensure the paragraph for "No low stock items" is inside a container if #low-stock-items is just a div
+                } else { 
                     analyticsLowStockHtml = '<p style="text-align:center; color: var(--text-on-dark-secondary); padding: 20px 0;">No low stock items.</p>';
                 }
-                 // If #low-stock-items is itself the container that should get card styling, 
-                // and it might contain the "No low stock items" p directly:
                 if (this.ui.analytics.lowStockItems.classList.contains('metric-card')) {
                     this.ui.analytics.lowStockItems.innerHTML = analyticsLowStockHtml;
-                } else { // If #low-stock-items is a wrapper for a .metric-card
+                } else { 
                     const innerContainer = this.ui.analytics.lowStockItems.querySelector('.metric-card') || this.ui.analytics.lowStockItems;
                     innerContainer.innerHTML = analyticsLowStockHtml;
                 }
-
                 
                 let dashboardLowStockHtml = '';
                 if (sortedCategories.length > 0) {
@@ -1545,8 +1550,8 @@
                             backgroundColor: this.hexToRgba(accentLimeGreen, 0.2),
                             tension: 0.3,
                             fill: true,
-                            pointBackgroundColor: accentLimeGreen, // Make points visible
-                            pointBorderColor: '#fff', // White border for points
+                            pointBackgroundColor: accentLimeGreen, 
+                            pointBorderColor: '#fff', 
                             pointHoverBackgroundColor: '#fff',
                             pointHoverBorderColor: accentLimeGreen
                         }]
@@ -1570,24 +1575,24 @@
                             }
                         },
                         plugins: {
-                            legend: { display: false }, // Hide legend as per FishWish
+                            legend: { display: false }, 
                             title: { 
                                 display: true,
-                                text: titleSuffix, // Use dynamic title directly
+                                text: titleSuffix, 
                                 color: textOnDarkSecondary,
                                 font: { size: 14, weight: 'normal' },
                                 align: 'start',
                                 padding: { top: 0, bottom: 10 }
                             },
                             tooltip: {
-                                backgroundColor: var(--surface-dark-alt), // Tooltip bg
-                                titleColor: var(--text-on-dark-primary), 
-                                bodyColor: var(--text-on-dark-secondary), 
-                                borderColor: var(--border-dark-primary),
+                                backgroundColor: 'var(--surface-dark-alt)', 
+                                titleColor: 'var(--text-on-dark-primary)', 
+                                bodyColor: 'var(--text-on-dark-secondary)', 
+                                borderColor: 'var(--border-dark-primary)',
                                 borderWidth: 1,
                                 padding: 10,
-                                cornerRadius: var(--border-radius-sm),
-                                displayColors: false, // Hide color box in tooltip
+                                cornerRadius: 'var(--border-radius-sm)',
+                                displayColors: false, 
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.dataset.label || '';
