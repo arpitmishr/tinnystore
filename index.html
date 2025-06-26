@@ -860,7 +860,7 @@
                 </section>
                 <section class="card" id="holiday-management-section">
                     <h2>Holiday Management</h2>
-                    <p>Mark specific dates as holidays. This information is saved with your data.</p>
+                    <p>Mark specific dates as holidays. This information is saved with your data and sales on these dates will be excluded from the Sales Trend graph.</p>
                     <div class="holiday-input-group">
                         <div>
                             <label for="holiday-date">Select Holiday Date:</label>
@@ -901,7 +901,7 @@
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { inventory: [], transactions: [], holidays: [] }, // Added holidays to state
+            state: { inventory: [], transactions: [], holidays: [] },
             ui: {},
             salesChartInstance: null, 
 
@@ -965,7 +965,7 @@
                 
                 this.renderAll();
                 if (typeof Chart !== 'undefined' && this.ui.operations.salesTrendChart) {
-                    this.renderSalesTrendChart(); // Initial render with default (last 7 days)
+                    this.renderSalesTrendChart(); 
                 } else if (this.ui.operations.salesTrendChart) {
                     console.warn("Chart.js is not loaded, but chart canvas exists. Sales trend chart will not be rendered.");
                 }
@@ -1000,20 +1000,20 @@
                                    t.paidAmount = 0;
                                }
                                if(t.items && !Array.isArray(t.items)) {
-                                   t.items = [t.items]; // Ensure items is always an array
+                                   t.items = [t.items]; 
                                }
                            });
                         }
 
                         const defaultState = { inventory: [], transactions: [], holidays: [] };
                         this.state = { ...defaultState, ...loadedState };
-                        this.state.holidays = loadedState.holidays || []; // Ensure holidays array exists
+                        this.state.holidays = loadedState.holidays || []; 
 
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
-                        this.state.holidays = []; // Initialize holidays for fresh start
-                        await this._findOrCreateAppFolder(); // Ensure folder exists for new data
+                        this.state.holidays = []; 
+                        await this._findOrCreateAppFolder(); 
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
@@ -1180,7 +1180,7 @@
                 let categoryParts = [];
 
                 for (const word of words) {
-                    if (/\d/.test(word)) { // If the word contains any digit
+                    if (/\d/.test(word)) { 
                         break;
                     }
                     categoryParts.push(word);
@@ -1196,7 +1196,7 @@
                             return textualPrefixMatch[1];
                         }
                     }
-                    return "Other Items"; // Fallback category
+                    return "Other Items"; 
                 }
             },
             
@@ -1206,7 +1206,7 @@
             _getLastDayOfMonth(date) {
                 return new Date(date.getFullYear(), date.getMonth() + 1, 0);
             },
-            _getDaysInMonth(year, month) { // month is 0-indexed
+            _getDaysInMonth(year, month) { 
                 return new Date(year, month + 1, 0).getDate();
             },
 
@@ -1228,7 +1228,7 @@
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
                 this.ui.inventoryTableBody.innerHTML = this.state.inventory.length
                     ? this.state.inventory.map(item => {
-                        const isLowStock = item.quantity > 0 && item.quantity <= 3; // Low stock threshold
+                        const isLowStock = item.quantity > 0 && item.quantity <= 3; 
                         const rowClass = isLowStock ? 'is-low-stock' : '';
                         const badgeHTML = isLowStock ? ` <span class="low-stock-badge">Low</span>` : '';
 
@@ -1272,7 +1272,7 @@
                 }
                 const sortedCategories = Object.keys(categorizedLowStock).sort((a, b) => a.localeCompare(b));
                 
-                // For Analytics Tab (#low-stock-items)
+                
                 let analyticsLowStockHtml = '';
                 if (sortedCategories.length > 0) {
                     analyticsLowStockHtml = '<div class="categorized-low-stock-container">';
@@ -1294,7 +1294,7 @@
                 }
                 this.ui.analytics.lowStockItems.innerHTML = analyticsLowStockHtml;
                 
-                // For Operations Tab Dashboard (#dashboard-low-stock-items-ul)
+                
                 let dashboardLowStockHtml = '';
                 if (sortedCategories.length > 0) {
                     sortedCategories.forEach((category, index) => {
@@ -1350,86 +1350,113 @@
                 }
             },
             
-            _prepareSalesDataForMode(mode, customStartDate, customEndDate) {
-                let startDate, endDate;
-                let labels = [];
-                const salesDataAggregated = {};
+            isDateHoliday(dateObj) { 
+                if (!this.state.holidays || this.state.holidays.length === 0) return false;
+                if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+                    // console.warn("isDateHoliday received an invalid date object:", dateObj); // Optional: for debugging
+                    return false; 
+                }
+                const dateString = dateObj.toISOString().split('T')[0];
+                return this.state.holidays.includes(dateString);
+            },
+
+            _prepareSalesDataForMode(mode, customStartDateStr, customEndDateStr) {
+                let loopIterationStartDate, loopIterationEndDate;
+                let transactionFilterStartDate, transactionFilterEndDate;
+                const salesDataAggregated = {}; // Key: YYYY-MM-DD, Value: total sales
                 let titleSuffix = "";
 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
                 if (mode === 'last7days') {
-                    titleSuffix = "Last 7 Days";
-                    endDate = new Date(today);
-                    startDate = new Date(today);
-                    startDate.setDate(today.getDate() - 6);
+                    titleSuffix = "Last 7 Days (Excl. Holidays)";
+                    loopIterationEndDate = new Date(today);
+                    loopIterationStartDate = new Date(today);
+                    loopIterationStartDate.setDate(today.getDate() - 6);
 
-                    for (let i = 0; i < 7; i++) {
-                        const date = new Date(startDate);
-                        date.setDate(startDate.getDate() + i);
-                        const dateString = date.toISOString().split('T')[0];
-                        labels.push(this.formatDateDDMMYYYY(date).substring(0, 5)); // DD/MM
-                        salesDataAggregated[dateString] = 0;
-                    }
+                    transactionFilterEndDate = new Date(today); 
+                    transactionFilterEndDate.setHours(23,59,59,999);
+                    transactionFilterStartDate = new Date(today);
+                    transactionFilterStartDate.setDate(today.getDate() - 6);
+                    transactionFilterStartDate.setHours(0,0,0,0);
+
                 } else if (mode === 'currentMonth') {
-                    titleSuffix = "Current Month";
-                    startDate = this._getFirstDayOfMonth(today);
-                    endDate = this._getLastDayOfMonth(today);
-                    const daysInMonth = endDate.getDate();
+                    titleSuffix = "Current Month (Excl. Holidays)";
+                    loopIterationStartDate = this._getFirstDayOfMonth(today); 
+                    loopIterationEndDate = this._getLastDayOfMonth(today);   
 
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        const date = new Date(today.getFullYear(), today.getMonth(), day);
-                        const dateString = date.toISOString().split('T')[0];
-                        labels.push(String(day)); // Day number
-                        salesDataAggregated[dateString] = 0;
-                    }
+                    transactionFilterStartDate = new Date(loopIterationStartDate);
+                    transactionFilterEndDate = new Date(loopIterationEndDate);
+                    transactionFilterEndDate.setHours(23,59,59,999); 
+
                 } else if (mode === 'customRange') {
-                    if (!customStartDate || !customEndDate) {
+                    if (!customStartDateStr || !customEndDateStr) {
                         this.showToast("Please select both start and end dates for custom range.", "error");
-                        return this._prepareSalesDataForMode('last7days'); // Fallback to default
+                        return this._prepareSalesDataForMode('last7days'); 
                     }
-                    startDate = new Date(customStartDate);
-                    startDate.setHours(0,0,0,0);
-                    endDate = new Date(customEndDate);
-                    endDate.setHours(23,59,59,999);
+                    loopIterationStartDate = new Date(customStartDateStr);
+                    loopIterationStartDate.setHours(0,0,0,0);
+                    loopIterationEndDate = new Date(customEndDateStr);
+                    loopIterationEndDate.setHours(0,0,0,0);
 
-                    if (startDate > endDate) {
+                    if (loopIterationStartDate > loopIterationEndDate) {
                         this.showToast("Start date cannot be after end date.", "error");
-                        return this._prepareSalesDataForMode('last7days'); // Fallback
+                        return this._prepareSalesDataForMode('last7days'); 
                     }
-                    titleSuffix = `Custom: ${this.formatDateDDMMYYYY(startDate)} - ${this.formatDateDDMMYYYY(endDate)}`;
-
-                    let currentDate = new Date(startDate);
-                    while(currentDate <= endDate) {
-                        const dateString = currentDate.toISOString().split('T')[0];
-                        labels.push(this.formatDateDDMMYYYY(currentDate).substring(0,5));
-                        salesDataAggregated[dateString] = 0;
-                        currentDate.setDate(currentDate.getDate() + 1);
-                    }
-                     if (labels.length === 0 && startDate.getTime() === endDate.setHours(0,0,0,0)) { // Handle single day range
-                        const dateString = startDate.toISOString().split('T')[0];
-                        labels.push(this.formatDateDDMMYYYY(startDate).substring(0,5));
-                        salesDataAggregated[dateString] = 0;
-                    }
+                    titleSuffix = `Custom: ${this.formatDateDDMMYYYY(loopIterationStartDate)} - ${this.formatDateDDMMYYYY(loopIterationEndDate)} (Excl. Holidays)`;
+                    
+                    transactionFilterStartDate = new Date(loopIterationStartDate); 
+                    transactionFilterEndDate = new Date(loopIterationEndDate);
+                    transactionFilterEndDate.setHours(23,59,59,999);
+                } else {
+                    return { labels: [], dataPoints: [], titleSuffix: "Error: Invalid Mode", salesDataAggregated: {} };
                 }
 
+                // 1. Initialize salesDataAggregated for non-holiday days within the iteration range
+                let currentDateIter = new Date(loopIterationStartDate);
+                while(currentDateIter <= loopIterationEndDate) {
+                    if (!this.isDateHoliday(currentDateIter)) {
+                        const dateString = currentDateIter.toISOString().split('T')[0];
+                        salesDataAggregated[dateString] = 0;
+                    }
+                    currentDateIter.setDate(currentDateIter.getDate() + 1);
+                }
+                
+                // 2. Aggregate sales data from transactions
                 this.state.transactions.forEach(transaction => {
                     if (transaction.type === 'Sale') {
-                        const transactionDate = new Date(transaction.date);
-                        transactionDate.setHours(0, 0, 0, 0);
-                        if (transactionDate >= startDate && transactionDate <= endDate) {
+                        const transactionDate = new Date(transaction.date); 
+                        
+                        if (transactionDate >= transactionFilterStartDate && transactionDate <= transactionFilterEndDate) {
                             const transactionDateString = transactionDate.toISOString().split('T')[0];
-                            if (salesDataAggregated.hasOwnProperty(transactionDateString)) {
+                            if (salesDataAggregated.hasOwnProperty(transactionDateString)) { 
                                 salesDataAggregated[transactionDateString] += transaction.total;
                             }
                         }
                     }
                 });
                 
-                const dataPoints = Object.values(salesDataAggregated);
-                return { labels, dataPoints, titleSuffix, salesDataAggregated };
+                // 3. Prepare final labels and dataPoints from the aggregated data
+                const finalLabels = [];
+                const finalDataPoints = [];
+                const sortedDateStrings = Object.keys(salesDataAggregated).sort();
+
+                sortedDateStrings.forEach(dateString => {
+                    const [year, month, day] = dateString.split('-').map(Number);
+                    const localDateObj = new Date(year, month - 1, day);
+
+                    if (mode === 'last7days' || mode === 'customRange') {
+                        finalLabels.push(this.formatDateDDMMYYYY(localDateObj).substring(0, 5)); // DD/MM
+                    } else if (mode === 'currentMonth') {
+                        finalLabels.push(String(localDateObj.getDate())); // Day number
+                    }
+                    finalDataPoints.push(salesDataAggregated[dateString]);
+                });
+
+                return { labels: finalLabels, dataPoints: finalDataPoints, titleSuffix };
             },
+
 
             renderSalesTrendChart() {
                 if (typeof Chart === 'undefined') {
@@ -1454,7 +1481,9 @@
                 const customStartDate = this.ui.operations.salesTrendStartDateInput.value;
                 const customEndDate = this.ui.operations.salesTrendEndDateInput.value;
 
+                // Pass custom dates as strings
                 const { labels, dataPoints, titleSuffix } = this._prepareSalesDataForMode(mode, customStartDate, customEndDate);
+
 
                 if (this.salesChartInstance) {
                     this.salesChartInstance.destroy();
@@ -1492,7 +1521,7 @@
                         },
                         plugins: {
                             legend: { labels: { color: textOnDarkSecondary } },
-                            title: { // Dynamic title
+                            title: { 
                                 display: true,
                                 text: 'Sales Trend (' + titleSuffix + ')',
                                 color: textOnDarkSecondary,
@@ -1668,19 +1697,19 @@
             },
              renderHolidays() {
                 const holidayListEl = this.ui.settings.holidayList;
-                holidayListEl.innerHTML = ''; // Clear existing list
+                holidayListEl.innerHTML = ''; 
 
                 if (this.state.holidays.length === 0) {
                     holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>';
                     return;
                 }
                 
-                // Sort holidays for consistent display
+                
                 const sortedHolidays = [...this.state.holidays].sort();
 
                 sortedHolidays.forEach(holidayDateStr => {
                     const listItem = document.createElement('li');
-                    const dateObj = new Date(holidayDateStr + 'T00:00:00'); // Ensure parsing as local date
+                    const dateObj = new Date(holidayDateStr + 'T00:00:00'); 
                     
                     const dateTextSpan = document.createElement('span');
                     dateTextSpan.className = 'holiday-date-text';
@@ -1789,7 +1818,7 @@
             processSale(isInvoice, isCredit = false, creditForm) { 
                 const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
                 const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
-                const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); // Ensure local time
+                const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); 
 
                 if (isCredit && !partyName) { this.showToast("Party Name is required for credit sales.", "error"); return null; }
                 if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Please select a valid date for the credit sale.", "error"); return null; }
@@ -1913,7 +1942,7 @@
                     this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
                 }
 
-                // For Analytics Tab Low Stock Accordion
+                
                 this.ui.analytics.lowStockItems.addEventListener('click', (e) => {
                     const categoryTitle = e.target.closest('.low-stock-category-title');
                     if (categoryTitle) {
@@ -1931,7 +1960,7 @@
                     }
                 });
 
-                // For Operations Tab Dashboard Low Stock Accordion
+                
                 if (this.ui.operations.dashboardLowStockItemsUl) {
                     this.ui.operations.dashboardLowStockItemsUl.addEventListener('click', (e) => {
                         const categoryHeader = e.target.closest('.dashboard-category-header');
@@ -1951,20 +1980,27 @@
                     });
                 }
                 
-                // Sales Trend Controls
+                
                 this.ui.operations.salesTrendModeSelect.addEventListener('change', () => {
                     const mode = this.ui.operations.salesTrendModeSelect.value;
                     if (mode === 'customRange') {
                         this.ui.operations.salesTrendCustomRangeInputs.style.display = 'flex';
+                         // Set default dates for custom range if not already set
+                        if (!this.ui.operations.salesTrendStartDateInput.value) {
+                            this.ui.operations.salesTrendStartDateInput.value = this.getTodayDateString(new Date(new Date().setDate(new Date().getDate() - 6))); // Default to 7 days ago
+                        }
+                        if (!this.ui.operations.salesTrendEndDateInput.value) {
+                            this.ui.operations.salesTrendEndDateInput.value = this.getTodayDateString(); // Default to today
+                        }
                     } else {
                         this.ui.operations.salesTrendCustomRangeInputs.style.display = 'none';
                     }
-                    this.renderSalesTrendChart(); // Re-render on mode change
+                    this.renderSalesTrendChart(); 
                 });
                 this.ui.operations.refreshSalesTrendBtn.addEventListener('click', () => this.renderSalesTrendChart());
 
 
-                // Holiday Management Event Listeners
+                
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => {
                     const holidayDateStr = this.ui.settings.holidayDateInput.value;
                     if (!holidayDateStr) {
@@ -1979,7 +2015,8 @@
                     this.renderHolidays();
                     this.triggerAutoSave();
                     this.showToast("Holiday added successfully!", "success");
-                    this.ui.settings.holidayDateInput.value = ''; // Clear input
+                    this.ui.settings.holidayDateInput.value = ''; 
+                    this.renderSalesTrendChart(); // Re-render chart if operations tab is active
                 });
 
                 this.ui.settings.holidayList.addEventListener('click', (e) => {
@@ -1989,6 +2026,7 @@
                         this.renderHolidays();
                         this.triggerAutoSave();
                         this.showToast("Holiday removed.", "success");
+                        this.renderSalesTrendChart(); // Re-render chart if operations tab is active
                     }
                 });
 
@@ -2006,7 +2044,7 @@
                     if (!saleDateStr) {
                         this.showToast("Please select a valid date for the cosmetic credit sale.", "error"); return;
                     }
-                    const saleDate = new Date(saleDateStr + 'T00:00:00'); // Ensure local time
+                    const saleDate = new Date(saleDateStr + 'T00:00:00'); 
 
                     if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0 || isNaN(saleDate.getTime())) {
                         this.showToast("Please fill all fields correctly for the cosmetic credit sale.", "error"); return;
