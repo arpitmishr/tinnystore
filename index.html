@@ -14,44 +14,36 @@
 
     <style>
         :root {
-            /* FishWish Inspired Theme */
-            --background-body: #0D0C12; /* Very dark background */
-            --surface-dark: #1A1D24; /* Card and surface background - slightly less blue */
-            --surface-dark-alt: #252A33; /* Slightly lighter surface for hovers or secondary elements */
+            --background-body: #F0F2F5;
+            --surface-dark: #1A202C;
+            --surface-dark-alt: #2D3748;
             
-            --text-on-dark-primary: #EAEAEA; /* Slightly brighter light gray for primary text */
-            --text-on-dark-secondary: #B0B0C0; /* Medium light gray for secondary text */
-            --text-on-dark-placeholder: #787888; 
+            --text-on-dark-primary: #E2E8F0;
+            --text-on-dark-secondary: #A0AEC0;
+            --text-on-dark-placeholder: #718096;
 
-            --text-primary-on-light: #EAEAEA; 
-            --text-secondary-on-light: #B0B0C0;
+            --text-primary-on-light: #2D3748;
+            --text-secondary-on-light: #4A5568;
 
-            /* Accent Colors from FishWish */
-            --accent-lime-green: #A8E063;
-            --accent-lime-green-darker: #8CCF4F;
-            --accent-bright-yellow: #F9D423; 
-            --accent-salmon-pink: #FF8C94;
-            --accent-salmon-pink-darker: #F08080;
+            --accent-teal: #00A99D;
+            --accent-teal-darker: #007A70;
+            --accent-yellow: #F59E0B; /* Used for warnings, highlights */
+            --accent-pink: #EC4899; /* For some dashboard trends or highlights */
             
-            --accent-teal: var(--accent-lime-green); 
-            --accent-teal-darker: var(--accent-lime-green-darker);
-            --accent-yellow: var(--accent-bright-yellow); 
-            --accent-pink: var(--accent-salmon-pink); 
-            
-            --success-green: var(--accent-lime-green);
-            --danger-red: var(--accent-salmon-pink); 
-            --info-blue: #6CA5CC; 
+            --success-green: #38A169;
+            --danger-red: #E53E3E;
+            --info-blue: #3182CE;
 
-            --border-dark-primary: #303540; /* Slightly more visible border */
-            --border-dark-focus: var(--accent-lime-green); 
+            --border-dark-primary: #4A5568;
+            --border-dark-focus: var(--accent-teal);
 
-            --border-radius-sm: 10px; 
-            --border-radius-md: 14px;
-            --border-radius-lg: 18px; /* More pronounced rounding for main cards */
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 14px;
 
-            --shadow-subtle: 0 2px 5px rgba(0,0,0,0.15);
-            --shadow-medium: 0 6px 12px rgba(0,0,0,0.2);
-            --shadow-strong: 0 10px 20px rgba(0,0,0,0.25);
+            --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+            --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
         }
 
         * {
@@ -62,7 +54,7 @@
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             background-color: var(--background-body);
-            color: var(--text-on-dark-primary); /* Default text color */
+            color: var(--text-primary-on-light);
             margin: 0;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -72,21 +64,20 @@
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; width: 100%; text-align: center; padding: 2rem;
-            background: var(--background-body); 
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-yellow) 100%);
         }
         .login-box {
-            background: var(--surface-dark); color: var(--text-on-dark-primary);
-            padding: 3rem 3.5rem; border-radius: var(--border-radius-lg);
+            background: var(--surface-dark-alt); color: var(--text-on-dark-primary);
+            padding: 2.5rem 3rem; border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow-strong); max-width: 480px; width: 100%;
-            border: 1px solid var(--border-dark-primary);
         }
-        .login-box .store-logo { font-size: 2.5rem; font-weight: 700; color: var(--accent-lime-green); margin-bottom: 0.5rem; }
-        .login-box .store-logo span { display: inline-block; padding: 0.1em 0.4em; background-color: var(--accent-lime-green); color: var(--surface-dark); border-radius: var(--border-radius-sm); margin-right: 0.1em; }
+        .login-box .store-logo { font-size: 2.5rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 0.5rem; }
+        .login-box .store-logo span { display: inline-block; padding: 0.1em 0.4em; background-color: var(--accent-yellow); color: var(--surface-dark); border-radius: var(--border-radius-sm); margin-right: 0.1em; }
         .login-box h1 { color: var(--text-on-dark-primary); margin-bottom: 0.5rem; font-size: 1.8rem; font-weight: 700; }
         .login-box p { color: var(--text-on-dark-secondary); margin-bottom: 1.5rem; font-size: 0.95rem; }
-        #signin-btn { background-color: #4285F4;  color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: 25px; cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-subtle); }
+        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: var(--shadow-subtle); }
         #signin-btn:hover:not([disabled]) { background-color: #357ae8; box-shadow: var(--shadow-medium); }
-        #signin-btn[disabled] { background-color: #505050; color: var(--text-on-dark-secondary); cursor: not-allowed; }
+        #signin-btn[disabled] { background-color: #718096; color: var(--text-on-dark-secondary); cursor: not-allowed; }
         #signin-btn svg { width: 24px; height: 24px; background: white; border-radius: 50%; padding: 2px; }
         #auth-status { margin-top: 1.5rem; font-size: 0.9rem; }
 
@@ -95,33 +86,32 @@
 
         header {
             background-color: var(--surface-dark); color: var(--text-on-dark-primary);
-            padding: 20px 30px; border-radius: var(--border-radius-lg); /* More padding, larger radius */
+            padding: 15px 25px; border-radius: var(--border-radius-lg);
             margin-bottom: 35px; box-shadow: var(--shadow-medium);
             display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid var(--border-dark-primary);
         }
-        header .header-title-group h1 { margin: 0; font-weight: 700; font-size: 1.8rem; color: var(--accent-lime-green); } 
+        header .header-title-group h1 { margin: 0; font-weight: 700; font-size: 1.6rem; color: var(--accent-yellow); }
         .user-profile { display: flex; align-items: center; gap: 12px; }
         .user-profile span { font-weight: 500; font-size: 0.9rem; color: var(--text-on-dark-primary); }
-        #signout-btn { font-size: 0.85rem; color: var(--accent-salmon-pink); cursor: pointer; background: transparent; border: 1px solid var(--accent-salmon-pink); border-radius: 20px; padding: 7px 15px; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
-        #signout-btn:hover { background-color: var(--accent-salmon-pink); color: var(--surface-dark); }
+        #signout-btn { font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent; border: 1px solid var(--accent-yellow); border-radius: var(--border-radius-md); padding: 7px 12px; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
+        #signout-btn:hover { background-color: var(--accent-yellow); color: var(--surface-dark); }
         .low-stock-alert { 
-            display: none; 
+            display: none; /* Permanently hidden */
         }
 
         .tab-nav {
             display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 30px;
-            background-color: var(--surface-dark-alt); padding: 8px; border-radius: 25px; /* Pill-like container for tabs */
+            background-color: var(--surface-dark-alt); padding: 5px; border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow-subtle);
         }
         .tab-button {
-            padding: 10px 22px; cursor: pointer; border: none; background-color: transparent;
+            padding: 10px 20px; cursor: pointer; border: none; background-color: transparent;
             font-size: 0.95rem; font-weight: 500; color: var(--text-on-dark-secondary);
-            border-radius: 20px; /* Rounded individual tabs */ transition: color 0.3s ease, background-color 0.2s ease;
-            margin: 0 4px;
+            border-radius: var(--border-radius-md); transition: color 0.3s ease, background-color 0.2s ease;
+            margin: 0 3px;
         }
-        .tab-button:hover { color: var(--text-on-dark-primary); background-color: rgba(255,255,255,0.08); }
-        .tab-button.active { color: var(--background-body); background-color: var(--accent-lime-green); font-weight: 600; box-shadow: var(--shadow-medium); }
+        .tab-button:hover { color: var(--text-on-dark-primary); background-color: rgba(255,255,255,0.05); }
+        .tab-button.active { color: var(--surface-dark); background-color: var(--accent-teal); font-weight: 600; box-shadow: var(--shadow-medium); }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeInContent 0.4s ease-out; }
@@ -135,13 +125,12 @@
 
         .card {
             background-color: var(--surface-dark); color: var(--text-on-dark-primary);
-            border-radius: var(--border-radius-lg); padding: 30px; /* Increased padding */
+            border-radius: var(--border-radius-lg); padding: 25px 30px;
             box-shadow: var(--shadow-medium); margin-bottom: 30px;
-            border: 1px solid var(--border-dark-primary);
         }
         .card h2 {
-            color: var(--accent-lime-green); font-weight: 600; font-size: 1.35rem; margin-top: 0;
-            border-bottom: 1px solid var(--border-dark-primary); padding-bottom: 18px; margin-bottom: 28px;
+            color: var(--accent-teal); font-weight: 600; font-size: 1.25rem; margin-top: 0;
+            border-bottom: 1px solid var(--border-dark-primary); padding-bottom: 15px; margin-bottom: 25px;
         }
         .card .form-grid, .card form .item-entry { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .card .cosmetic-form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -149,29 +138,29 @@
         .card .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         
         .card input[type="text"], .card input[type="number"], .card input[type="file"], .card input[type="date"], .card select {
-            width: 100%; padding: 14px 18px; border: 1px solid var(--border-dark-primary);
+            width: 100%; padding: 12px 15px; border: 1px solid var(--border-dark-primary);
             border-radius: var(--border-radius-md); font-size: 0.95rem; 
             font-family: 'Roboto', sans-serif; background-color: var(--surface-dark-alt);
             color: var(--text-on-dark-primary);
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .card input[type="text"]:focus, .card input[type="number"]:focus, .card input[type="date"]:focus, .card select:focus {
-            border-color: var(--border-dark-focus); box-shadow: 0 0 0 3px var(--accent-lime-green-darker); outline: none;
+            border-color: var(--border-dark-focus); box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.25); outline: none;
         }
-        .card input[type="file"] { background-color: var(--surface-dark-alt); border: 1px dashed var(--accent-lime-green); color: var(--accent-lime-green); cursor: pointer; }
+        .card input[type="file"] { background-color: var(--surface-dark-alt); border-color: var(--accent-teal); color: var(--accent-teal); cursor: pointer; }
         .card input::placeholder { color: var(--text-on-dark-placeholder); opacity: 1; }
         #settings .card input[type="file"] { margin-top: 15px; }
         .card .controls-grid label, .card .form-row label, #holiday-management-section label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
         
         #add-sale-item-btn, #add-purchase-item-btn, #add-credit-inventory-item-btn {
-            background-color: transparent; color: var(--accent-lime-green); border: 2px dashed var(--accent-lime-green);
-            font-weight: 500; text-transform: none; padding: 12px 18px; margin-top: 15px; margin-bottom: 25px;
-            width: 100%; border-radius: 25px; /* Pill shape for add item buttons */ transition: background-color 0.2s, color 0.2s;
+            background-color: transparent; color: var(--accent-teal); border: 2px dashed var(--accent-teal);
+            font-weight: 500; text-transform: none; padding: 10px 15px; margin-top: 10px; margin-bottom: 20px;
+            width: 100%; border-radius: var(--border-radius-md); transition: background-color 0.2s, color 0.2s;
         }
-        #add-sale-item-btn:hover, #add-purchase-item-btn:hover, #add-credit-inventory-item-btn:hover { background-color: rgba(168, 224, 99, 0.1); } 
+        #add-sale-item-btn:hover, #add-purchase-item-btn:hover, #add-credit-inventory-item-btn:hover { background-color: rgba(0, 169, 157, 0.1); }
 
         .btn {
-            padding: 12px 25px; border-radius: 25px;  border: none; font-size: 0.95rem;
+            width: 100%; padding: 12px 20px; border-radius: var(--border-radius-md); border: none; font-size: 0.95rem;
             font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
             transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
             box-shadow: var(--shadow-subtle);
@@ -179,34 +168,29 @@
         .btn:hover:not([disabled]) { box-shadow: var(--shadow-medium); transform: translateY(-1px); }
         .btn:active:not([disabled]) { box-shadow: var(--shadow-subtle); transform: translateY(0px); }
         .btn[disabled] { background-color: var(--text-on-dark-placeholder); color: var(--surface-dark-alt); cursor: not-allowed; opacity: 0.8; box-shadow: none; }
-        
-        .btn-primary { background-color: var(--accent-salmon-pink); color: var(--background-body); } 
-        .btn-primary:hover:not([disabled]) { background-color: var(--accent-salmon-pink-darker); }
-        
-        .btn-secondary { background-color: var(--accent-lime-green); color: var(--background-body); }
-        .btn-secondary:hover:not([disabled]) { background-color: var(--accent-lime-green-darker); }
-
-        .btn-success { background-color: var(--accent-lime-green); color: var(--background-body); } 
-        .btn-success:hover:not([disabled]) { background-color: var(--accent-lime-green-darker); }
-        
-        .btn-danger { background-color: var(--accent-salmon-pink); color: var(--background-body); } 
-        .btn-danger:hover:not([disabled]) { background-color: var(--accent-salmon-pink-darker); }
-
-        .btn-small { padding: 8px 18px; font-size: 0.8rem; letter-spacing: 0.2px; width: auto;}
+        .btn-primary { background-color: var(--accent-teal); color: var(--surface-dark); }
+        .btn-primary:hover:not([disabled]) { background-color: var(--accent-teal-darker); }
+        .btn-secondary { background-color: var(--surface-dark-alt); color: var(--text-on-dark-primary); border: 1px solid var(--border-dark-primary); }
+        .btn-secondary:hover:not([disabled]) { background-color: #4A5568; }
+        .btn-success { background-color: var(--success-green); color: white; }
+        .btn-success:hover:not([disabled]) { background-color: #2F855A; }
+        .btn-danger { background-color: var(--danger-red); color: white; }
+        .btn-danger:hover:not([disabled]) { background-color: #C53030; }
+        .btn-small { padding: 8px 14px; font-size: 0.8rem; letter-spacing: 0.2px; width: auto;}
         .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
 
         .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-md); margin-top: 20px; background-color: var(--surface-dark); }
         .styled-table { width: 100%; border-collapse: collapse; }
         .styled-table th, .styled-table td { border-bottom: 1px solid var(--border-dark-primary); padding: 14px 16px; text-align: left; font-size: 0.9rem; vertical-align: middle; color: var(--text-on-dark-secondary); }
-        .styled-table th { background-color: var(--surface-dark-alt); color: var(--accent-lime-green); font-weight: 600; position: sticky; top: 0; text-transform: capitalize; z-index: 1; }
+        .styled-table th { background-color: var(--surface-dark-alt); color: var(--accent-teal); font-weight: 600; position: sticky; top: 0; text-transform: capitalize; z-index: 1; }
         .styled-table tr:hover td { background-color: var(--surface-dark-alt); color: var(--text-on-dark-primary); }
         .styled-table td ul { margin: 0; padding-left: 18px; list-style-type: disc; }
         .styled-table td li { padding: 3px 0; }
         .profit-col { font-weight: 600; color: var(--success-green); }
-        .credit-label { font-size: 0.75rem; font-weight: 600; color: var(--background-body); background-color: var(--info-blue); padding: 3px 8px; border-radius: var(--border-radius-sm); display: inline-block; margin-top: 6px; }
+        .credit-label { font-size: 0.75rem; font-weight: 600; color: var(--surface-dark); background-color: var(--info-blue); padding: 3px 8px; border-radius: var(--border-radius-sm); display: inline-block; margin-top: 6px; }
         .sales-history-actions { display: flex; gap: 8px; }
-        tr.is-low-stock td { background-color: rgba(249, 212, 35, 0.05) !important; border-left: 3px solid var(--accent-bright-yellow); color: var(--accent-bright-yellow) !important; }
-        .low-stock-badge { display: inline-block; margin-left: 8px; padding: 3px 7px; font-size: 0.7rem; font-weight: 600; color: var(--background-body); background-color: var(--accent-bright-yellow); border-radius: 10px; text-transform: uppercase; vertical-align: middle; }
+        tr.is-low-stock td { background-color: rgba(245, 158, 11, 0.1) !important; border-left: 3px solid var(--accent-yellow); color: var(--accent-yellow) !important; }
+        .low-stock-badge { display: inline-block; margin-left: 8px; padding: 3px 7px; font-size: 0.7rem; font-weight: 600; color: var(--surface-dark); background-color: var(--accent-yellow); border-radius: 10px; text-transform: uppercase; vertical-align: middle; }
         .inventory-actions { display: flex; gap: 6px; }
         .edit-input { padding: 6px 8px; font-size: 0.9rem; max-width: 90px; }
         tr.edit-mode .display-value { display: none; }
@@ -214,47 +198,35 @@
         tr.edit-mode .edit-btn, tr.edit-mode .delete-btn { display: none; }
         tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
 
-        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; } 
-        .metric-card { 
-            text-align: left; 
-            transition: transform 0.2s ease, box-shadow 0.2s ease; 
-            background-color: var(--surface-dark); 
-            padding: 25px; 
-            border-radius:var(--border-radius-lg); 
-            border: 1px solid var(--border-dark-primary);
-            box-shadow: var(--shadow-subtle);
-        }
-        .metric-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-strong); }
-        .metric-card h3 { margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-        .metric-card p { font-size: 2.2rem; margin: 0; color: var(--accent-bright-yellow); font-weight: 700; } 
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .metric-card { text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-strong); }
+        .metric-card h3 { margin: 0 0 12px; color: var(--text-on-dark-secondary); font-size: 0.85rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-card p { font-size: 2rem; margin: 0; color: var(--accent-yellow); font-weight: 700; }
+        .metric-card #total-profit, .metric-card #total-revenue { color: var(--accent-teal);}
         
-        #total-profit p, #total-revenue p, #filtered-sales-total, #filtered-profit-total { 
-            color: var(--accent-lime-green) !important; 
-        }
-        
-        #low-stock-items.metric-card { background-color: var(--surface-dark); padding-bottom: 25px; } 
-        #low-stock-items.metric-card h3 { color: var(--accent-bright-yellow); } 
+        /* Styles for categorized low stock in Analytics Tab */
+        #low-stock-items { background-color: var(--surface-dark-alt); padding-bottom: 15px; }
+        #low-stock-items.metric-card h3 { color: var(--accent-yellow); } 
         .categorized-low-stock-container .low-stock-category-group { margin-bottom: 15px; }
         .categorized-low-stock-container .low-stock-category-group:last-child { margin-bottom: 0; }
         
         .low-stock-category-title { 
-            color: var(--accent-lime-green); 
+            color: var(--accent-teal); 
             font-size: 1rem; 
             font-weight: 600;
             margin-top: 15px;
-            margin-bottom: 0; 
-            padding: 12px 15px; 
+            margin-bottom: 8px;
+            padding: 8px 5px; /* Added padding for better click area */
             border-bottom: 1px solid var(--border-dark-primary);
             cursor: pointer; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             transition: background-color 0.2s;
-            background-color: var(--surface-dark-alt); 
-            border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
         }
         .low-stock-category-title:hover {
-            background-color: #383d48; 
+            background-color: rgba(0, 169, 157, 0.1); /* Teal accent on hover */
         }
         .low-stock-category-title.expanded .category-toggle-indicator {
             transform: rotate(90deg);
@@ -263,104 +235,94 @@
 
         .low-stock-items-in-category {
             list-style-type: none;
-            padding-left: 0; 
-            margin-top: 0;
-            background-color: var(--surface-dark); 
-            border-radius: 0 0 var(--border-radius-md) var(--border-radius-md); 
-            border: 1px solid var(--border-dark-primary);
-            border-top: none; 
-            padding: 15px;
+            padding-left: 15px; /* Indent items under category */
+            margin-top: 5px;
+            background-color: var(--surface-dark); /* Match card background */
+            border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm); /* Rounded corners if visible */
         }
         .low-stock-items-in-category li {
             padding: 10px 5px;
-            border-bottom: 1px dashed #4A5568; 
+            border-bottom: 1px dashed var(--border-dark-primary); 
             font-size: 0.9rem;
             color: var(--text-on-dark-secondary);
         }
         .low-stock-items-in-category li:last-child { border-bottom: none; }
-        .low-stock-items-in-category li .low-stock-qty { color: var(--accent-bright-yellow); font-weight: 600; }
-        #low-stock-items > p[style*="text-align:center"] { 
+        .low-stock-items-in-category li .low-stock-qty { color: var(--accent-yellow); font-weight: 600; }
+        #low-stock-items p[style*="text-align:center"] { /* For the "No low stock items" text */
             font-size: 0.95rem; 
             color: var(--text-on-dark-secondary);
             text-align: center;
-            padding: 20px 0; 
+            padding: 20px 0; /* Add padding */
         }
 
 
-        #toast { position: fixed; bottom: -120px; right: 25px; padding: 14px 25px; border-radius: var(--border-radius-md); color: var(--background-body); font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-strong); transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease; z-index: 9999; opacity: 0; }
+        #toast { position: fixed; bottom: -120px; right: 25px; padding: 14px 25px; border-radius: var(--border-radius-md); color: var(--surface-dark); font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-strong); transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease; z-index: 9999; opacity: 0; }
         #toast.show { bottom: 25px; opacity: 1; }
-        #toast.success { background-color: var(--success-green); }
-        #toast.error { background-color: var(--danger-red); }
-        #toast.info { background-color: var(--info-blue); }
+        #toast.success { background-color: var(--success-green); color: white; }
+        #toast.error { background-color: var(--danger-red); color: white; }
+        #toast.info { background-color: var(--info-blue); color: white; }
 
-        .creditor-item { background-color: var(--surface-dark); padding: 0; border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-lg); margin-bottom: 15px; box-shadow: var(--shadow-subtle); overflow: hidden; }
-        .creditor-header { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 1.05rem; cursor: pointer; padding: 18px 22px; transition: background-color 0.2s; border-bottom: 1px solid transparent; color: var(--text-on-dark-primary); }
+        .creditor-item { background-color: var(--surface-dark); padding: 0; border: 1px solid var(--border-dark-primary); border-radius: var(--border-radius-md); margin-bottom: 15px; box-shadow: var(--shadow-subtle); overflow: hidden; }
+        .creditor-header { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 1.05rem; cursor: pointer; padding: 15px 20px; transition: background-color 0.2s; border-bottom: 1px solid transparent; color: var(--text-on-dark-primary); }
         .creditor-header:hover { background-color: var(--surface-dark-alt); }
-        .creditor-header .creditor-balance { color: var(--accent-bright-yellow); font-weight: 600; }
+        .creditor-header .creditor-balance { color: var(--accent-yellow); font-weight: 600; }
         .creditor-header::after { content: '▼'; font-size: 0.8em; color: var(--text-on-dark-secondary); transition: transform 0.3s ease; margin-left: auto; padding-left: 10px; }
-        .creditor-header.is-open::after { transform: rotate(180deg); color: var(--accent-lime-green); }
+        .creditor-header.is-open::after { transform: rotate(180deg); color: var(--accent-teal); }
         .creditor-item.is-expanded .creditor-header { border-bottom-color: var(--border-dark-primary); }
         .creditor-details { display: none; padding: 20px; background-color: var(--surface-dark-alt); }
         .creditor-details.visible { display: block; animation: fadeInAccordion 0.4s ease; }
         @keyframes fadeInAccordion { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
         .creditor-details table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .creditor-details th, .creditor-details td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-dark-primary); font-size: 0.9rem; color: var(--text-on-dark-secondary); }
-        .creditor-details th { font-size: 0.85rem; color: var(--accent-lime-green); background-color: var(--surface-dark); }
+        .creditor-details th { font-size: 0.85rem; color: var(--accent-teal); background-color: var(--surface-dark); }
         .payment-form { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
         .payment-form input { max-width: 180px; }
         .payment-form label { font-size: 0.9rem; color: var(--text-on-dark-secondary); white-space: nowrap; }
 
+        /* Dashboard Specific Styles ("Operations" Tab) */
         .dashboard-overview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
-            gap: 25px; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
-        .overview-card { 
+        .overview-card {
             background-color: var(--surface-dark);
             color: var(--text-on-dark-primary);
-            padding: 25px; 
-            border-radius: var(--border-radius-lg); 
+            padding: 20px 25px;
+            border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow-medium);
             position: relative;
-            border: 1px solid var(--border-dark-primary);
-            display: flex; 
-            flex-direction: column;
-            justify-content: space-between; 
         }
-        .overview-card h4 { 
-            margin: 0 0 10px 0;
-            font-size: 0.9rem;
+        .overview-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
             font-weight: 500;
             color: var(--text-on-dark-secondary);
             text-transform: uppercase;
         }
-        .overview-value { 
-            font-size: 2.4rem; 
+        .overview-value {
+            font-size: 2.2rem;
             font-weight: 700;
-            color: var(--accent-lime-green); 
-            margin: 0 0 12px 0;
+            color: var(--accent-teal);
+            margin: 0 0 10px 0;
             line-height: 1.1;
         }
-        #overview-low-stock .overview-value,
-        #overview-inventory-value .overview-value,
-        #dashboard-low-stock-count { 
-            color: var(--accent-bright-yellow);
+        #overview-low-stock .overview-value, #overview-inventory-value .overview-value {
+            color: var(--accent-yellow);
         }
-         #dashboard-inventory-value { color: var(--accent-bright-yellow); }
-
-
         .overview-trend {
             font-size: 0.85rem;
             font-weight: 500;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: var(--border-radius-sm);
-             margin-top: auto; 
-             align-self: flex-start; 
+            position: absolute;
+            top: 20px;
+            right: 20px;
         }
-        .overview-trend.positive { background-color: rgba(168, 224, 99, 0.15); color: var(--accent-lime-green); } 
-        .overview-trend.warning { background-color: rgba(249, 212, 35, 0.15); color: var(--accent-bright-yellow); } 
-        .overview-trend.neutral { background-color: rgba(112, 112, 128, 0.15); color: var(--text-on-dark-secondary); } 
+        .overview-trend.positive { background-color: rgba(56, 161, 105, 0.2); color: var(--success-green); }
+        .overview-trend.warning { background-color: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); }
+        .overview-trend.neutral { background-color: rgba(113, 128, 150, 0.2); color: var(--text-on-dark-secondary); }
 
         .dashboard-main-area {
             display: grid;
@@ -369,17 +331,17 @@
             margin-bottom: 30px;
         }
         .dashboard-chart-container.card { 
-             min-height: 380px; 
+             min-height: 350px; 
              display: flex; flex-direction: column; justify-content: space-between;
         }
-         .dashboard-chart-container.card h2 { font-size: 1.2rem; }
+         .dashboard-chart-container.card h2 { font-size: 1.1rem; }
         .quick-stats-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
             padding-top: 15px; border-top: 1px solid var(--border-dark-primary);
             font-size: 0.9rem;
         }
         .quick-stats-grid span { color: var(--text-on-dark-secondary); }
-        .quick-stats-grid strong { color: var(--accent-lime-green); }
+        .quick-stats-grid strong { color: var(--accent-teal); }
 
 
         .dashboard-low-stock-list.card { 
@@ -391,34 +353,34 @@
             align-items: center;
         }
         .dashboard-low-stock-list .list-header h2 {
-            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.2rem; 
-            color: var(--accent-bright-yellow); 
+            border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 1.1rem;
         }
         
         #dashboard-low-stock-items-ul {
             list-style-type: none;
             padding: 0;
-            margin-top: 20px; 
-            max-height: 380px; 
+            margin-top: 15px;
+            max-height: 350px; 
             overflow-y: auto;
         }
+         /* Style for the main li acting as a category container */
         #dashboard-low-stock-items-ul li.dashboard-category-item {
             display: block; 
             border-bottom: none; 
             padding: 0; 
-            margin-bottom: 8px; 
-            background-color: var(--surface-dark); 
-            border-radius: var(--border-radius-md); 
-            overflow: hidden; 
-            border: 1px solid var(--border-dark-primary);
+            margin-bottom: 5px; /* Space between category groups */
+            background-color: var(--surface-dark); /* Base for category item */
+            border-radius: var(--border-radius-sm);
+            overflow: hidden; /* Ensures child rounded corners are visible */
         }
          #dashboard-low-stock-items-ul li.dashboard-category-item:last-child {
             margin-bottom: 0;
         }
 
         .dashboard-category-header {
-            padding: 12px 15px;
+            padding: 10px 8px;
             background-color: var(--surface-dark-alt);
+            /* border-bottom: 1px solid var(--border-dark-primary); Removed for cleaner look when expanded */
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -426,11 +388,11 @@
             transition: background-color 0.2s;
         }
         .dashboard-category-header:hover {
-            background-color: #383d48; 
+            background-color: #4A5568; 
         }
-        .dashboard-category-header h5 { 
+        .dashboard-category-header h5 {
             margin: 0;
-            color: var(--accent-salmon-pink); 
+            color: var(--accent-pink);
             font-size: 1rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -440,22 +402,22 @@
             transform: rotate(90deg);
         }
         .category-toggle-indicator { 
-            font-size: 1em; 
+            font-size: 1em; /* Made slightly larger */
             color: var(--text-on-dark-secondary);
             transition: transform 0.2s ease-out;
             padding: 0 5px; 
         }
 
-        #dashboard-low-stock-items-ul .dashboard-items-in-category { 
+        #dashboard-low-stock-items-ul .dashboard-items-in-category { /* UL for items */
             list-style-type: none;
             padding: 0;
             margin: 0;
             background-color: var(--surface-dark); 
         }
-        #dashboard-low-stock-items-ul .dashboard-items-in-category li { 
+        #dashboard-low-stock-items-ul .dashboard-items-in-category li { /* Actual item LI */
             display: flex;
             align-items: center;
-            padding: 14px 12px; 
+            padding: 12px 10px; 
             border-bottom: 1px solid var(--border-dark-primary);
         }
         #dashboard-low-stock-items-ul .dashboard-items-in-category li:last-child {
@@ -464,6 +426,7 @@
         #dashboard-low-stock-items-ul .dashboard-items-in-category li:hover {
             background-color: var(--surface-dark-alt);
         }
+         /* For the "No low stock items." message when it's the only content of the main UL */
         #dashboard-low-stock-items-ul > li > p[style*="text-align:center"] {
             padding: 20px; 
             color: var(--text-on-dark-secondary);
@@ -472,12 +435,12 @@
 
         .item-icon-placeholder {
             width: 40px; height: 40px;
-            background-color: var(--accent-salmon-pink); 
+            background-color: var(--accent-pink); 
             border-radius: var(--border-radius-sm);
             margin-right: 15px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; color: var(--background-body); font-weight: bold; 
-            flex-shrink: 0; 
+            font-size: 1.2rem; color: var(--surface-dark); font-weight: bold;
+            flex-shrink: 0; /* Prevent shrinking */
         }
         .item-icon-placeholder::before { content: "🛍️"; }
 
@@ -493,15 +456,16 @@
             font-size: 0.8rem;
             color: var(--text-on-dark-secondary);
         }
-        .item-details .item-sub-detail .low-stock-qty { color: var(--accent-bright-yellow); font-weight: bold; }
+        .item-details .item-sub-detail .low-stock-qty { color: var(--accent-yellow); font-weight: bold; }
         .item-stock-level {
             font-size: 0.9rem;
             font-weight: 600;
-            color: var(--accent-bright-yellow); 
+            color: var(--accent-yellow);
             margin-left: 10px;
-            white-space: nowrap; 
+            white-space: nowrap; /* Prevent "X left" from wrapping */
         }
         
+        /* Holiday Management Styles */
         #holiday-management-section { margin-top: 20px; }
         #holiday-management-section .holiday-input-group { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 15px; }
         #holiday-management-section .holiday-input-group input[type="date"] { flex-grow: 1; }
@@ -509,17 +473,17 @@
         #holiday-list li {
             background-color: var(--surface-dark-alt);
             padding: 10px 15px;
-            border-radius: var(--border-radius-md); 
+            border-radius: var(--border-radius-sm);
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.95rem;
             color: var(--text-on-dark-secondary);
-            border: 1px solid var(--border-dark-primary);
         }
          #holiday-list li .holiday-date-text { color: var(--text-on-dark-primary); }
 
+        /* Responsive adjustments */
         @media (max-width: 400px) {
             #login-screen { padding: 1rem; }
             .login-box { padding: 2rem 1.5rem; }
@@ -553,37 +517,39 @@
             #holiday-management-section .holiday-input-group button { width: 100%; margin-top: 5px; }
 
             #sales-trend-controls {
-                flex-direction: column; 
-                align-items: stretch; 
-            }
+    flex-direction: column; /* Stack controls vertically */
+    align-items: stretch; /* Make items stretch to full width of the container */
+}
 
-            #sales-trend-controls label,
-            #sales-trend-controls select,
-            #sales-trend-controls .btn {
-                width: 100%; 
-                max-width: none; 
-                margin-bottom: 10px; 
-            }
+#sales-trend-controls label,
+#sales-trend-controls select,
+#sales-trend-controls .btn {
+    width: 100%; /* Make label, select, and button full width */
+    max-width: none; /* Override any max-width set inline or elsewhere */
+    margin-bottom: 10px; /* Add some space between stacked items */
+}
 
-            #sales-trend-controls .btn {
-                margin-left: 0; 
-            }
+#sales-trend-controls .btn {
+    margin-left: 0; /* Remove auto margin for the button */
+}
 
-            #sales-trend-custom-range-inputs {
-                flex-direction: column; 
-                width: 100%; 
-                gap: 5px; 
-            }
+#sales-trend-custom-range-inputs {
+    flex-direction: column; /* Stack date inputs vertically */
+    width: 100%; /* Make the container full width */
+    gap: 5px; /* Reduce gap for tighter stacking */
+}
 
-            #sales-trend-custom-range-inputs input[type="date"] {
-                width: 100%; 
-                margin-bottom: 5px; 
-            }
+#sales-trend-custom-range-inputs input[type="date"] {
+    width: 100%; /* Make date inputs full width */
+    margin-bottom: 5px; /* Space between date inputs */
+}
 
-            #sales-trend-custom-range-inputs span {
-                display: none; 
-            }
+#sales-trend-custom-range-inputs span {
+    display: none; /* Hide the hyphen when stacked, or style differently if preferred */
+}
+
         }
+
     </style>
 </head>
 <body>
@@ -774,8 +740,8 @@
                 <section class="card">
                     <h2>Shop Performance At a Glance</h2>
                     <div class="analytics-grid">
-                        <div class="metric-card" id="total-profit"><h3>Total Profit</h3><p>₹0.00</p></div>
-                        <div class="metric-card" id="total-revenue"><h3>Total Revenue</h3><p>₹0.00</p></div>
+                        <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
+                        <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue">₹0.00</p></div>
                         <div class="metric-card"><h3>Average Margin</h3><p id="avg-margin">0%</p></div>
                         <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
                         <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
@@ -904,7 +870,8 @@
                     </div>
                     <h3>Marked Holidays:</h3>
                     <ul id="holiday-list">
-                        <li style="text-align:center; color: var(--text-on-dark-secondary); background: none; border:none;">No holidays marked yet.</li>
+                        <!-- Holidays will be listed here -->
+                        <li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>
                     </ul>
                 </section>
             </div>
@@ -950,24 +917,16 @@
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
             async initializeGapiClient() { 
-                try {
-                    await gapi.client.init({
-                        apiKey: this.API_KEY,
-                        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-                    });
-                    this.ui.signinBtn.disabled = false;
-                    this.ui.authStatus.textContent = 'Ready. Please sign in.';
-                } catch (error) {
-                    console.error("Error during GAPI client initialization:", error);
-                    this.ui.authStatus.textContent = 'Initialization Error. Check console.';
-                    this.showToast("GAPI Client Init Failed: " + (error.details || error.message || "Unknown error"), "error");
-                }
+                await gapi.client.init({
+                    apiKey: this.API_KEY,
+                    discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                });
+                this.ui.signinBtn.disabled = false;
+                this.ui.authStatus.textContent = 'Ready. Please sign in.';
             },
             async handleAuthResponse(response) { 
                 if (response.error) {
-                    this.showToast(`Auth Error: ${response.error}`, 'error');
-                    console.error("Auth Error:", response);
-                     this.ui.authStatus.textContent = 'Authentication Failed. Please try again.';
+                    this.showToast(`Error: ${response.error}`, 'error');
                     return;
                 }
                 document.getElementById('login-screen').style.display = 'none';
@@ -985,8 +944,6 @@
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-container').classList.remove('visible');
                         this.showToast('Signed out successfully.');
-                         this.ui.authStatus.textContent = 'Initializing...'; // Reset status for next login
-                         this.ui.signinBtn.disabled = true; // Disable until GAPI is re-initialized effectively on next load
                     });
                 }
             },
@@ -1107,21 +1064,14 @@
             },
 
             hexToRgba(hex, alpha = 1) {
-                if (!hex || typeof hex !== 'string') { 
-                     if (typeof hex === 'string' && hex.startsWith('rgba')) return hex;
-                     console.warn("Invalid hex in hexToRgba:", hex);
-                     return `rgba(168, 224, 99, ${alpha})`; 
-                }
-                if (hex.charAt(0) !== '#') {
-                     console.warn("Hex string does not start with #:", hex);
-                     return `rgba(168, 224, 99, ${alpha})`; 
+                if (!hex || typeof hex !== 'string' || hex.charAt(0) !== '#') {
+                    return `rgba(0, 169, 157, ${alpha})`; 
                 }
                 const r = parseInt(hex.slice(1, 3), 16);
                 const g = parseInt(hex.slice(3, 5), 16);
                 const b = parseInt(hex.slice(5, 7), 16);
                 if (isNaN(r) || isNaN(g) || isNaN(b)) {
-                    console.warn("Failed to parse hex in hexToRgba:", hex)
-                    return `rgba(168, 224, 99, ${alpha})`; 
+                    return `rgba(0, 169, 157, ${alpha})`; 
                 }
                 return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             },
@@ -1147,8 +1097,8 @@
                     tabContents: document.querySelectorAll('.tab-content'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
                     analytics: { 
-                        totalProfit: document.getElementById('total-profit').querySelector('p'),
-                        totalRevenue: document.getElementById('total-revenue').querySelector('p'),
+                        totalProfit: document.getElementById('total-profit'),
+                        totalRevenue: document.getElementById('total-revenue'),
                         avgMargin: document.getElementById('avg-margin'),
                         inventoryCost: document.getElementById('total-inventory-cost'),
                         totalUnits: document.getElementById('total-units'),
@@ -1339,15 +1289,11 @@
                         analyticsLowStockHtml += `</ul></div>`;
                     });
                     analyticsLowStockHtml += '</div>';
-                } else { 
+                } else {
                     analyticsLowStockHtml = '<p style="text-align:center; color: var(--text-on-dark-secondary); padding: 20px 0;">No low stock items.</p>';
                 }
-                if (this.ui.analytics.lowStockItems.classList.contains('metric-card')) {
-                    this.ui.analytics.lowStockItems.innerHTML = analyticsLowStockHtml;
-                } else { 
-                    const innerContainer = this.ui.analytics.lowStockItems.querySelector('.metric-card') || this.ui.analytics.lowStockItems;
-                    innerContainer.innerHTML = analyticsLowStockHtml;
-                }
+                this.ui.analytics.lowStockItems.innerHTML = analyticsLowStockHtml;
+                
                 
                 let dashboardLowStockHtml = '';
                 if (sortedCategories.length > 0) {
@@ -1407,6 +1353,7 @@
             isDateHoliday(dateObj) { 
                 if (!this.state.holidays || this.state.holidays.length === 0) return false;
                 if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+                    // console.warn("isDateHoliday received an invalid date object:", dateObj); // Optional: for debugging
                     return false; 
                 }
                 const dateString = dateObj.toISOString().split('T')[0];
@@ -1416,7 +1363,7 @@
             _prepareSalesDataForMode(mode, customStartDateStr, customEndDateStr) {
                 let loopIterationStartDate, loopIterationEndDate;
                 let transactionFilterStartDate, transactionFilterEndDate;
-                const salesDataAggregated = {}; 
+                const salesDataAggregated = {}; // Key: YYYY-MM-DD, Value: total sales
                 let titleSuffix = "";
 
                 const today = new Date();
@@ -1466,6 +1413,7 @@
                     return { labels: [], dataPoints: [], titleSuffix: "Error: Invalid Mode", salesDataAggregated: {} };
                 }
 
+                // 1. Initialize salesDataAggregated for non-holiday days within the iteration range
                 let currentDateIter = new Date(loopIterationStartDate);
                 while(currentDateIter <= loopIterationEndDate) {
                     if (!this.isDateHoliday(currentDateIter)) {
@@ -1475,6 +1423,7 @@
                     currentDateIter.setDate(currentDateIter.getDate() + 1);
                 }
                 
+                // 2. Aggregate sales data from transactions
                 this.state.transactions.forEach(transaction => {
                     if (transaction.type === 'Sale') {
                         const transactionDate = new Date(transaction.date); 
@@ -1488,6 +1437,7 @@
                     }
                 });
                 
+                // 3. Prepare final labels and dataPoints from the aggregated data
                 const finalLabels = [];
                 const finalDataPoints = [];
                 const sortedDateStrings = Object.keys(salesDataAggregated).sort();
@@ -1497,9 +1447,9 @@
                     const localDateObj = new Date(year, month - 1, day);
 
                     if (mode === 'last7days' || mode === 'customRange') {
-                        finalLabels.push(this.formatDateDDMMYYYY(localDateObj).substring(0, 5)); 
+                        finalLabels.push(this.formatDateDDMMYYYY(localDateObj).substring(0, 5)); // DD/MM
                     } else if (mode === 'currentMonth') {
-                        finalLabels.push(String(localDateObj.getDate())); 
+                        finalLabels.push(String(localDateObj.getDate())); // Day number
                     }
                     finalDataPoints.push(salesDataAggregated[dateString]);
                 });
@@ -1525,13 +1475,13 @@
                 const style = getComputedStyle(document.documentElement);
                 const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim();
                 const borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim();
-                const accentLimeGreen = style.getPropertyValue('--accent-lime-green').trim();
-
+                const accentTeal = style.getPropertyValue('--accent-teal').trim();
 
                 const mode = this.ui.operations.salesTrendModeSelect.value;
                 const customStartDate = this.ui.operations.salesTrendStartDateInput.value;
                 const customEndDate = this.ui.operations.salesTrendEndDateInput.value;
 
+                // Pass custom dates as strings
                 const { labels, dataPoints, titleSuffix } = this._prepareSalesDataForMode(mode, customStartDate, customEndDate);
 
 
@@ -1546,14 +1496,10 @@
                         datasets: [{
                             label: 'Daily Sales',
                             data: dataPoints,
-                            borderColor: accentLimeGreen, 
-                            backgroundColor: this.hexToRgba(accentLimeGreen, 0.2),
+                            borderColor: accentTeal,
+                            backgroundColor: this.hexToRgba(accentTeal, 0.2),
                             tension: 0.3,
                             fill: true,
-                            pointBackgroundColor: accentLimeGreen, 
-                            pointBorderColor: '#fff', 
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: accentLimeGreen
                         }]
                     },
                     options: {
@@ -1561,38 +1507,30 @@
                         maintainAspectRatio: false,
                         scales: {
                             x: {
-                                grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary, drawBorder: false },
-                                ticks: { color: textOnDarkSecondary, font: {size: 10} }
+                                grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary },
+                                ticks: { color: textOnDarkSecondary }
                             },
                             y: {
                                 beginAtZero: true,
-                                grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary, drawBorder: false },
+                                grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary },
                                 ticks: {
                                     color: textOnDarkSecondary,
-                                    callback: function(value) { return '₹' + value.toLocaleString('en-IN'); },
-                                    font: {size: 10}
+                                    callback: function(value) { return '₹' + value.toLocaleString('en-IN'); }
                                 }
                             }
                         },
                         plugins: {
-                            legend: { display: false }, 
+                            legend: { labels: { color: textOnDarkSecondary } },
                             title: { 
                                 display: true,
-                                text: titleSuffix, 
+                                text: 'Sales Trend (' + titleSuffix + ')',
                                 color: textOnDarkSecondary,
-                                font: { size: 14, weight: 'normal' },
-                                align: 'start',
-                                padding: { top: 0, bottom: 10 }
+                                font: { size: 16 }
                             },
                             tooltip: {
-                                backgroundColor: 'var(--surface-dark-alt)', 
-                                titleColor: 'var(--text-on-dark-primary)', 
-                                bodyColor: 'var(--text-on-dark-secondary)', 
-                                borderColor: 'var(--border-dark-primary)',
-                                borderWidth: 1,
-                                padding: 10,
-                                cornerRadius: 'var(--border-radius-sm)',
-                                displayColors: false, 
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.dataset.label || '';
@@ -1604,10 +1542,6 @@
                                     }
                                 }
                             }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index',
                         }
                     }
                 });
@@ -1766,7 +1700,7 @@
                 holidayListEl.innerHTML = ''; 
 
                 if (this.state.holidays.length === 0) {
-                    holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none; border:none;">No holidays marked yet.</li>';
+                    holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>';
                     return;
                 }
                 
@@ -2051,11 +1985,12 @@
                     const mode = this.ui.operations.salesTrendModeSelect.value;
                     if (mode === 'customRange') {
                         this.ui.operations.salesTrendCustomRangeInputs.style.display = 'flex';
+                         // Set default dates for custom range if not already set
                         if (!this.ui.operations.salesTrendStartDateInput.value) {
-                            this.ui.operations.salesTrendStartDateInput.value = this.getTodayDateString(new Date(new Date().setDate(new Date().getDate() - 6))); 
+                            this.ui.operations.salesTrendStartDateInput.value = this.getTodayDateString(new Date(new Date().setDate(new Date().getDate() - 6))); // Default to 7 days ago
                         }
                         if (!this.ui.operations.salesTrendEndDateInput.value) {
-                            this.ui.operations.salesTrendEndDateInput.value = this.getTodayDateString(); 
+                            this.ui.operations.salesTrendEndDateInput.value = this.getTodayDateString(); // Default to today
                         }
                     } else {
                         this.ui.operations.salesTrendCustomRangeInputs.style.display = 'none';
@@ -2081,9 +2016,7 @@
                     this.triggerAutoSave();
                     this.showToast("Holiday added successfully!", "success");
                     this.ui.settings.holidayDateInput.value = ''; 
-                    if (document.getElementById('operations').classList.contains('active')) {
-                        this.renderSalesTrendChart(); 
-                    }
+                    this.renderSalesTrendChart(); // Re-render chart if operations tab is active
                 });
 
                 this.ui.settings.holidayList.addEventListener('click', (e) => {
@@ -2093,9 +2026,7 @@
                         this.renderHolidays();
                         this.triggerAutoSave();
                         this.showToast("Holiday removed.", "success");
-                        if (document.getElementById('operations').classList.contains('active')) {
-                           this.renderSalesTrendChart(); 
-                        }
+                        this.renderSalesTrendChart(); // Re-render chart if operations tab is active
                     }
                 });
 
@@ -2251,7 +2182,7 @@
                         const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars);
                         if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; }
                         this.renderAll(); this.triggerAutoSave();
-                        this.showToast('Inventory updated successfully!', "success");
+                        this.showToast('Inventory updated successfully!', 'success');
                     }
                 });
             }
