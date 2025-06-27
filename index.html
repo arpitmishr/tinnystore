@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tinny Fashion Store - Complete Business Manager</title>
+    <title>Tinny Fashion Store</title>
    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%236B46C1'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -601,11 +601,7 @@
                         <p class="overview-value" id="dashboard-total-units">0</p>
                         <span class="overview-trend positive">+0.0%</span> 
                     </div>
-                    <div class="overview-card" id="overview-low-stock">
-                        <h4>Low in Stock</h4>
-                        <p class="overview-value" id="dashboard-low-stock-count">0</p>
-                        <span class="overview-trend warning">Alert</span>
-                    </div>
+                    
                     <div class="overview-card" id="overview-inventory-value">
                         <h4>Inventory Value</h4>
                         <p class="overview-value" id="dashboard-inventory-value">₹0.00</p>
@@ -614,30 +610,7 @@
                 </section>
 
                 <section class="dashboard-main-area">
-                    <div class="dashboard-chart-container card">
-                        <h2>Sales Trend</h2>
-                         <div id="sales-trend-controls" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                            <label for="sales-trend-mode" style="margin-bottom: 0; color: var(--text-on-dark-secondary);">View:</label>
-                            <select id="sales-trend-mode" style="padding: 8px 10px; font-size: 0.9rem; max-width: 150px;">
-                                <option value="last7days" selected>Last 7 Days</option>
-                                <option value="currentMonth">Current Month</option>
-                                <option value="customRange">Custom Range</option>
-                            </select>
-                            <div id="sales-trend-custom-range-inputs" style="display:none; gap: 10px; align-items: center;">
-                                <input type="date" id="sales-trend-start-date" style="padding: 8px 10px; font-size: 0.9rem;">
-                                <span style="color: var(--text-on-dark-secondary);">-</span>
-                                <input type="date" id="sales-trend-end-date" style="padding: 8px 10px; font-size: 0.9rem;">
-                            </div>
-                            <button id="refresh-sales-trend-btn" class="btn btn-secondary btn-small" style="margin-left:auto;">Refresh</button>
-                        </div>
-                        <div style="flex-grow: 1; position: relative; min-height: 250px; padding-bottom: 15px;">
-                            <canvas id="salesTrendChart"></canvas>
-                        </div>
-                        <div class="quick-stats-grid">
-                            <div><span>Total Revenue (All Time):</span> <strong id="dashboard-total-revenue">₹0.00</strong></div>
-                            <div><span>Total Profit (All Time):</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
-                        </div>
-                    </div>
+                    
 
                     <div class="dashboard-low-stock-list card">
                         <div class="list-header">
@@ -746,6 +719,30 @@
                         <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
                         <div class="metric-card"><h3>Units in Stock</h3><p id="total-units">0</p></div>
                     </div>
+                    <div class="dashboard-chart-container card">
+                        <h2>Sales Trend</h2>
+                         <div id="sales-trend-controls" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <label for="sales-trend-mode" style="margin-bottom: 0; color: var(--text-on-dark-secondary);">View:</label>
+                            <select id="sales-trend-mode" style="padding: 8px 10px; font-size: 0.9rem; max-width: 150px;">
+                                <option value="last7days" selected>Last 7 Days</option>
+                                <option value="currentMonth">Current Month</option>
+                                <option value="customRange">Custom Range</option>
+                            </select>
+                            <div id="sales-trend-custom-range-inputs" style="display:none; gap: 10px; align-items: center;">
+                                <input type="date" id="sales-trend-start-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                                <span style="color: var(--text-on-dark-secondary);">-</span>
+                                <input type="date" id="sales-trend-end-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                            </div>
+                            <button id="refresh-sales-trend-btn" class="btn btn-secondary btn-small" style="margin-left:auto;">Refresh</button>
+                        </div>
+                        <div style="flex-grow: 1; position: relative; min-height: 250px; padding-bottom: 15px;">
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                        <div class="quick-stats-grid">
+                            <div><span>Total Revenue (All Time):</span> <strong id="dashboard-total-revenue">₹0.00</strong></div>
+                            <div><span>Total Profit (All Time):</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
+                        </div>
+                    </div>
                 </section>
                 
                 <section class="card">
@@ -772,6 +769,7 @@
                         </div>
                     </div>
                 </section>
+                
 
                 <section class="card">
                     <h2>Low Stock Items
