@@ -530,6 +530,40 @@
         .forecast-result-card.pending { border-left: 3px solid var(--info-blue); }
         .forecast-result-card.complete { border-left: 3px solid var(--success-green); }
 
+        /* HEAT MAP STYLES */
+        #product-heatmap-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 10px;
+        }
+        .heatmap-item {
+            padding: 12px 18px;
+            border-radius: var(--border-radius-md);
+            color: var(--surface-dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: default;
+        }
+        .heatmap-item:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-strong);
+        }
+        .heatmap-item .heatmap-product-name {
+            display: block;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .heatmap-item .heatmap-sales-count {
+            display: block;
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 400px) {
             #login-screen { padding: 1rem; }
@@ -553,8 +587,9 @@
             .tab-nav { padding: 5px 0; }
             .tab-button { padding: 10px 12px; font-size: 0.9rem; margin: 2px; }
             .card .form-grid, .card .cosmetic-credit-form-grid { grid-template-columns: 1fr; }
-            .card .controls-grid { grid-template-columns: 1fr; }
+            .card .controls-grid { grid-template-columns: 1fr; gap: 10px;}
             .controls-grid .btn { margin-top: 10px; }
+            .controls-grid-2col { grid-template-columns: 1fr; }
             header .header-title-group h1 { font-size: 1.4rem; }
             .card h2 { font-size: 1.15rem; }
             .overview-value { font-size: 1.8rem; }
@@ -778,60 +813,50 @@
                     </div>
                 </section>
                 
-                <!-- NEW: Demand Forecasting Accuracy -->
                 <section class="card">
-                    <h2>Demand Forecasting Accuracy</h2>
+                    <h2>Sales & Profit by Date Range</h2>
+                    <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="analytics-control-group">
+                            <label for="analytics-start-date">Start Date</label>
+                            <input type="date" id="analytics-start-date">
+                        </div>
+                        <div class="analytics-control-group">
+                            <label for="analytics-end-date">End Date</label>
+                            <input type="date" id="analytics-end-date">
+                        </div>
+                    </div>
+                    <div class="controls-grid controls-grid-2col" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <button class="btn btn-info" id="analytics-today-btn">Today</button>
+                        <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
+                    </div>
+                     <div class="analytics-grid" id="filtered-sales-profit-container" style="margin-top: 25px;">
+                        <div class="metric-card">
+                            <h3 id="filtered-sales-heading">Total Sales</h3>
+                            <p id="filtered-sales-total">₹0.00</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3 id="filtered-profit-heading">Total Profit</h3>
+                            <p id="filtered-profit-total">₹0.00</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- NEW: Trend Analysis & Future Projections -->
+                <section class="card analytics-chart-container">
+                    <h2>Sales Trend Analysis & Projection</h2>
+                     <div class="chart-canvas-wrapper">
+                        <canvas id="trendProjectionChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- NEW: Heat Map -->
+                <section class="card">
+                    <h2>Product Performance Heat Map</h2>
                     <p style="font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-top:-15px; margin-bottom: 20px;">
-                        Set a sales forecast for a product for a future month. After the month ends, the system will compare your forecast to actual sales and calculate your accuracy.
+                        Visual representation of sales volume by product (all-time). Brighter/redder colors indicate higher sales.
                     </p>
-                    <form id="demand-forecasting-form">
-                        <div class="analytics-control-group">
-                            <label for="forecast-product-select">Product</label>
-                            <select id="forecast-product-select" required></select>
-                        </div>
-                        <div class="analytics-control-group">
-                            <label for="forecast-month-input">Forecast Month</label>
-                            <input type="month" id="forecast-month-input" required>
-                        </div>
-                        <div class="analytics-control-group">
-                            <label for="forecast-quantity-input">Forecasted Sales (Units)</label>
-                            <input type="number" id="forecast-quantity-input" min="0" placeholder="e.g., 50" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-small">Save Forecast</button>
-                    </form>
-                    <div id="forecast-results-container">
-                        <h3>Results & Pending Forecasts</h3>
-                        <div id="forecast-results-grid">
-                            <p style="color: var(--text-on-dark-secondary);">No forecasts set yet.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- NEW: Seasonal Trend Analysis -->
-                <section class="card analytics-chart-container">
-                    <h2>Seasonal Trend Analysis</h2>
-                    <div class="chart-controls">
-                        <div class="analytics-control-group">
-                            <label for="seasonal-analysis-year-select">Select Year</label>
-                            <select id="seasonal-analysis-year-select"></select>
-                        </div>
-                    </div>
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="seasonalAnalysisChart"></canvas>
-                    </div>
-                </section>
-
-                <!-- NEW: Product Lifecycle Tracking -->
-                <section class="card analytics-chart-container">
-                    <h2>Product Lifecycle Tracking</h2>
-                    <div class="chart-controls">
-                        <div class="analytics-control-group">
-                            <label for="product-lifecycle-select">Select Product</label>
-                            <select id="product-lifecycle-select"></select>
-                        </div>
-                    </div>
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="productLifecycleChart"></canvas>
+                    <div id="product-heatmap-container">
+                        <p style="color: var(--text-on-dark-secondary);">Not enough sales data to generate a heat map.</p>
                     </div>
                 </section>
                 
@@ -962,12 +987,11 @@
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { inventory: [], transactions: [], holidays: [], forecasts: [] }, // <-- Added forecasts
+            state: { inventory: [], transactions: [], holidays: [] },
             ui: {},
             // Chart instances
             salesChartInstance: null, 
-            seasonalChartInstance: null,
-            lifecycleChartInstance: null,
+            trendProjectionChartInstance: null,
 
             init() { 
                 this.cacheDOMElements();
@@ -1028,7 +1052,6 @@
                 this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                 
                 this.renderAll();
-                this.renderAllAnalyticsCharts();
             },
             async _findOrCreateAppFolder() { 
                 if (this.appFolderId) return this.appFolderId;
@@ -1061,21 +1084,20 @@
                            });
                         }
 
-                        const defaultState = { inventory: [], transactions: [], holidays: [], forecasts: [] };
+                        const defaultState = { inventory: [], transactions: [], holidays: [] };
                         this.state = { ...defaultState, ...loadedState };
                         this.state.holidays = loadedState.holidays || []; 
-                        this.state.forecasts = loadedState.forecasts || [];
 
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
-                        this.state = { inventory: [], transactions: [], holidays: [], forecasts: [] };
+                        this.state = { inventory: [], transactions: [], holidays: [] };
                         await this._findOrCreateAppFolder(); 
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
                     this.showToast("Failed to load data. Starting fresh.", "error");
-                    this.state = { inventory: [], transactions: [], holidays: [], forecasts: [] }; 
+                    this.state = { inventory: [], transactions: [], holidays: [] }; 
                 }
             },
             triggerAutoSave() { 
@@ -1126,6 +1148,14 @@
                 if (isNaN(r) || isNaN(g) || isNaN(b)) return `rgba(0, 169, 157, ${alpha})`; 
                 return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             },
+            
+            interpolateColor(color1, color2, factor) {
+                let result = color1.slice();
+                for (let i = 0; i < 3; i++) {
+                    result[i] = Math.round(result[i] + factor * (color2[i] - result[i]));
+                }
+                return `rgb(${result.join(',')})`;
+            },
 
             cacheDOMElements() {
                 this.ui = {
@@ -1155,16 +1185,16 @@
                         totalUnits: document.getElementById('total-units'),
                         lowStockItems: document.getElementById('low-stock-items'),
                         downloadLowStockBtn: document.getElementById('download-low-stock-btn'),
-                        // New Analytics UI Elements
-                        demandForecastingForm: document.getElementById('demand-forecasting-form'),
-                        forecastProductSelect: document.getElementById('forecast-product-select'),
-                        forecastMonthInput: document.getElementById('forecast-month-input'),
-                        forecastQuantityInput: document.getElementById('forecast-quantity-input'),
-                        forecastResultsGrid: document.getElementById('forecast-results-grid'),
-                        seasonalAnalysisChart: document.getElementById('seasonalAnalysisChart'),
-                        seasonalAnalysisYearSelect: document.getElementById('seasonal-analysis-year-select'),
-                        productLifecycleChart: document.getElementById('productLifecycleChart'),
-                        productLifecycleSelect: document.getElementById('product-lifecycle-select'),
+                        startDateInput: document.getElementById('analytics-start-date'),
+                        endDateInput: document.getElementById('analytics-end-date'),
+                        filterBtn: document.getElementById('analytics-filter-btn'),
+                        todayBtn: document.getElementById('analytics-today-btn'),
+                        filteredSalesTotal: document.getElementById('filtered-sales-total'),
+                        filteredProfitTotal: document.getElementById('filtered-profit-total'),
+                        filteredSalesHeading: document.getElementById('filtered-sales-heading'),
+                        filteredProfitHeading: document.getElementById('filtered-profit-heading'),
+                        productHeatmapContainer: document.getElementById('product-heatmap-container'),
+                        trendProjectionChart: document.getElementById('trendProjectionChart'),
                     },
                     transactions: { 
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
@@ -1252,18 +1282,16 @@
                 this.renderCreditorList(); 
                 this.renderHolidays();
                 
-                // New analytics rendering
-                this.populateAnalyticsSelects();
-                this.renderDemandForecasting();
                 this.renderAllAnalyticsCharts();
             },
 
             renderAllAnalyticsCharts() {
-                if (document.getElementById('analytics').classList.contains('active')) {
-                    this.renderSeasonalAnalysisChart();
-                    this.renderProductLifecycleChart();
+                const activeTab = document.querySelector('.tab-content.active').id;
+                if (activeTab === 'analytics') {
+                    this.renderTrendProjectionChart();
+                    this.renderProductHeatmap();
                 }
-                if (document.getElementById('operations').classList.contains('active')) {
+                if (activeTab === 'operations') {
                      this.renderSalesTrendChart();
                 }
             },
@@ -1366,6 +1394,7 @@
                     this.ui.operations.dashboardTotalProfit.textContent = `₹${totalProfit.toFixed(2)}`;
                     if(this.ui.operations.dashboardDownloadLowStockBtn) this.ui.operations.dashboardDownloadLowStockBtn.disabled = lowStockCount === 0;
                 }
+                this.renderFilteredSalesAndProfit();
             },
             
             isDateHoliday(dateObj) { 
@@ -1376,487 +1405,224 @@
             },
 
             _prepareSalesDataForMode(mode, customStartDateStr, customEndDateStr) {
-                let loopIterationStartDate, loopIterationEndDate;
-                let transactionFilterStartDate, transactionFilterEndDate;
-                const salesDataAggregated = {}; // Key: YYYY-MM-DD, Value: total sales
-                let titleSuffix = "";
+                let loopIterationStartDate, loopIterationEndDate, transactionFilterStartDate, transactionFilterEndDate;
+                const salesDataAggregated = {}; let titleSuffix = "";
                 const today = new Date(); today.setHours(0, 0, 0, 0);
 
                 if (mode === 'last7days') {
-                    titleSuffix = "Last 7 Days (Excl. Holidays)";
+                    titleSuffix = "Last 7 Days";
                     loopIterationEndDate = new Date(today);
                     loopIterationStartDate = new Date(today); loopIterationStartDate.setDate(today.getDate() - 6);
-                    transactionFilterEndDate = new Date(today); transactionFilterEndDate.setHours(23,59,59,999);
-                    transactionFilterStartDate = new Date(today); transactionFilterStartDate.setDate(today.getDate() - 6); transactionFilterStartDate.setHours(0,0,0,0);
                 } else if (mode === 'currentMonth') {
-                    titleSuffix = "Current Month (Excl. Holidays)";
+                    titleSuffix = "Current Month";
                     loopIterationStartDate = this._getFirstDayOfMonth(today); 
                     loopIterationEndDate = this._getLastDayOfMonth(today);   
-                    transactionFilterStartDate = new Date(loopIterationStartDate);
-                    transactionFilterEndDate = new Date(loopIterationEndDate); transactionFilterEndDate.setHours(23,59,59,999); 
                 } else if (mode === 'customRange') {
                     if (!customStartDateStr || !customEndDateStr) return this._prepareSalesDataForMode('last7days'); 
                     loopIterationStartDate = new Date(customStartDateStr); loopIterationStartDate.setHours(0,0,0,0);
                     loopIterationEndDate = new Date(customEndDateStr); loopIterationEndDate.setHours(0,0,0,0);
                     if (loopIterationStartDate > loopIterationEndDate) return this._prepareSalesDataForMode('last7days'); 
-                    titleSuffix = `Custom: ${this.formatDateDDMMYYYY(loopIterationStartDate)} - ${this.formatDateDDMMYYYY(loopIterationEndDate)} (Excl. Holidays)`;
-                    transactionFilterStartDate = new Date(loopIterationStartDate); 
-                    transactionFilterEndDate = new Date(loopIterationEndDate); transactionFilterEndDate.setHours(23,59,59,999);
-                } else {
-                    return { labels: [], dataPoints: [], titleSuffix: "Error: Invalid Mode", salesDataAggregated: {} };
+                    titleSuffix = `Custom: ${this.formatDateDDMMYYYY(loopIterationStartDate)} - ${this.formatDateDDMMYYYY(loopIterationEndDate)}`;
                 }
+                
+                transactionFilterStartDate = new Date(loopIterationStartDate); transactionFilterStartDate.setHours(0,0,0,0);
+                transactionFilterEndDate = new Date(loopIterationEndDate); transactionFilterEndDate.setHours(23,59,59,999);
 
                 let currentDateIter = new Date(loopIterationStartDate);
                 while(currentDateIter <= loopIterationEndDate) {
-                    if (!this.isDateHoliday(currentDateIter)) {
-                        salesDataAggregated[currentDateIter.toISOString().split('T')[0]] = 0;
-                    }
+                    if (!this.isDateHoliday(currentDateIter)) salesDataAggregated[currentDateIter.toISOString().split('T')[0]] = 0;
                     currentDateIter.setDate(currentDateIter.getDate() + 1);
                 }
                 
-                this.state.transactions.forEach(transaction => {
-                    if (transaction.type === 'Sale') {
-                        const transactionDate = new Date(transaction.date); 
-                        if (transactionDate >= transactionFilterStartDate && transactionDate <= transactionFilterEndDate) {
-                            const transactionDateString = transactionDate.toISOString().split('T')[0];
-                            if (salesDataAggregated.hasOwnProperty(transactionDateString)) salesDataAggregated[transactionDateString] += transaction.total;
-                        }
+                this.state.transactions.forEach(t => {
+                    if (t.type === 'Sale' && t.date >= transactionFilterStartDate && t.date <= transactionFilterEndDate) {
+                        const dateString = t.date.toISOString().split('T')[0];
+                        if (salesDataAggregated.hasOwnProperty(dateString)) salesDataAggregated[dateString] += t.total;
                     }
                 });
                 
                 const finalLabels = [], finalDataPoints = [];
-                const sortedDateStrings = Object.keys(salesDataAggregated).sort();
-                sortedDateStrings.forEach(dateString => {
-                    const [year, month, day] = dateString.split('-').map(Number);
-                    const localDateObj = new Date(year, month - 1, day);
-                    finalLabels.push(this.formatDateDDMMYYYY(localDateObj).substring(0, 5)); // DD/MM
+                Object.keys(salesDataAggregated).sort().forEach(dateString => {
+                    finalLabels.push(this.formatDateDDMMYYYY(new Date(dateString+'T00:00:00')).substring(0, 5));
                     finalDataPoints.push(salesDataAggregated[dateString]);
                 });
-                return { labels: finalLabels, dataPoints: finalDataPoints, titleSuffix };
+                return { labels: finalLabels, dataPoints: finalDataPoints, titleSuffix: titleSuffix + " (Excl. Holidays)" };
             },
 
             renderSalesTrendChart() {
-                if (typeof Chart === 'undefined') {
-                    if(this.ui.operations.salesTrendChart) this.ui.operations.salesTrendChart.parentElement.innerHTML = '<p style="text-align:center; color: var(--text-on-dark-secondary); padding-top: 20px;">Chart library not loaded.</p>';
-                    return;
-                }
-                if (!this.ui.operations.salesTrendChart) return;
+                if (typeof Chart === 'undefined' || !this.ui.operations.salesTrendChart) return;
                 const ctx = this.ui.operations.salesTrendChart.getContext('2d');
                 if (!ctx) return;
 
                 const style = getComputedStyle(document.documentElement);
-                const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim();
-                const borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim();
-                const accentTeal = style.getPropertyValue('--accent-teal').trim();
-                const mode = this.ui.operations.salesTrendModeSelect.value;
-                const customStartDate = this.ui.operations.salesTrendStartDateInput.value;
-                const customEndDate = this.ui.operations.salesTrendEndDateInput.value;
-                const { labels, dataPoints, titleSuffix } = this._prepareSalesDataForMode(mode, customStartDate, customEndDate);
+                const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim(), borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim(), accentTeal = style.getPropertyValue('--accent-teal').trim();
+                const { labels, dataPoints, titleSuffix } = this._prepareSalesDataForMode(this.ui.operations.salesTrendModeSelect.value, this.ui.operations.salesTrendStartDateInput.value, this.ui.operations.salesTrendEndDateInput.value);
 
                 if (this.salesChartInstance) this.salesChartInstance.destroy();
                 this.salesChartInstance = new Chart(ctx, {
                     type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{ label: 'Daily Sales', data: dataPoints, borderColor: accentTeal, backgroundColor: this.hexToRgba(accentTeal, 0.2), tension: 0.3, fill: true }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            x: { grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary } },
-                            y: { beginAtZero: true, grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary, callback: value => '₹' + value.toLocaleString('en-IN') } }
-                        },
-                        plugins: {
-                            legend: { labels: { color: textOnDarkSecondary } },
-                            title: { display: true, text: 'Sales Trend (' + titleSuffix + ')', color: textOnDarkSecondary, font: { size: 16 } },
+                    data: { labels, datasets: [{ label: 'Daily Sales', data: dataPoints, borderColor: accentTeal, backgroundColor: this.hexToRgba(accentTeal, 0.2), tension: 0.3, fill: true }] },
+                    options: { responsive: true, maintainAspectRatio: false,
+                        scales: { x: { grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary } }, y: { beginAtZero: true, grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary, callback: value => '₹' + value.toLocaleString('en-IN') } } },
+                        plugins: { legend: { labels: { color: textOnDarkSecondary } }, title: { display: true, text: `Sales Trend (${titleSuffix})`, color: textOnDarkSecondary, font: { size: 16 } },
                             tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleColor: 'white', bodyColor: 'white', callbacks: { label: context => `${context.dataset.label || ''}: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed.y)}` } }
                         }
                     }
                 });
             },
+            
+            renderFilteredSalesAndProfit() {
+                const startDateStr = this.ui.analytics.startDateInput.value, endDateStr = this.ui.analytics.endDateInput.value;
+                const startDate = startDateStr ? new Date(startDateStr) : null; if(startDate) startDate.setHours(0, 0, 0, 0);
+                const endDate = endDateStr ? new Date(endDateStr) : null; if(endDate) endDate.setHours(23, 59, 59, 999);
+                const sales = this.state.transactions.filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate));
+                const totalSales = sales.reduce((sum, t) => sum + t.total, 0), totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                this.ui.analytics.filteredSalesTotal.textContent = `₹${totalSales.toFixed(2)}`;
+                this.ui.analytics.filteredProfitTotal.textContent = `₹${totalProfit.toFixed(2)}`;
+                const isFiltered = startDate || endDate;
+                this.ui.analytics.filteredSalesHeading.textContent = isFiltered ? "Filtered Sales" : "All-Time Sales";
+                this.ui.analytics.filteredProfitHeading.textContent = isFiltered ? "Filtered Profit" : "All-Time Profit";
+            },
 
             renderTransactions() { 
-                const startDateStr = this.ui.transactions.startDateInput.value;
-                const endDateStr = this.ui.transactions.endDateInput.value;
+                const startDateStr = this.ui.transactions.startDateInput.value, endDateStr = this.ui.transactions.endDateInput.value;
                 const startDate = startDateStr ? new Date(startDateStr) : null; if(startDate) startDate.setHours(0,0,0,0);
                 const endDate = endDateStr ? new Date(endDateStr) : null; if(endDate) endDate.setHours(23,59,59,999);
-                const sortOrder = this.ui.transactions.transactionSortOrder.value;
-                const sortFunction = (a, b) => sortOrder === 'oldest-first' ? a.date - b.date : b.date - a.date;
-
+                const sortFunction = (a, b) => this.ui.transactions.transactionSortOrder.value === 'oldest-first' ? a.date - b.date : b.date - a.date;
                 const filteredSales = this.state.transactions.filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFunction);
                 const filteredPurchases = this.state.transactions.filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFunction);
-
-                this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => {
-                    const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : '';
-                    const itemsHtml = t.items.map(i => `<li><span>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</span> <button class="btn btn-danger btn-small return-item-btn" data-transaction-id="${t.id}" data-item-particulars="${i.particulars}">Return</button></li>`).join('');
-                    return `<tr><td>${this.formatDateDDMMYYYY(t.date)}</td><td><ul>${itemsHtml}</ul>${creditLabel}</td><td>₹${t.total.toFixed(2)}</td><td><div class="sales-history-actions"><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button><button class="btn btn-danger btn-small delete-sale-btn" data-id="${t.id}">Delete</button></div></td></tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
+                this.ui.transactions.salesHistoryBody.innerHTML = filteredSales.length ? filteredSales.map(t => { const creditLabel = t.saleType === 'Credit' ? `<span class="credit-label">CREDIT TO: ${t.partyName} (Paid: ₹${(t.paidAmount || 0).toFixed(2)})</span>` : ''; const itemsHtml = t.items.map(i => `<li><span>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)}</span> <button class="btn btn-danger btn-small return-item-btn" data-transaction-id="${t.id}" data-item-particulars="${i.particulars}">Return</button></li>`).join(''); return `<tr><td>${this.formatDateDDMMYYYY(t.date)}</td><td><ul>${itemsHtml}</ul>${creditLabel}</td><td>₹${t.total.toFixed(2)}</td><td><div class="sales-history-actions"><button class="btn btn-secondary btn-small download-invoice-btn" data-id="${t.id}">Invoice</button><button class="btn btn-danger btn-small delete-sale-btn" data-id="${t.id}">Delete</button></div></td></tr>`}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match the selected criteria.</td></tr>`;
                 this.ui.transactions.purchaseHistoryBody.innerHTML = filteredPurchases.length ? filteredPurchases.map(t => `<tr><td>${this.formatDateDDMMYYYY(t.date)}</td><td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td><td>₹${t.total.toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match the selected criteria.</td></tr>`;
             },
             renderProfit() { 
                 const allItemsSold = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({ ...item, date: t.date })));
-                if (!allItemsSold.length) {
-                    this.ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`; return;
-                }
+                if (!allItemsSold.length) { this.ui.profit.profitDetailsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No sales recorded yet.</td></tr>`; return; }
                 allItemsSold.sort((a,b) => b.date - a.date);
-                const tableRows = allItemsSold.map(item => `<tr><td>${this.formatDateDDMMYYYY(item.date)}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${(item.sellingRate * item.quantity).toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${((item.sellingRate - item.costRate) * item.quantity).toFixed(2)}</td></tr>`).join('');
-                this.ui.profit.profitDetailsBody.innerHTML = tableRows;
+                this.ui.profit.profitDetailsBody.innerHTML = allItemsSold.map(item => `<tr><td>${this.formatDateDDMMYYYY(item.date)}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${(item.sellingRate * item.quantity).toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${((item.sellingRate - item.costRate) * item.quantity).toFixed(2)}</td></tr>`).join('');
             },
             renderCreditorList() { 
-                const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => {
-                    if (!t.partyName) return acc;
-                    if (!acc[t.partyName]) acc[t.partyName] = { totalOwed: 0, totalPaid: 0, transactions: [] };
-                    acc[t.partyName].totalOwed += t.total;
-                    acc[t.partyName].totalPaid += (t.paidAmount || 0);
-                    acc[t.partyName].transactions.push(t);
-                    return acc;
-                }, {});
+                const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => { if (!t.partyName) return acc; if (!acc[t.partyName]) acc[t.partyName] = { totalOwed: 0, totalPaid: 0, transactions: [] }; acc[t.partyName].totalOwed += t.total; acc[t.partyName].totalPaid += (t.paidAmount || 0); acc[t.partyName].transactions.push(t); return acc; }, {});
                 this.ui.credit.creditorListContainer.innerHTML = '';
                 const creditorsWithBalance = Object.entries(creditors).filter(([_, data]) => (data.totalOwed - data.totalPaid) > 0.01);
-                if (creditorsWithBalance.length === 0) {
-                    this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-on-dark-secondary);">No outstanding credit balances.</p>'; return;
-                }
-                creditorsWithBalance.sort((a,b) => a[0].localeCompare(b[0]));
-                for (const [name, data] of creditorsWithBalance) {
-                    const remainingBalance = data.totalOwed - data.totalPaid;
-                    const transactionRows = data.transactions.map(tx => {
-                        const balanceOnTx = tx.total - (tx.paidAmount || 0);
-                        if (balanceOnTx <= 0.01) return '';
-                        return `<tr><td>${this.formatDateDDMMYYYY(tx.date)}</td><td>${tx.items.map(i => `${i.quantity}x ${i.particulars.replace('(Cosmetic)', '')}`).join(', ')}</td><td>₹${tx.total.toFixed(2)}</td><td>₹${balanceOnTx.toFixed(2)}</td></tr>`;
-                    }).join('');
-                    const creditorElementHTML = `<div class="creditor-item" data-creditor-name="${name}"><div class="creditor-header"><span class="creditor-name">${name}</span><span class="creditor-balance">Balance: ₹${remainingBalance.toFixed(2)}</span></div><div class="creditor-details"><table><thead><tr><th>Date</th><th>Items</th><th>Total Sale</th><th>Balance</th></tr></thead><tbody>${transactionRows}</tbody></table><div class="payment-form"><label for="payment-${name.replace(/\s+/g, '-')}" style="white-space: nowrap;">Record Payment:</label><input type="number" id="payment-${name.replace(/\s+/g, '-')}" class="payment-amount-input" placeholder="Enter amount" min="0.01" max="${remainingBalance.toFixed(2)}" step="0.01"><button class="btn btn-success btn-small record-payment-btn" data-creditor-name="${name}">Pay</button></div></div></div>`;
-                    this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', creditorElementHTML);
-                }
+                if (creditorsWithBalance.length === 0) { this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-on-dark-secondary);">No outstanding credit balances.</p>'; return; }
+                creditorsWithBalance.sort((a,b) => a[0].localeCompare(b[0])).forEach(([name, data]) => { const remainingBalance = data.totalOwed - data.totalPaid; const transactionRows = data.transactions.map(tx => { const balanceOnTx = tx.total - (tx.paidAmount || 0); if (balanceOnTx <= 0.01) return ''; return `<tr><td>${this.formatDateDDMMYYYY(tx.date)}</td><td>${tx.items.map(i => `${i.quantity}x ${i.particulars.replace('(Cosmetic)', '')}`).join(', ')}</td><td>₹${tx.total.toFixed(2)}</td><td>₹${balanceOnTx.toFixed(2)}</td></tr>`; }).join(''); this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', `<div class="creditor-item" data-creditor-name="${name}"><div class="creditor-header"><span class="creditor-name">${name}</span><span class="creditor-balance">Balance: ₹${remainingBalance.toFixed(2)}</span></div><div class="creditor-details"><table><thead><tr><th>Date</th><th>Items</th><th>Total Sale</th><th>Balance</th></tr></thead><tbody>${transactionRows}</tbody></table><div class="payment-form"><label for="payment-${name.replace(/\s+/g, '-')}" style="white-space: nowrap;">Record Payment:</label><input type="number" id="payment-${name.replace(/\s+/g, '-')}" class="payment-amount-input" placeholder="Enter amount" min="0.01" max="${remainingBalance.toFixed(2)}" step="0.01"><button class="btn btn-success btn-small record-payment-btn" data-creditor-name="${name}">Pay</button></div></div></div>`); });
             },
             renderHolidays() {
                 const holidayListEl = this.ui.settings.holidayList; holidayListEl.innerHTML = ''; 
                 if (this.state.holidays.length === 0) { holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>'; return; }
-                const sortedHolidays = [...this.state.holidays].sort();
-                sortedHolidays.forEach(holidayDateStr => {
-                    const listItem = document.createElement('li');
-                    const dateObj = new Date(holidayDateStr + 'T00:00:00'); 
-                    listItem.innerHTML = `<span class="holiday-date-text">${this.formatDateDDMMYYYY(dateObj)}</span><button class="btn btn-danger btn-small delete-holiday-btn" data-date="${holidayDateStr}">Remove</button>`;
-                    holidayListEl.appendChild(listItem);
-                });
+                [...this.state.holidays].sort().forEach(holidayDateStr => { holidayListEl.insertAdjacentHTML('beforeend', `<li><span class="holiday-date-text">${this.formatDateDDMMYYYY(new Date(holidayDateStr + 'T00:00:00'))}</span><button class="btn btn-danger btn-small delete-holiday-btn" data-date="${holidayDateStr}">Remove</button></li>`); });
             },
-            // NEW ANALYTICS RENDER FUNCTIONS
-            populateAnalyticsSelects() {
-                const products = this.state.inventory.map(item => item.particulars);
-                const forecastSelect = this.ui.analytics.forecastProductSelect;
-                const lifecycleSelect = this.ui.analytics.productLifecycleSelect;
-                const currentForecastVal = forecastSelect.value;
-                const currentLifecycleVal = lifecycleSelect.value;
+            renderProductHeatmap() {
+                const container = this.ui.analytics.productHeatmapContainer;
+                const productSales = this.state.transactions.filter(t => t.type === 'Sale')
+                    .flatMap(t => t.items)
+                    .reduce((acc, item) => {
+                        acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
+                        return acc;
+                    }, {});
                 
-                forecastSelect.innerHTML = '<option value="">Select a Product...</option>' + products.map(p => `<option value="${p}">${p}</option>`).join('');
-                lifecycleSelect.innerHTML = '<option value="">Select a Product...</option>' + products.map(p => `<option value="${p}">${p}</option>`).join('');
-                if(products.includes(currentForecastVal)) forecastSelect.value = currentForecastVal;
-                if(products.includes(currentLifecycleVal)) lifecycleSelect.value = currentLifecycleVal;
+                const sortedProducts = Object.entries(productSales).sort(([,a], [,b]) => b - a);
 
-                const salesYears = [...new Set(this.state.transactions.filter(t=>t.type === 'Sale').map(t => t.date.getFullYear()))].sort((a,b) => b-a);
-                const yearSelect = this.ui.analytics.seasonalAnalysisYearSelect;
-                const currentYearVal = yearSelect.value;
-                yearSelect.innerHTML = salesYears.map(y => `<option value="${y}">${y}</option>`).join('');
-                if(salesYears.includes(parseInt(currentYearVal))) yearSelect.value = currentYearVal;
-                if(!yearSelect.value && salesYears.length > 0) yearSelect.value = salesYears[0];
-            },
-
-            renderDemandForecasting() {
-                const grid = this.ui.analytics.forecastResultsGrid;
-                grid.innerHTML = '';
-                if (this.state.forecasts.length === 0) {
-                    grid.innerHTML = '<p style="color: var(--text-on-dark-secondary);">No forecasts set yet.</p>'; return;
+                if (sortedProducts.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-on-dark-secondary);">Not enough sales data to generate a heat map.</p>'; return;
                 }
-                const now = new Date();
-                const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                
+                container.innerHTML = '';
+                const maxSales = sortedProducts[0][1];
+                const colorStart = [255, 236, 179]; // light yellow
+                const colorEnd = [229, 62, 62]; // red-500
 
-                this.state.forecasts.sort((a, b) => new Date(a.month) - new Date(b.month)).forEach(forecast => {
-                    const forecastMonthDate = new Date(forecast.month + '-02'); // Use day 2 to avoid timezone issues
-                    const card = document.createElement('div');
-                    card.classList.add('forecast-result-card');
-                    
-                    let resultHtml;
-                    if (forecastMonthDate >= firstDayOfCurrentMonth) {
-                        card.classList.add('pending');
-                        resultHtml = `<h4>${forecast.product}</h4>
-                            <p><strong>Period:</strong> ${new Date(forecast.month + '-02').toLocaleString('default', { month: 'long', year: 'long' })}</p>
-                            <p><strong>Forecasted Units:</strong> ${forecast.quantity}</p>
-                            <p><em>Status: Pending</em></p>`;
-                    } else {
-                        card.classList.add('complete');
-                        const startOfMonth = forecastMonthDate;
-                        const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0, 23, 59, 59);
-                        const actualSales = this.state.transactions
-                            .filter(t => t.type === 'Sale' && t.date >= startOfMonth && t.date <= endOfMonth)
-                            .flatMap(t => t.items)
-                            .filter(i => i.particulars === forecast.product)
-                            .reduce((sum, i) => sum + i.quantity, 0);
-                        
-                        let accuracy = 0;
-                        let accuracyClass = 'bad';
-                        if (actualSales > 0) {
-                            accuracy = (1 - (Math.abs(actualSales - forecast.quantity) / actualSales)) * 100;
-                        } else if (forecast.quantity === 0) {
-                            accuracy = 100; // Perfect forecast if both were zero
-                        }
-
-                        if (accuracy >= 85) accuracyClass = 'good';
-                        else if (accuracy >= 60) accuracyClass = 'ok';
-                        
-                        resultHtml = `<h4>${forecast.product}</h4>
-                            <p><strong>Period:</strong> ${startOfMonth.toLocaleString('default', { month: 'long', year: 'long' })}</p>
-                            <p><strong>Forecasted:</strong> ${forecast.quantity} units</p>
-                            <p><strong>Actual Sales:</strong> ${actualSales} units</p>
-                            <p><strong>Accuracy:</strong> <span class="forecast-accuracy-${accuracyClass}">${accuracy.toFixed(1)}%</span></p>`;
-                    }
-                    card.innerHTML = resultHtml;
-                    grid.appendChild(card);
+                sortedProducts.forEach(([product, sales]) => {
+                    const factor = maxSales > 1 ? (sales - 1) / (maxSales - 1) : 1;
+                    const color = this.interpolateColor(colorStart, colorEnd, factor);
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'heatmap-item';
+                    itemDiv.style.backgroundColor = color;
+                    itemDiv.innerHTML = `<span class="heatmap-product-name" title="${product}">${product}</span><span class="heatmap-sales-count">${sales}</span>`;
+                    container.appendChild(itemDiv);
                 });
             },
+            renderTrendProjectionChart() {
+                if(typeof Chart === 'undefined' || !this.ui.analytics.trendProjectionChart) return;
+                const ctx = this.ui.analytics.trendProjectionChart.getContext('2d');
+                if (this.trendProjectionChartInstance) this.trendProjectionChartInstance.destroy();
 
-            renderSeasonalAnalysisChart() {
-                if(typeof Chart === 'undefined' || !this.ui.analytics.seasonalAnalysisChart) return;
-                const ctx = this.ui.analytics.seasonalAnalysisChart.getContext('2d');
-                const selectedYear = parseInt(this.ui.analytics.seasonalAnalysisYearSelect.value, 10);
+                const monthlySales = {};
+                this.state.transactions.forEach(t => {
+                    if (t.type === 'Sale') {
+                        const monthKey = `${t.date.getFullYear()}-${String(t.date.getMonth() + 1).padStart(2, '0')}`;
+                        monthlySales[monthKey] = (monthlySales[monthKey] || 0) + t.total;
+                    }
+                });
 
-                if (this.seasonalChartInstance) this.seasonalChartInstance.destroy();
-                if (!selectedYear) {
+                const sortedMonths = Object.keys(monthlySales).sort();
+                if (sortedMonths.length < 2) {
                     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                     ctx.font = "16px Roboto"; ctx.fillStyle = "grey"; ctx.textAlign = "center";
-                    ctx.fillText("Select a year to view seasonal trends.", ctx.canvas.width/2, ctx.canvas.height/2);
+                    ctx.fillText("At least two months of sales data needed for trend projection.", ctx.canvas.width/2, ctx.canvas.height/2);
                     return;
                 }
 
-                const monthlySales = Array(12).fill(0);
-                this.state.transactions.forEach(t => {
-                    if (t.type === 'Sale' && t.date.getFullYear() === selectedYear) {
-                        const month = t.date.getMonth();
-                        monthlySales[month] += t.total;
-                    }
-                });
+                const historicalLabels = sortedMonths.map(m => new Date(m+'-02').toLocaleString('default', {month:'short', year:'2-digit'}));
+                const historicalData = sortedMonths.map(m => monthlySales[m]);
+
+                // Linear Regression for projection
+                const projectionPoints = 6;
+                const dataForRegression = historicalData.slice(-projectionPoints);
+                const n = dataForRegression.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                for(let i = 0; i < n; i++) {
+                    sumX += i; sumY += dataForRegression[i];
+                    sumXY += i * dataForRegression[i]; sumX2 += i * i;
+                }
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX2);
+                const intercept = (sumY - slope * sumX) / n;
+
+                const projectionLabels = [];
+                const projectionData = [];
+                const lastMonthDate = new Date(sortedMonths[sortedMonths.length - 1] + '-02');
+                for (let i = 1; i <= projectionPoints; i++) {
+                    const nextMonth = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() + i, 1);
+                    projectionLabels.push(nextMonth.toLocaleString('default', {month:'short', year:'2-digit'}));
+                    const projectedValue = slope * (n - 1 + i) + intercept;
+                    projectionData.push(projectedValue > 0 ? projectedValue : 0);
+                }
 
                 const style = getComputedStyle(document.documentElement);
                 const accentPink = style.getPropertyValue('--accent-pink').trim();
+                const infoBlue = style.getPropertyValue('--info-blue').trim();
 
-                this.seasonalChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: `Total Sales for ${selectedYear}`,
-                            data: monthlySales,
-                            backgroundColor: this.hexToRgba(accentPink, 0.6),
-                            borderColor: accentPink,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: this.getCommonChartOptions(`Monthly Sales Distribution for ${selectedYear}`)
-                });
-            },
-
-            renderProductLifecycleChart() {
-                if(typeof Chart === 'undefined' || !this.ui.analytics.productLifecycleSelect) return;
-                const ctx = this.ui.analytics.productLifecycleChart.getContext('2d');
-                const selectedProduct = this.ui.analytics.productLifecycleSelect.value;
-                
-                if (this.lifecycleChartInstance) this.lifecycleChartInstance.destroy();
-
-                if (!selectedProduct) {
-                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                    ctx.font = "16px Roboto"; ctx.fillStyle = "grey"; ctx.textAlign = "center";
-                    ctx.fillText("Select a product to track its lifecycle.", ctx.canvas.width/2, ctx.canvas.height/2);
-                    return;
-                }
-
-                const productSales = this.state.transactions
-                    .filter(t => t.type === 'Sale')
-                    .flatMap(t => t.items.map(i => ({...i, date: t.date})))
-                    .filter(i => i.particulars === selectedProduct);
-                
-                if (productSales.length === 0) {
-                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                    ctx.font = "16px Roboto"; ctx.fillStyle = "grey"; ctx.textAlign = "center";
-                    ctx.fillText("No sales recorded for this product yet.", ctx.canvas.width/2, ctx.canvas.height/2);
-                    return;
-                }
-                
-                const salesByMonth = {};
-                productSales.forEach(sale => {
-                    const monthKey = `${sale.date.getFullYear()}-${String(sale.date.getMonth() + 1).padStart(2, '0')}`;
-                    if (!salesByMonth[monthKey]) salesByMonth[monthKey] = 0;
-                    salesByMonth[monthKey] += sale.quantity;
-                });
-
-                const sortedMonths = Object.keys(salesByMonth).sort();
-                const labels = sortedMonths.map(m => new Date(m+'-02').toLocaleString('default', {month:'short', year:'2-digit'}));
-                const dataPoints = sortedMonths.map(m => salesByMonth[m]);
-                const accentYellow = getComputedStyle(document.documentElement).getPropertyValue('--accent-yellow').trim();
-
-                this.lifecycleChartInstance = new Chart(ctx, {
+                this.trendProjectionChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Monthly Units Sold',
-                            data: dataPoints,
-                            borderColor: accentYellow,
-                            backgroundColor: this.hexToRgba(accentYellow, 0.2),
-                            tension: 0.1,
-                            fill: true,
-                        }]
+                        labels: [...historicalLabels, ...projectionLabels],
+                        datasets: [
+                            { label: 'Historical Sales', data: historicalData, borderColor: accentPink, tension: 0.1 },
+                            { label: 'Projected Sales', data: [...Array(historicalData.length).fill(null), ...projectionData], borderColor: infoBlue, borderDash: [5, 5], tension: 0.1 }
+                        ]
                     },
-                    options: this.getCommonChartOptions(`Sales Lifecycle for ${selectedProduct}`)
+                    options: this.getCommonChartOptions('Monthly Sales Trend & 6-Month Projection')
                 });
             },
-
             getCommonChartOptions(titleText) {
                 const style = getComputedStyle(document.documentElement);
-                const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim();
-                const borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim();
-                return {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary } },
-                        y: { beginAtZero: true, grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary, callback: value => Number.isInteger(value) ? value : null } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: textOnDarkSecondary } },
-                        title: { display: true, text: titleText, color: textOnDarkSecondary, font: { size: 16 } },
-                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleColor: 'white', bodyColor: 'white' }
-                    }
+                const textOnDarkSecondary = style.getPropertyValue('--text-on-dark-secondary').trim(), borderDarkPrimary = style.getPropertyValue('--border-dark-primary').trim();
+                return { responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary } }, y: { beginAtZero: true, grid: { color: borderDarkPrimary, borderColor: borderDarkPrimary }, ticks: { color: textOnDarkSecondary, callback: value => '₹' + value.toLocaleString('en-IN') } } },
+                    plugins: { legend: { labels: { color: textOnDarkSecondary } }, title: { display: true, text: titleText, color: textOnDarkSecondary, font: { size: 16 } }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleColor: 'white', bodyColor: 'white', callbacks: { label: context => `${context.dataset.label || ''}: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed.y)}` } } }
                 };
             },
 
-            createFormItemHTML(isSale) { 
-                return isSale
-                ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>`
-                : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`; },
+            createFormItemHTML(isSale) { return isSale ? `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" list="inventory-datalist" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Selling Rate" min="0" step="0.01" required></div>` : `<div class="form-grid item-entry"><input type="text" class="particulars" placeholder="Item Particulars" required><input type="number" class="quantity" placeholder="Quantity" min="1" required><input type="number" class="rate" placeholder="Cost Rate" min="0" step="0.01" required></div>`; },
             addFormItem(container, isSale) { container.insertAdjacentHTML('beforeend', this.createFormItemHTML(isSale)) },
-            handleFileUpload(event) { 
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                        this.state.inventory = json.map(row => ({ particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0 })).filter(item => item.particulars !== "N/A");
-                        this.renderAll(); this.triggerAutoSave();
-                        this.showToast('Inventory loaded successfully!', 'success');
-                    } catch (error) { this.showToast('Error reading Excel file. Ensure columns are: particulars, quantity, rate.', 'error'); console.error(error); }
-                };
-                reader.readAsArrayBuffer(file);
-            },
-            deleteSale(transactionId) { 
-                if (!confirm("Are you sure you want to delete this ENTIRE sale record? All items will be returned to inventory.")) return;
-                const transactionIndex = this.state.transactions.findIndex(t => t.id === transactionId);
-                if (transactionIndex === -1) { this.showToast("Sale not found.", "error"); return; }
-                const transactionToDelete = this.state.transactions[transactionIndex];
-                if (transactionToDelete.items && Array.isArray(transactionToDelete.items)) {
-                    transactionToDelete.items.forEach(soldItem => {
-                        if (soldItem.particulars.startsWith('(Cosmetic)')) return;
-                        const inventoryItem = this.state.inventory.find(i => i.particulars === soldItem.particulars);
-                        if (inventoryItem) inventoryItem.quantity += soldItem.quantity;
-                        else this.state.inventory.push({ particulars: soldItem.particulars, quantity: soldItem.quantity, rate: soldItem.costRate });
-                    });
-                }
-                this.state.transactions.splice(transactionIndex, 1);
-                this.showToast("Sale deleted and all stock restored.", "success");
-                this.renderAll(); this.triggerAutoSave();
-            },
-            handleSalesReturn(transactionId, itemParticulars) { 
-                if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale?`)) return;
-                const transaction = this.state.transactions.find(t => t.id === transactionId); if (!transaction) { this.showToast("Sale not found.", "error"); return; }
-                const itemIndex = transaction.items.findIndex(i => i.particulars === itemParticulars); if (itemIndex === -1) { this.showToast("Item not found in this sale.", "error"); return; }
-                const [returnedItem] = transaction.items.splice(itemIndex, 1);
-                if (!returnedItem.particulars.startsWith('(Cosmetic)')) {
-                    const inventoryItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars);
-                    if (inventoryItem) inventoryItem.quantity += returnedItem.quantity;
-                    else this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate });
-                }
-                const returnedValue = returnedItem.quantity * returnedItem.sellingRate;
-                transaction.total -= returnedValue;
-                if (transaction.paidAmount > transaction.total) transaction.paidAmount = transaction.total;
-                if (transaction.items.length === 0) {
-                    const transactionIndexGlobal = this.state.transactions.findIndex(t => t.id === transactionId);
-                    this.state.transactions.splice(transactionIndexGlobal, 1);
-                    this.showToast('Item returned. The sale is now empty and has been removed.', 'success');
-                } else { this.showToast('Item returned and stock restored.', 'success'); }
-                this.renderAll(); this.triggerAutoSave();
-            },
-            processSale(isInvoice, isCredit = false, creditForm) { 
-                const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer;
-                const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null;
-                const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); 
-                if (isCredit && !partyName) { this.showToast("Party Name is required for credit sales.", "error"); return null; }
-                if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Please select a valid date.", "error"); return null; }
-                const saleItems = [], errors = []; let isValid = true;
-                container.querySelectorAll('.item-entry').forEach(entry => {
-                    const p = this.parseItemNameFromDatalist(entry.querySelector('.particulars').value);
-                    const q = parseInt(entry.querySelector('.quantity').value, 10);
-                    const r = parseFloat(entry.querySelector('.rate').value);
-                    if (!p || !q || isNaN(r)) return;
-                    const item = this.state.inventory.find(i => i.particulars === p);
-                    if (!item) { isValid = false; errors.push(`Item not found: ${p}`); }
-                    else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}. Only ${item.quantity} left.`); }
-                    else saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate });
-                });
-                if (saleItems.length === 0) { this.showToast("Please add at least one valid item.", "error"); return null; }
-                if (!isValid) { this.showToast("Sale could not be completed:\n" + errors.join("\n"), "error"); return null; }
-                saleItems.forEach(soldItem => { this.state.inventory.find(i => i.particulars === soldItem.particulars).quantity -= soldItem.quantity; });
-                const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName: partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, soldItem) => acc + (soldItem.sellingRate * soldItem.quantity), 0), paidAmount: 0 };
-                this.state.transactions.push(newTransaction);
-                this.renderAll(); this.triggerAutoSave();
-                if (isCredit) { creditForm.reset(); this.ui.credit.inventoryDateInput.value = this.getTodayDateString(); container.innerHTML = ''; this.addFormItem(container, true); } 
-                else { this.ui.salesItemsContainer.innerHTML = ''; this.addFormItem(this.ui.salesItemsContainer, true); }
-                if (isInvoice) this.generateInvoice(newTransaction);
-                this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded successfully!', "success");
-            },
-            recordPayment(creditorName, amount) { 
-                let paymentToApply = amount;
-                const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date);
-                if (creditorTransactions.length === 0) { this.showToast("No outstanding balance found.", "error"); return; }
-                const totalDue = creditorTransactions.reduce((sum, t) => sum + (t.total - (t.paidAmount || 0)), 0);
-                if (amount > totalDue + 0.01) { this.showToast(`Payment (₹${amount.toFixed(2)}) exceeds total due (₹${totalDue.toFixed(2)}).`, 'error'); return; }
-                for (const transaction of creditorTransactions) {
-                    if (paymentToApply <= 0) break;
-                    const dueOnThisTx = transaction.total - (transaction.paidAmount || 0);
-                    const paymentForThisTx = Math.min(paymentToApply, dueOnThisTx);
-                    transaction.paidAmount = (transaction.paidAmount || 0) + paymentForThisTx;
-                    paymentToApply -= paymentForThisTx;
-                }
-                this.showToast(`Payment of ₹${amount.toFixed(2)} recorded for ${creditorName}.`, 'success');
-                this.renderAll(); this.triggerAutoSave();
-            },
-            exportTransactionsToExcel() { 
-                if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; }
-                const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Sale Type": t.saleType, "Party Name": t.partyName || 'N/A', "Amount Paid": t.paidAmount, "Item Particulars": item.particulars, "Quantity": item.quantity, "Selling Rate (per item)": item.sellingRate, "Cost Rate (per item)": item.costRate, "Total Sale": (item.quantity * item.sellingRate), "Profit": (item.sellingRate - item.costRate) * item.quantity })));
-                const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(item => ({"Transaction ID": t.id, "Date (DD/MM/YYYY)": this.formatDateDDMMYYYY(t.date), "Item Particulars": item.particulars, "Quantity": item.quantity, "Cost Rate (per item)": item.rate, "Total Purchase": (item.quantity * item.rate) })));
-                const profitData = salesData.map(item => ({ "Date (DD/MM/YYYY)": item["Date (DD/MM/YYYY)"], "Item Particulars": item["Item Particulars"], "Quantity": item.Quantity, "Selling Rate": item["Selling Rate (per item)"], "Cost Rate": item["Cost Rate (per item)"], "Total Profit": item.Profit }));
-                const wsSales = XLSX.utils.json_to_sheet(salesData), wsPurchases = XLSX.utils.json_to_sheet(purchaseData), wsProfit = XLSX.utils.json_to_sheet(profitData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, wsSales, "Sales History"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchase History"); XLSX.utils.book_append_sheet(wb, wsProfit, "Profit Details");
-                XLSX.writeFile(wb, "Transaction_History.xlsx");
-                this.showToast("Transaction history exported successfully!", "success");
-            },
-            generateInvoice(transaction) { 
-                const doc = new jsPDF(); let y = 20;
-                doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" }); y += 8;
-                doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" }); y += 15;
-                doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" }); y += 8; doc.setFontSize(10); 
-                if (transaction.saleType === 'Credit') doc.text(`Credit To: ${transaction.partyName}`, 20, y);
-                doc.text(`Date: ${this.formatDateDDMMYYYY(transaction.date)}`, 190, y, { align: "right" }); y += 15;
-                doc.setFontSize(12); doc.setFont("helvetica", "bold");
-                doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" }); y += 7;
-                doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8; doc.setFont("helvetica", "normal");
-                transaction.items.forEach(item => {
-                    doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y); doc.text(item.sellingRate.toFixed(2), 150, y); doc.text((item.quantity * item.sellingRate).toFixed(2), 185, y, { align: "right" }); y += 7;
-                });
-                y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7;
-                doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y); doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" });
-                doc.save(`Invoice_${transaction.id}.pdf`);
-            },
-            showToast(msg, type='success') { 
-                const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `show ${type}`;
-                setTimeout(() => toast.className = toast.className.replace('show',''), 3000);
-            },
+            handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]); this.state.inventory = json.map(row => ({ particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0 })).filter(item => item.particulars !== "N/A"); this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory loaded successfully!', 'success'); } catch (error) { this.showToast('Error reading Excel file. Ensure columns are: particulars, quantity, rate.', 'error'); console.error(error); } }; reader.readAsArrayBuffer(file); },
+            deleteSale(transactionId) { if (!confirm("Are you sure you want to delete this ENTIRE sale record?")) return; const transactionIndex = this.state.transactions.findIndex(t => t.id === transactionId); if (transactionIndex === -1) { this.showToast("Sale not found.", "error"); return; } const transactionToDelete = this.state.transactions[transactionIndex]; if (transactionToDelete.items) { transactionToDelete.items.forEach(soldItem => { if (soldItem.particulars.startsWith('(Cosmetic)')) return; const inventoryItem = this.state.inventory.find(i => i.particulars === soldItem.particulars); if (inventoryItem) inventoryItem.quantity += soldItem.quantity; else this.state.inventory.push({ particulars: soldItem.particulars, quantity: soldItem.quantity, rate: soldItem.costRate }); }); } this.state.transactions.splice(transactionIndex, 1); this.showToast("Sale deleted and stock restored.", "success"); this.renderAll(); this.triggerAutoSave(); },
+            handleSalesReturn(transactionId, itemParticulars) { if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale?`)) return; const transaction = this.state.transactions.find(t => t.id === transactionId); if (!transaction) { this.showToast("Sale not found.", "error"); return; } const itemIndex = transaction.items.findIndex(i => i.particulars === itemParticulars); if (itemIndex === -1) { this.showToast("Item not found.", "error"); return; } const [returnedItem] = transaction.items.splice(itemIndex, 1); if (!returnedItem.particulars.startsWith('(Cosmetic)')) { const inventoryItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars); if (inventoryItem) inventoryItem.quantity += returnedItem.quantity; else this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate }); } const returnedValue = returnedItem.quantity * returnedItem.sellingRate; transaction.total -= returnedValue; if (transaction.paidAmount > transaction.total) transaction.paidAmount = transaction.total; if (transaction.items.length === 0) { const transactionIndexGlobal = this.state.transactions.findIndex(t => t.id === transactionId); this.state.transactions.splice(transactionIndexGlobal, 1); this.showToast('Item returned. Sale removed.', 'success'); } else { this.showToast('Item returned.', 'success'); } this.renderAll(); this.triggerAutoSave(); },
+            processSale(isInvoice, isCredit = false, creditForm) { const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer; const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null; const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); if (isCredit && !partyName) { this.showToast("Party Name is required.", "error"); return null; } if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Invalid date.", "error"); return null; } const saleItems = [], errors = []; let isValid = true; container.querySelectorAll('.item-entry').forEach(entry => { const p = this.parseItemNameFromDatalist(entry.querySelector('.particulars').value); const q = parseInt(entry.querySelector('.quantity').value, 10); const r = parseFloat(entry.querySelector('.rate').value); if (!p || !q || isNaN(r)) return; const item = this.state.inventory.find(i => i.particulars === p); if (!item) { isValid = false; errors.push(`Item not found: ${p}`); } else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}.`); } else saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }); if (saleItems.length === 0) { this.showToast("Add at least one item.", "error"); return null; } if (!isValid) { this.showToast("Sale error:\n" + errors.join("\n"), "error"); return null; } saleItems.forEach(soldItem => { this.state.inventory.find(i => i.particulars === soldItem.particulars).quantity -= soldItem.quantity; }); const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, si) => acc + (si.sellingRate * si.quantity), 0), paidAmount: 0 }; this.state.transactions.push(newTransaction); this.renderAll(); this.triggerAutoSave(); if (isCredit) { creditForm.reset(); this.ui.credit.inventoryDateInput.value = this.getTodayDateString(); container.innerHTML = ''; this.addFormItem(container, true); } else { this.ui.salesItemsContainer.innerHTML = ''; this.addFormItem(this.ui.salesItemsContainer, true); } if (isInvoice) this.generateInvoice(newTransaction); this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded!', "success"); },
+            recordPayment(creditorName, amount) { let paymentToApply = amount; const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date); if (creditorTransactions.length === 0) { this.showToast("No outstanding balance.", "error"); return; } const totalDue = creditorTransactions.reduce((sum, t) => sum + (t.total - (t.paidAmount || 0)), 0); if (amount > totalDue + 0.01) { this.showToast(`Payment (₹${amount.toFixed(2)}) exceeds total due (₹${totalDue.toFixed(2)}).`, 'error'); return; } for (const transaction of creditorTransactions) { if (paymentToApply <= 0) break; const dueOnThisTx = transaction.total - (transaction.paidAmount || 0); const paymentForThisTx = Math.min(paymentToApply, dueOnThisTx); transaction.paidAmount = (transaction.paidAmount || 0) + paymentForThisTx; paymentToApply -= paymentForThisTx; } this.showToast(`Payment of ₹${amount.toFixed(2)} recorded for ${creditorName}.`, 'success'); this.renderAll(); this.triggerAutoSave(); },
+            exportTransactionsToExcel() { if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; } const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(i => ({"Tx ID": t.id, Date: this.formatDateDDMMYYYY(t.date), Type: t.saleType, Party: t.partyName || 'N/A', Paid: t.paidAmount, Item: i.particulars, Qty: i.quantity, "Sell Rate": i.sellingRate, "Cost Rate": i.costRate, Total: i.quantity * i.sellingRate, Profit: (i.sellingRate - i.costRate) * i.quantity }))); const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(i => ({"Tx ID": t.id, Date: this.formatDateDDMMYYYY(t.date), Item: i.particulars, Qty: i.quantity, "Cost Rate": i.rate, Total: i.quantity * i.rate }))); const wsSales = XLSX.utils.json_to_sheet(salesData), wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsSales, "Sales"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchases"); XLSX.writeFile(wb, "Transaction_History.xlsx"); this.showToast("Exported successfully!", "success"); },
+            generateInvoice(transaction) { const doc = new jsPDF(); let y = 20; doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" }); y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" }); y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" }); y += 8; doc.setFontSize(10); if (transaction.saleType === 'Credit') doc.text(`Credit To: ${transaction.partyName}`, 20, y); doc.text(`Date: ${this.formatDateDDMMYYYY(transaction.date)}`, 190, y, { align: "right" }); y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" }); y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8; doc.setFont("helvetica", "normal"); transaction.items.forEach(item => { doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y); doc.text(item.sellingRate.toFixed(2), 150, y); doc.text((item.quantity * item.sellingRate).toFixed(2), 185, y, { align: "right" }); y += 7; }); y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7; doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y); doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" }); doc.save(`Invoice_${transaction.id}.pdf`); },
+            showToast(msg, type='success') { const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `show ${type}`; setTimeout(() => toast.className = toast.className.replace('show',''), 3000); },
             
             addEventListeners() { 
                 this.ui.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
@@ -1867,31 +1633,30 @@
                 this.ui.credit.addInventoryItemBtn.addEventListener('click', () => this.addFormItem(this.ui.credit.inventoryItemsContainer, true));
                 this.ui.credit.inventorySaleForm.addEventListener('submit', (e) => { e.preventDefault(); this.processSale(false, true, e.target); });
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
+                this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
+                this.ui.analytics.todayBtn.addEventListener('click', () => { const todayStr = this.getTodayDateString(); this.ui.analytics.startDateInput.value = todayStr; this.ui.analytics.endDateInput.value = todayStr; this.renderFilteredSalesAndProfit(); });
+                
                 const downloadLowStockLogic = () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
-                    if (lowStockItems.length === 0) { this.showToast("No low stock items (qty <= 5).", "info"); return; }
-                    const ws = XLSX.utils.json_to_sheet(lowStockItems.map(item => ({ 'Particulars': item.particulars, 'Quantity Remaining': item.quantity, 'Last Cost Rate': item.rate.toFixed(2) })));
-                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Low Stock Inventory"); XLSX.writeFile(wb, "Low_Stock_Inventory.xlsx");
+                    if (lowStockItems.length === 0) { this.showToast("No low stock items.", "info"); return; }
+                    const ws = XLSX.utils.json_to_sheet(lowStockItems.map(item => ({ 'Particulars': item.particulars, 'Qty': item.quantity, 'Rate': item.rate.toFixed(2) })));
+                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Low Stock"); XLSX.writeFile(wb, "Low_Stock_Inventory.xlsx");
                     this.showToast("Low stock list downloaded!", "success");
                 };
                 this.ui.analytics.downloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
                 if (this.ui.operations.dashboardDownloadLowStockBtn) this.ui.operations.dashboardDownloadLowStockBtn.addEventListener('click', downloadLowStockLogic);
+                
                 this.ui.analytics.lowStockItems.addEventListener('click', (e) => {
                     const categoryTitle = e.target.closest('.low-stock-category-title');
-                    if (categoryTitle) {
-                        const itemsList = document.getElementById(categoryTitle.dataset.categoryIndex.replace('analytics-', 'analytics-items-'));
-                        if (itemsList) { const isExpanded = itemsList.style.display === 'block'; itemsList.style.display = isExpanded ? 'none' : 'block'; categoryTitle.classList.toggle('expanded', !isExpanded); }
-                    }
+                    if (categoryTitle) { const itemsList = document.getElementById(categoryTitle.dataset.categoryIndex.replace('analytics-', 'analytics-items-')); if (itemsList) { const isExpanded = itemsList.style.display === 'block'; itemsList.style.display = isExpanded ? 'none' : 'block'; categoryTitle.classList.toggle('expanded', !isExpanded); } }
                 });
                 if (this.ui.operations.dashboardLowStockItemsUl) {
                     this.ui.operations.dashboardLowStockItemsUl.addEventListener('click', (e) => {
                         const categoryHeader = e.target.closest('.dashboard-category-header');
-                        if (categoryHeader) {
-                            const itemsList = document.getElementById(categoryHeader.dataset.categoryIndex.replace('dashboard-', 'dashboard-items-'));
-                            if (itemsList) { const isExpanded = itemsList.style.display === 'block'; itemsList.style.display = isExpanded ? 'none' : 'block'; categoryHeader.classList.toggle('expanded', !isExpanded); }
-                        }
+                        if (categoryHeader) { const itemsList = document.getElementById(categoryHeader.dataset.categoryIndex.replace('dashboard-', 'dashboard-items-')); if (itemsList) { const isExpanded = itemsList.style.display === 'block'; itemsList.style.display = isExpanded ? 'none' : 'block'; categoryHeader.classList.toggle('expanded', !isExpanded); } }
                     });
                 }
+                
                 this.ui.operations.salesTrendModeSelect.addEventListener('change', () => {
                     if (this.ui.operations.salesTrendModeSelect.value === 'customRange') {
                         this.ui.operations.salesTrendCustomRangeInputs.style.display = 'flex';
@@ -1901,102 +1666,20 @@
                     this.renderSalesTrendChart(); 
                 });
                 this.ui.operations.refreshSalesTrendBtn.addEventListener('click', () => this.renderSalesTrendChart());
-                this.ui.settings.addHolidayBtn.addEventListener('click', () => {
-                    const holidayDateStr = this.ui.settings.holidayDateInput.value;
-                    if (!holidayDateStr) { this.showToast("Please select a date.", "error"); return; }
-                    if (this.state.holidays.includes(holidayDateStr)) { this.showToast("This date is already a holiday.", "info"); return; }
-                    this.state.holidays.push(holidayDateStr);
-                    this.renderHolidays(); this.triggerAutoSave();
-                    this.showToast("Holiday added successfully!", "success");
-                    this.ui.settings.holidayDateInput.value = ''; this.renderSalesTrendChart();
-                });
-                this.ui.settings.holidayList.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('delete-holiday-btn')) {
-                        this.state.holidays = this.state.holidays.filter(dateStr => dateStr !== e.target.dataset.date);
-                        this.renderHolidays(); this.triggerAutoSave();
-                        this.showToast("Holiday removed.", "success"); this.renderSalesTrendChart();
-                    }
-                });
-                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { 
-                    e.preventDefault();
-                    const partyName = e.target.querySelector('#credit-cosmetic-party-name').value.trim(), saleDateStr = e.target.querySelector('#credit-cosmetic-date').value, itemName = e.target.querySelector('#credit-cosmetic-item-name').value.trim(), quantity = parseInt(e.target.querySelector('#credit-cosmetic-qty').value, 10), costRate = parseFloat(e.target.querySelector('#credit-cosmetic-cost-rate').value), sellRate = parseFloat(e.target.querySelector('#credit-cosmetic-sell-rate').value);
-                    if (!saleDateStr) { this.showToast("Please select a valid date.", "error"); return; } const saleDate = new Date(saleDateStr + 'T00:00:00'); 
-                    if (!partyName || !itemName || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0 || isNaN(saleDate.getTime())) { this.showToast("Please fill all fields correctly.", "error"); return; }
-                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: saleDate, items: [{ particulars: `(Cosmetic) ${itemName}`, quantity, sellingRate: sellRate, costRate }], total: sellRate * quantity, paidAmount: 0 });
-                    this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString(); this.showToast(`Cosmetic credit sale to ${partyName} recorded!`, 'success');
-                });
+                this.ui.settings.addHolidayBtn.addEventListener('click', () => { const holidayDateStr = this.ui.settings.holidayDateInput.value; if (!holidayDateStr) { this.showToast("Select a date.", "error"); return; } if (this.state.holidays.includes(holidayDateStr)) { this.showToast("Date is already a holiday.", "info"); return; } this.state.holidays.push(holidayDateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Holiday added!", "success"); this.ui.settings.holidayDateInput.value = ''; this.renderSalesTrendChart(); });
+                this.ui.settings.holidayList.addEventListener('click', (e) => { if (e.target.classList.contains('delete-holiday-btn')) { this.state.holidays = this.state.holidays.filter(d => d !== e.target.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Holiday removed.", "success"); this.renderSalesTrendChart(); } });
+                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const pName = e.target.querySelector('#credit-cosmetic-party-name').value.trim(), dateStr = e.target.querySelector('#credit-cosmetic-date').value, iName = e.target.querySelector('#credit-cosmetic-item-name').value.trim(), qty = parseInt(e.target.querySelector('#credit-cosmetic-qty').value, 10), cRate = parseFloat(e.target.querySelector('#credit-cosmetic-cost-rate').value), sRate = parseFloat(e.target.querySelector('#credit-cosmetic-sell-rate').value); if (!dateStr) { this.showToast("Select a date.", "error"); return; } const sDate = new Date(dateStr + 'T00:00:00'); if (!pName || !iName || isNaN(qty) || isNaN(cRate) || isNaN(sRate) || qty <= 0 || isNaN(sDate.getTime())) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: pName, date: sDate, items: [{ particulars: `(Cosmetic) ${iName}`, quantity: qty, sellingRate: sRate, costRate: cRate }], total: sRate * qty, paidAmount: 0 }); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString(); this.showToast(`Credit sale to ${pName} recorded!`, 'success'); });
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
                 this.ui.transactions.transactionSortOrder.addEventListener('change', () => this.renderTransactions());
-                this.ui.credit.creditorListContainer.addEventListener('click', (e) => { 
-                    const creditorHeader = e.target.closest('.creditor-header'), recordButton = e.target.closest('.record-payment-btn');
-                    if (creditorHeader) { const details = creditorHeader.nextElementSibling, creditorItem = creditorHeader.closest('.creditor-item'); details.classList.toggle('visible'); creditorHeader.classList.toggle('is-open'); if (creditorItem) creditorItem.classList.toggle('is-expanded'); }
-                    else if (recordButton) { const creditorName = recordButton.dataset.creditorName, paymentInput = recordButton.closest('.payment-form').querySelector('.payment-amount-input'), amountToPay = parseFloat(paymentInput.value); if (isNaN(amountToPay) || amountToPay <= 0) { this.showToast('Please enter a valid payment amount.', 'error'); return; } this.recordPayment(creditorName, amountToPay); paymentInput.value = ''; }
-                });
-                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { 
-                    e.preventDefault();
-                    const particulars = e.target.querySelector('#cosmetic-particulars').value.trim(), quantity = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10), costRate = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value), sellRate = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value);
-                    if (!particulars || isNaN(quantity) || isNaN(costRate) || isNaN(sellRate) || quantity <= 0) { this.showToast("Please fill all fields correctly.", "error"); return; }
-                    this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [{ particulars: `(Cosmetic) ${particulars}`, quantity, sellingRate: sellRate, costRate }], total: sellRate * quantity });
-                    this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Profit recorded successfully!`, "success");
-                });
-                this.ui.purchaseForm.addEventListener('submit', (event) => { 
-                    event.preventDefault();
-                    const { newItems, total } = Array.from(this.ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => { const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value); if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; } return acc; }, { newItems: [], total: 0 });
-                    if (newItems.length === 0) return this.showToast("Please fill out all fields for at least one item.", "error");
-                    newItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalExistingValue = existing.rate * existing.quantity, totalNewValue = newItem.rate * newItem.quantity, totalQuantity = existing.quantity + newItem.quantity; existing.rate = (totalExistingValue + totalNewValue) / totalQuantity; existing.quantity = totalQuantity; } else this.state.inventory.push(newItem); });
-                    this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total });
-                    this.renderAll(); this.triggerAutoSave(); this.ui.purchaseItemsContainer.innerHTML = ''; this.addFormItem(this.ui.purchaseItemsContainer, false); this.showToast('Stock updated!', "success");
-                });
-                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { 
-                    this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active');
-                    this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active');
-                    this.renderAllAnalyticsCharts(); // Re-render charts on tab switch
-                }));
-                document.body.addEventListener('input', e => { 
-                    if (e.target.classList.contains('particulars')) {
-                        const item = this.state.inventory.find(i => i.particulars === this.parseItemNameFromDatalist(e.target.value));
-                        const rateInput = e.target.closest('.item-entry').querySelector('.rate');
-                        if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) rateInput.value = (item.sellingRate || item.rate).toFixed(2);
-                    }
-                });
-                this.ui.transactions.transactionsTab.addEventListener('click', e => { 
-                    if (e.target.classList.contains('download-invoice-btn')) { const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10)); if (tx) this.generateInvoice(tx); }
-                    else if (e.target.classList.contains('delete-sale-btn')) this.deleteSale(parseInt(e.target.dataset.id, 10));
-                    else if (e.target.classList.contains('return-item-btn')) this.handleSalesReturn(parseInt(e.target.dataset.transactionId, 10), e.target.dataset.itemParticulars);
-                });
-                this.ui.inventoryTableBody.addEventListener('click', (e) => { 
-                    const particulars = e.target.dataset.particulars, targetRow = e.target.closest('tr'); if (!targetRow) return;
-                    if (e.target.classList.contains('edit-btn')) { const currentlyEditing = this.ui.inventoryTableBody.querySelector('tr.edit-mode'); if(currentlyEditing) currentlyEditing.classList.remove('edit-mode'); targetRow.classList.add('edit-mode'); }
-                    else if (e.target.classList.contains('cancel-btn')) targetRow.classList.remove('edit-mode');
-                    else if (e.target.classList.contains('delete-btn')) { if (confirm(`Are you sure you want to delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); } }
-                    else if (e.target.classList.contains('save-btn')) { const newQty = parseInt(targetRow.querySelector('.edit-quantity').value, 10), newRate = parseFloat(targetRow.querySelector('.edit-rate').value); if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) { this.showToast('Invalid input.', 'error'); return; } const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars); if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; } this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory updated!', 'success'); }
-                });
-
-                // NEW ANALYTICS EVENT LISTENERS
-                this.ui.analytics.demandForecastingForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const product = this.ui.analytics.forecastProductSelect.value;
-                    const month = this.ui.analytics.forecastMonthInput.value;
-                    const quantity = parseInt(this.ui.analytics.forecastQuantityInput.value, 10);
-                    if (!product || !month || isNaN(quantity)) { this.showToast('Please fill all forecast fields.', 'error'); return; }
-                    
-                    const existingForecastIndex = this.state.forecasts.findIndex(f => f.product === product && f.month === month);
-                    if (existingForecastIndex > -1) {
-                         if(!confirm('A forecast for this product and month already exists. Do you want to overwrite it?')) return;
-                         this.state.forecasts[existingForecastIndex].quantity = quantity;
-                    } else {
-                        this.state.forecasts.push({ product, month, quantity, id: Date.now() });
-                    }
-                    
-                    this.showToast('Forecast saved!', 'success');
-                    this.renderDemandForecasting();
-                    this.triggerAutoSave();
-                    e.target.reset();
-                });
-                this.ui.analytics.seasonalAnalysisYearSelect.addEventListener('change', () => this.renderSeasonalAnalysisChart());
-                this.ui.analytics.productLifecycleSelect.addEventListener('change', () => this.renderProductLifecycleChart());
+                this.ui.credit.creditorListContainer.addEventListener('click', (e) => { const creditorHeader = e.target.closest('.creditor-header'), recordButton = e.target.closest('.record-payment-btn'); if (creditorHeader) { const details = creditorHeader.nextElementSibling, item = creditorHeader.closest('.creditor-item'); details.classList.toggle('visible'); creditorHeader.classList.toggle('is-open'); if (item) item.classList.toggle('is-expanded'); } else if (recordButton) { const name = recordButton.dataset.creditorName, input = recordButton.closest('.payment-form').querySelector('.payment-amount-input'), amount = parseFloat(input.value); if (isNaN(amount) || amount <= 0) { this.showToast('Enter a valid amount.', 'error'); return; } this.recordPayment(name, amount); input.value = ''; } });
+                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(), q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10), c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value), s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s) || q <= 0) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q }); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Profit recorded!`, "success"); });
+                this.ui.purchaseForm.addEventListener('submit', (event) => { event.preventDefault(); const { newItems, total } = Array.from(this.ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => { const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value); if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; } return acc; }, { newItems: [], total: 0 }); if (newItems.length === 0) return this.showToast("Add at least one item.", "error"); newItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity, totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total }); this.renderAll(); this.triggerAutoSave(); this.ui.purchaseItemsContainer.innerHTML = ''; this.addFormItem(this.ui.purchaseItemsContainer, false); this.showToast('Stock updated!', "success"); });
+                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active'); this.renderAllAnalyticsCharts(); }));
+                document.body.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === this.parseItemNameFromDatalist(e.target.value)); const rateInput = e.target.closest('.item-entry').querySelector('.rate'); if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) rateInput.value = (item.sellingRate || item.rate).toFixed(2); } });
+                this.ui.transactions.transactionsTab.addEventListener('click', e => { if (e.target.classList.contains('download-invoice-btn')) { const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10)); if (tx) this.generateInvoice(tx); } else if (e.target.classList.contains('delete-sale-btn')) this.deleteSale(parseInt(e.target.dataset.id, 10)); else if (e.target.classList.contains('return-item-btn')) this.handleSalesReturn(parseInt(e.target.dataset.transactionId, 10), e.target.dataset.itemParticulars); });
+                this.ui.inventoryTableBody.addEventListener('click', (e) => { const particulars = e.target.dataset.particulars, row = e.target.closest('tr'); if (!row) return; if (e.target.classList.contains('edit-btn')) { const editing = this.ui.inventoryTableBody.querySelector('tr.edit-mode'); if(editing) editing.classList.remove('edit-mode'); row.classList.add('edit-mode'); } else if (e.target.classList.contains('cancel-btn')) row.classList.remove('edit-mode'); else if (e.target.classList.contains('delete-btn')) { if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); } } else if (e.target.classList.contains('save-btn')) { const newQty = parseInt(row.querySelector('.edit-quantity').value, 10), newRate = parseFloat(row.querySelector('.edit-rate').value); if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) { this.showToast('Invalid input.', 'error'); return; } const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars); if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; } this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory updated!', 'success'); } });
             }
         };
         app.init();
