@@ -485,10 +485,10 @@
 
         /* NEW ANALYTICS STYLES */
         .analytics-chart-container .chart-controls {
-            margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end;
+            margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;
         }
         .analytics-chart-container .chart-controls .analytics-control-group {
-            flex-grow: 1;
+            flex-grow: 1; min-width: 150px;
         }
         .analytics-chart-container .chart-canvas-wrapper {
             flex-grow: 1; position: relative; min-height: 280px;
@@ -843,7 +843,7 @@
 
                 <!-- NEW: Trend Analysis & Future Projections -->
                 <section class="card analytics-chart-container">
-                    <h2>Sales Trend Analysis & Projection</h2>
+                    <h2>Sales & Profit Trend with Projection</h2>
                      <div class="chart-canvas-wrapper">
                         <canvas id="trendProjectionChart"></canvas>
                     </div>
@@ -852,9 +852,22 @@
                 <!-- NEW: Heat Map -->
                 <section class="card">
                     <h2>Product Performance Heat Map</h2>
-                    <p style="font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-top:-15px; margin-bottom: 20px;">
-                        Visual representation of sales volume by product (all-time). Brighter/redder colors indicate higher sales.
-                    </p>
+                    <div class="chart-controls">
+                        <div class="analytics-control-group">
+                            <label for="heatmap-month-filter">Filter by Month</label>
+                            <select id="heatmap-month-filter">
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                        <div class="analytics-control-group">
+                            <label for="heatmap-item-type-filter">Filter by Item Type</label>
+                            <select id="heatmap-item-type-filter">
+                                <option value="all">All Items</option>
+                                <option value="inventory">Inventory Only</option>
+                                <option value="cosmetic">Cosmetics Only</option>
+                            </select>
+                        </div>
+                    </div>
                     <div id="product-heatmap-container">
                         <p style="color: var(--text-on-dark-secondary);">Not enough sales data to generate a heat map.</p>
                     </div>
@@ -1194,6 +1207,8 @@
                         filteredSalesHeading: document.getElementById('filtered-sales-heading'),
                         filteredProfitHeading: document.getElementById('filtered-profit-heading'),
                         productHeatmapContainer: document.getElementById('product-heatmap-container'),
+                        heatmapMonthFilter: document.getElementById('heatmap-month-filter'),
+                        heatmapItemTypeFilter: document.getElementById('heatmap-item-type-filter'),
                         trendProjectionChart: document.getElementById('trendProjectionChart'),
                     },
                     transactions: { 
@@ -1281,6 +1296,7 @@
                 this.renderProfit();
                 this.renderCreditorList(); 
                 this.renderHolidays();
+                this.populateHeatmapFilters();
                 
                 this.renderAllAnalyticsCharts();
             },
@@ -1512,28 +1528,74 @@
                 if (this.state.holidays.length === 0) { holidayListEl.innerHTML = '<li style="text-align:center; color: var(--text-on-dark-secondary); background: none;">No holidays marked yet.</li>'; return; }
                 [...this.state.holidays].sort().forEach(holidayDateStr => { holidayListEl.insertAdjacentHTML('beforeend', `<li><span class="holiday-date-text">${this.formatDateDDMMYYYY(new Date(holidayDateStr + 'T00:00:00'))}</span><button class="btn btn-danger btn-small delete-holiday-btn" data-date="${holidayDateStr}">Remove</button></li>`); });
             },
+
+            populateHeatmapFilters() {
+                const monthFilter = this.ui.analytics.heatmapMonthFilter;
+                const existingValue = monthFilter.value;
+                monthFilter.innerHTML = '<option value="all">All Time</option>';
+                
+                const salesTransactions = this.state.transactions.filter(t => t.type === 'Sale');
+                if(salesTransactions.length === 0) return;
+
+                const months = new Set();
+                salesTransactions.forEach(t => {
+                    months.add(t.date.toISOString().slice(0, 7)); // YYYY-MM
+                });
+
+                const sortedMonths = Array.from(months).sort().reverse();
+
+                sortedMonths.forEach(monthKey => {
+                    const option = document.createElement('option');
+                    option.value = monthKey;
+                    const date = new Date(monthKey + '-02'); // Use second day to avoid timezone issues
+                    option.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                    monthFilter.appendChild(option);
+                });
+                
+                monthFilter.value = existingValue || 'all';
+            },
+
             renderProductHeatmap() {
                 const container = this.ui.analytics.productHeatmapContainer;
-                const productSales = this.state.transactions.filter(t => t.type === 'Sale')
-                    .flatMap(t => t.items)
-                    .reduce((acc, item) => {
-                        acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
-                        return acc;
-                    }, {});
+                const selectedMonth = this.ui.analytics.heatmapMonthFilter.value;
+                const itemType = this.ui.analytics.heatmapItemTypeFilter.value;
+
+                let transactionsToConsider = this.state.transactions.filter(t => t.type === 'Sale');
+
+                // Filter by month
+                if (selectedMonth !== 'all') {
+                    transactionsToConsider = transactionsToConsider.filter(t => t.date.toISOString().startsWith(selectedMonth));
+                }
+
+                // Filter by item type
+                let itemsToConsider;
+                if (itemType === 'cosmetic') {
+                    itemsToConsider = transactionsToConsider.flatMap(t => t.items.filter(i => i.particulars.includes('(Cosmetic)')));
+                } else if (itemType === 'inventory') {
+                    itemsToConsider = transactionsToConsider.flatMap(t => t.items.filter(i => !i.particulars.includes('(Cosmetic)')));
+                } else {
+                    itemsToConsider = transactionsToConsider.flatMap(t => t.items);
+                }
+
+                const productSales = itemsToConsider.reduce((acc, item) => {
+                    const cleanParticulars = item.particulars.replace('(Cosmetic) ', '');
+                    acc[cleanParticulars] = (acc[cleanParticulars] || 0) + item.quantity;
+                    return acc;
+                }, {});
                 
                 const sortedProducts = Object.entries(productSales).sort(([,a], [,b]) => b - a);
 
                 if (sortedProducts.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-on-dark-secondary);">Not enough sales data to generate a heat map.</p>'; return;
+                    container.innerHTML = '<p style="color: var(--text-on-dark-secondary);">No sales data for the selected filters.</p>'; return;
                 }
                 
                 container.innerHTML = '';
-                const maxSales = sortedProducts[0][1];
+                const maxSales = sortedProducts.length > 0 ? sortedProducts[0][1] : 0;
                 const colorStart = [255, 236, 179]; // light yellow
                 const colorEnd = [229, 62, 62]; // red-500
 
                 sortedProducts.forEach(([product, sales]) => {
-                    const factor = maxSales > 1 ? (sales - 1) / (maxSales - 1) : 1;
+                    const factor = maxSales > 1 ? (sales - 1) / (maxSales - 1) : (maxSales > 0 ? 1 : 0);
                     const color = this.interpolateColor(colorStart, colorEnd, factor);
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'heatmap-item';
@@ -1542,20 +1604,25 @@
                     container.appendChild(itemDiv);
                 });
             },
+
             renderTrendProjectionChart() {
                 if(typeof Chart === 'undefined' || !this.ui.analytics.trendProjectionChart) return;
                 const ctx = this.ui.analytics.trendProjectionChart.getContext('2d');
                 if (this.trendProjectionChartInstance) this.trendProjectionChartInstance.destroy();
 
-                const monthlySales = {};
+                const monthlyData = {};
                 this.state.transactions.forEach(t => {
                     if (t.type === 'Sale') {
                         const monthKey = `${t.date.getFullYear()}-${String(t.date.getMonth() + 1).padStart(2, '0')}`;
-                        monthlySales[monthKey] = (monthlySales[monthKey] || 0) + t.total;
+                        if (!monthlyData[monthKey]) {
+                           monthlyData[monthKey] = { sales: 0, profit: 0 };
+                        }
+                        monthlyData[monthKey].sales += t.total;
+                        monthlyData[monthKey].profit += t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                     }
                 });
 
-                const sortedMonths = Object.keys(monthlySales).sort();
+                const sortedMonths = Object.keys(monthlyData).sort();
                 if (sortedMonths.length < 2) {
                     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                     ctx.font = "16px Roboto"; ctx.fillStyle = "grey"; ctx.textAlign = "center";
@@ -1564,18 +1631,21 @@
                 }
 
                 const historicalLabels = sortedMonths.map(m => new Date(m+'-02').toLocaleString('default', {month:'short', year:'2-digit'}));
-                const historicalData = sortedMonths.map(m => monthlySales[m]);
-
-                // Linear Regression for projection
+                const historicalSalesData = sortedMonths.map(m => monthlyData[m].sales);
+                const historicalProfitData = sortedMonths.map(m => monthlyData[m].profit);
+                
+                // Linear Regression for projection using historical sales
                 const projectionPoints = 6;
-                const dataForRegression = historicalData.slice(-projectionPoints);
+                const dataForRegression = historicalSalesData.slice(-projectionPoints);
                 const n = dataForRegression.length;
                 let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
                 for(let i = 0; i < n; i++) {
-                    sumX += i; sumY += dataForRegression[i];
-                    sumXY += i * dataForRegression[i]; sumX2 += i * i;
+                    sumX += i; 
+                    sumY += dataForRegression[i];
+                    sumXY += i * dataForRegression[i]; 
+                    sumX2 += i * i;
                 }
-                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX2);
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
                 const intercept = (sumY - slope * sumX) / n;
 
                 const projectionLabels = [];
@@ -1584,12 +1654,13 @@
                 for (let i = 1; i <= projectionPoints; i++) {
                     const nextMonth = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() + i, 1);
                     projectionLabels.push(nextMonth.toLocaleString('default', {month:'short', year:'2-digit'}));
-                    const projectedValue = slope * (n - 1 + i) + intercept;
+                    const projectedValue = (slope * (n - 1 + i)) + intercept;
                     projectionData.push(projectedValue > 0 ? projectedValue : 0);
                 }
 
                 const style = getComputedStyle(document.documentElement);
                 const accentPink = style.getPropertyValue('--accent-pink').trim();
+                const accentYellow = style.getPropertyValue('--accent-yellow').trim();
                 const infoBlue = style.getPropertyValue('--info-blue').trim();
 
                 this.trendProjectionChartInstance = new Chart(ctx, {
@@ -1597,11 +1668,12 @@
                     data: {
                         labels: [...historicalLabels, ...projectionLabels],
                         datasets: [
-                            { label: 'Historical Sales', data: historicalData, borderColor: accentPink, tension: 0.1 },
-                            { label: 'Projected Sales', data: [...Array(historicalData.length).fill(null), ...projectionData], borderColor: infoBlue, borderDash: [5, 5], tension: 0.1 }
+                            { label: 'Historical Sales', data: historicalSalesData, borderColor: accentPink, tension: 0.2, fill: false },
+                            { label: 'Historical Profit', data: historicalProfitData, borderColor: accentYellow, tension: 0.2, fill: false },
+                            { label: 'Projected Sales', data: [...Array(historicalSalesData.length).fill(null), ...projectionData], borderColor: infoBlue, borderDash: [5, 5], tension: 0.2, fill: false }
                         ]
                     },
-                    options: this.getCommonChartOptions('Monthly Sales Trend & 6-Month Projection')
+                    options: this.getCommonChartOptions('Monthly Sales, Profit & 6-Month Sales Projection')
                 });
             },
             getCommonChartOptions(titleText) {
@@ -1635,6 +1707,8 @@
                 this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredSalesAndProfit());
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const todayStr = this.getTodayDateString(); this.ui.analytics.startDateInput.value = todayStr; this.ui.analytics.endDateInput.value = todayStr; this.renderFilteredSalesAndProfit(); });
+                this.ui.analytics.heatmapMonthFilter.addEventListener('change', () => this.renderProductHeatmap());
+                this.ui.analytics.heatmapItemTypeFilter.addEventListener('change', () => this.renderProductHeatmap());
                 
                 const downloadLowStockLogic = () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
