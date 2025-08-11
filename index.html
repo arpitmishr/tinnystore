@@ -223,7 +223,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            transition: background-color: 0.2s;
+            transition: background-color 0.2s;
         }
         .low-stock-category-title:hover {
             background-color: rgba(0, 169, 157, 0.1); /* Teal accent on hover */
@@ -563,77 +563,6 @@
             font-size: 1.2rem;
             margin-top: 5px;
         }
-        
-        /* CHATBOT STYLES */
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 70vh; /* Make it take a good portion of the viewport height */
-            background-color: var(--surface-dark);
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-medium);
-            overflow: hidden;
-        }
-        #chat-messages {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .chat-message {
-            padding: 12px 18px;
-            border-radius: var(--border-radius-lg);
-            max-width: 80%;
-            line-height: 1.5;
-        }
-        .user-message {
-            background-color: var(--accent-teal);
-            color: var(--surface-dark);
-            align-self: flex-end;
-            border-bottom-right-radius: var(--border-radius-sm);
-        }
-        .ai-message {
-            background-color: var(--surface-dark-alt);
-            color: var(--text-on-dark-primary);
-            align-self: flex-start;
-            border-bottom-left-radius: var(--border-radius-sm);
-        }
-        .ai-message.loading {
-            color: var(--text-on-dark-secondary);
-            font-style: italic;
-        }
-        .ai-message.error {
-            background-color: rgba(229, 62, 62, 0.2);
-            color: var(--danger-red);
-            border: 1px solid var(--danger-red);
-        }
-        #chat-form {
-            display: flex;
-            padding: 15px;
-            border-top: 1px solid var(--border-dark-primary);
-            gap: 10px;
-        }
-        #chat-input {
-            flex-grow: 1;
-            background-color: var(--surface-dark-alt);
-            border: 1px solid var(--border-dark-primary);
-            color: var(--text-on-dark-primary);
-            border-radius: var(--border-radius-md);
-            padding: 12px 15px;
-            font-size: 1rem;
-        }
-        #chat-input:focus {
-             outline: none;
-             border-color: var(--border-dark-focus);
-             box-shadow: 0 0 0 3px rgba(0, 169, 157, 0.25);
-        }
-        #chat-send-btn {
-            width: auto;
-            padding: 0 25px;
-        }
-
 
         /* Responsive adjustments */
         @media (max-width: 400px) {
@@ -730,7 +659,6 @@
             <button class="tab-button" data-tab="analytics">Analytics</button>
             <button class="tab-button" data-tab="profit">Profit</button>
             <button class="tab-button" data-tab="transactions">Transactions</button>
-            <button class="tab-button" data-tab="chat">AI Chat</button> <!-- NEW CHAT TAB -->
             <button class="tab-button" data-tab="settings">Settings</button>
         </nav>
 
@@ -1017,19 +945,6 @@
                     </table>
                 </div></section>
             </div>
-
-            <!-- AI Chat Tab -->
-            <div id="chat" class="tab-content">
-                <div id="chat-container">
-                    <div id="chat-messages">
-                         <div class="ai-message">Hello! I'm your AI assistant. Ask me anything about your inventory, sales, or profit. For example: "Which items are low in stock?"</div>
-                    </div>
-                    <form id="chat-form">
-                        <input type="text" id="chat-input" placeholder="Ask about your inventory or sales..." autocomplete="off" required>
-                        <button id="chat-send-btn" type="submit" class="btn btn-primary">Send</button>
-                    </form>
-                </div>
-            </div>
         
             <!-- Settings Tab -->
             <div id="settings" class="tab-content">
@@ -1077,12 +992,6 @@
     <script>
     window.onload = () => {
         const { jsPDF } = window.jspdf;
-
-        // --- SECURE CHATGPT INTEGRATION ---
-        // The URL now points to our OWN backend server endpoint.
-        const CHATGPT_API_URL = "/api/chat"; 
-        // The actual API key is COMPLETELY REMOVED from this file.
-        // --- END OF SECURE INTEGRATION ---
 
         const app = {
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
@@ -1344,12 +1253,6 @@
                         holidayDateInput: document.getElementById('holiday-date'),
                         addHolidayBtn: document.getElementById('add-holiday-btn'),
                         holidayList: document.getElementById('holiday-list'),
-                    },
-                    chat: {
-                        form: document.getElementById('chat-form'),
-                        input: document.getElementById('chat-input'),
-                        sendBtn: document.getElementById('chat-send-btn'),
-                        messagesContainer: document.getElementById('chat-messages'),
                     }
                 };
             },
@@ -1793,115 +1696,6 @@
             generateInvoice(transaction) { const doc = new jsPDF(); let y = 20; doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" }); y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" }); y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" }); y += 8; doc.setFontSize(10); if (transaction.saleType === 'Credit') doc.text(`Credit To: ${transaction.partyName}`, 20, y); doc.text(`Date: ${this.formatDateDDMMYYYY(transaction.date)}`, 190, y, { align: "right" }); y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" }); y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8; doc.setFont("helvetica", "normal"); transaction.items.forEach(item => { doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y); doc.text(item.sellingRate.toFixed(2), 150, y); doc.text((item.quantity * item.sellingRate).toFixed(2), 185, y, { align: "right" }); y += 7; }); y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7; doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y); doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" }); doc.save(`Invoice_${transaction.id}.pdf`); },
             showToast(msg, type='success') { const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `show ${type}`; setTimeout(() => toast.className = toast.className.replace('show',''), 3000); },
             
-            // --- START OF CHATBOT FUNCTIONS ---
-            buildChatContext() {
-                // Gather overall performance stats
-                const sales = this.state.transactions.filter(t => t.type === 'Sale');
-                const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
-                const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-
-                // Gather inventory stats
-                const { cost, units, lowStockItemsArr } = this.state.inventory.reduce((acc, item) => {
-                    acc.cost += item.quantity * item.rate;
-                    acc.units += item.quantity;
-                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStockItemsArr.push({ name: item.particulars, qty: item.quantity });
-                    return acc;
-                }, { cost: 0, units: 0, lowStockItemsArr: [] });
-
-                // Get the last 10 transactions
-                const recentTransactions = this.state.transactions
-                    .slice(-10)
-                    .map(t => ({
-                        type: t.type,
-                        total: t.total.toFixed(2),
-                        items: t.items.map(i => `${i.quantity}x ${i.particulars}`).join(', ')
-                    }));
-
-                // Construct a compact, informative string for the AI
-                let context = `
-                    You are an expert AI assistant for the Tinny Fashion Store inventory management system. 
-                    Use the following data to answer the user's questions concisely and accurately. 
-                    Base your answers ONLY on this provided data. Today's date is ${new Date().toLocaleDateString('en-GB')}.
-
-                    ---
-                    **Business Summary:**
-                    - All-Time Total Revenue: INR ${totalRevenue.toFixed(2)}
-                    - All-Time Total Profit: INR ${totalProfit.toFixed(2)}
-
-                    **Inventory Summary:**
-                    - Total Unique Products: ${this.state.inventory.length}
-                    - Total Item Units in Stock: ${units}
-                    - Total Inventory Value (Cost): INR ${cost.toFixed(2)}
-                    - Low Stock Items (3 or fewer units): ${lowStockItemsArr.length > 0 ? JSON.stringify(lowStockItemsArr) : "None"}
-
-                    **Recent Transactions (last 10):**
-                    ${recentTransactions.length > 0 ? JSON.stringify(recentTransactions) : "No transactions recorded yet."}
-                    ---
-                `;
-                return context.replace(/\s+/g, ' '); // Compact the string
-            },
-            
-            async handleChatSubmit(event) {
-                event.preventDefault();
-                const userInput = this.ui.chat.input.value.trim();
-                if (!userInput) return;
-                
-                this.addMessageToChat('user', userInput);
-                this.ui.chat.input.value = '';
-                this.ui.chat.sendBtn.disabled = true;
-
-                const loadingElement = this.addMessageToChat('ai', 'Thinking...', ['loading']);
-
-                try {
-                    const systemContext = this.buildChatContext();
-                    
-                    const response = await fetch(CHATGPT_API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            messages: [
-                                { "role": "system", "content": systemContext },
-                                { "role": "user", "content": userInput }
-                            ]
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error.message || `API Error: ${response.statusText}`);
-                    }
-                    
-                    const aiResponse = data.choices[0].message.content;
-                    
-                    loadingElement.textContent = aiResponse;
-                    loadingElement.classList.remove('loading');
-
-                } catch (error) {
-                    console.error("Chat API Error:", error);
-                    loadingElement.textContent = `Error: Could not get a response. ${error.message}`;
-                    loadingElement.classList.remove('loading');
-                    loadingElement.classList.add('error');
-                } finally {
-                    this.ui.chat.sendBtn.disabled = false;
-                    this.ui.chat.input.focus();
-                }
-            },
-
-            addMessageToChat(sender, text, classes = []) {
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('chat-message', `${sender}-message`, ...classes);
-                messageDiv.textContent = text;
-                this.ui.chat.messagesContainer.appendChild(messageDiv);
-                // Scroll to the bottom
-                this.ui.chat.messagesContainer.scrollTop = this.ui.chat.messagesContainer.scrollHeight;
-                return messageDiv;
-            },
-            // --- END OF CHATBOT FUNCTIONS ---
-
-
             addEventListeners() { 
                 this.ui.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addFormItem(this.ui.salesItemsContainer, true));
@@ -1960,9 +1754,6 @@
                 document.body.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === this.parseItemNameFromDatalist(e.target.value)); const rateInput = e.target.closest('.item-entry').querySelector('.rate'); if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) rateInput.value = (item.sellingRate || item.rate).toFixed(2); } });
                 this.ui.transactions.transactionsTab.addEventListener('click', e => { if (e.target.classList.contains('download-invoice-btn')) { const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10)); if (tx) this.generateInvoice(tx); } else if (e.target.classList.contains('delete-sale-btn')) this.deleteSale(parseInt(e.target.dataset.id, 10)); else if (e.target.classList.contains('return-item-btn')) this.handleSalesReturn(parseInt(e.target.dataset.transactionId, 10), e.target.dataset.itemParticulars); });
                 this.ui.inventoryTableBody.addEventListener('click', (e) => { const particulars = e.target.dataset.particulars, row = e.target.closest('tr'); if (!row) return; if (e.target.classList.contains('edit-btn')) { const editing = this.ui.inventoryTableBody.querySelector('tr.edit-mode'); if(editing) editing.classList.remove('edit-mode'); row.classList.add('edit-mode'); } else if (e.target.classList.contains('cancel-btn')) row.classList.remove('edit-mode'); else if (e.target.classList.contains('delete-btn')) { if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); } } else if (e.target.classList.contains('save-btn')) { const newQty = parseInt(row.querySelector('.edit-quantity').value, 10), newRate = parseFloat(row.querySelector('.edit-rate').value); if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) { this.showToast('Invalid input.', 'error'); return; } const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars); if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; } this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory updated!', 'success'); } });
-                
-                // --- CHATBOT EVENT LISTENER ---
-                this.ui.chat.form.addEventListener('submit', (e) => this.handleChatSubmit(e));
             }
         };
         app.init();
