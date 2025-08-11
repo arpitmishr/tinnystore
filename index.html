@@ -223,7 +223,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
         }
         .low-stock-category-title:hover {
             background-color: rgba(0, 169, 157, 0.1); /* Teal accent on hover */
@@ -1078,15 +1078,11 @@
     window.onload = () => {
         const { jsPDF } = window.jspdf;
 
-        // --- START OF CHATGPT INTEGRATION ---
-        // !!! IMPORTANT SECURITY WARNING !!!
-        // DO NOT expose your API key in client-side code in a real application.
-        // This is done here only to fulfill the single-file request.
-        // In production, this request should be sent to your own secure backend server,
-        // which then makes the call to the OpenAI API.
-        const CHATGPT_API_KEY = "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"; // <-- PASTE YOUR API KEY HERE
-        const CHATGPT_API_URL = "https://api.openai.com/v1/chat/completions";
-        // --- END OF CHATGPT INTEGRATION ---
+        // --- SECURE CHATGPT INTEGRATION ---
+        // The URL now points to our OWN backend server endpoint.
+        const CHATGPT_API_URL = "/api/chat"; 
+        // The actual API key is COMPLETELY REMOVED from this file.
+        // --- END OF SECURE INTEGRATION ---
 
         const app = {
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
@@ -1349,14 +1345,12 @@
                         addHolidayBtn: document.getElementById('add-holiday-btn'),
                         holidayList: document.getElementById('holiday-list'),
                     },
-                    // --- START OF CHATBOT UI ELEMENTS ---
                     chat: {
                         form: document.getElementById('chat-form'),
                         input: document.getElementById('chat-input'),
                         sendBtn: document.getElementById('chat-send-btn'),
                         messagesContainer: document.getElementById('chat-messages'),
                     }
-                    // --- END OF CHATBOT UI ELEMENTS ---
                 };
             },
             
@@ -1852,17 +1846,10 @@
                 const userInput = this.ui.chat.input.value.trim();
                 if (!userInput) return;
                 
-                if (CHATGPT_API_KEY === "sk-proj-YOUR_API_KEY_HERE") {
-                    this.showToast("Please set your ChatGPT API key in the script.", "error");
-                    return;
-                }
-
-                // Add user message to UI
                 this.addMessageToChat('user', userInput);
                 this.ui.chat.input.value = '';
                 this.ui.chat.sendBtn.disabled = true;
 
-                // Add loading indicator
                 const loadingElement = this.addMessageToChat('ai', 'Thinking...', ['loading']);
 
                 try {
@@ -1872,10 +1859,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${CHATGPT_API_KEY}`
                         },
                         body: JSON.stringify({
-                            model: "gpt-3.5-turbo",
                             messages: [
                                 { "role": "system", "content": systemContext },
                                 { "role": "user", "content": userInput }
@@ -1883,20 +1868,19 @@
                         })
                     });
 
+                    const data = await response.json();
+
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error.message || `API Error: ${response.statusText}`);
+                        throw new Error(data.error.message || `API Error: ${response.statusText}`);
                     }
                     
-                    const data = await response.json();
                     const aiResponse = data.choices[0].message.content;
                     
-                    // Update the loading message with the actual response
                     loadingElement.textContent = aiResponse;
                     loadingElement.classList.remove('loading');
 
                 } catch (error) {
-                    console.error("ChatGPT API Error:", error);
+                    console.error("Chat API Error:", error);
                     loadingElement.textContent = `Error: Could not get a response. ${error.message}`;
                     loadingElement.classList.remove('loading');
                     loadingElement.classList.add('error');
