@@ -108,7 +108,7 @@
             padding: 10px 20px; cursor: pointer; border: none; background-color: transparent;
             font-size: 0.95rem; font-weight: 500; color: var(--text-on-dark-secondary);
             border-radius: var(--border-radius-md); transition: color 0.3s ease, background-color 0.2s ease;
-            margin: 0 3px; position: relative;
+            margin: 0 3px;
         }
         .tab-button:hover { color: var(--text-on-dark-primary); background-color: rgba(255,255,255,0.05); }
         .tab-button.active { color: var(--surface-dark); background-color: var(--accent-teal); font-weight: 600; box-shadow: var(--shadow-medium); }
@@ -563,89 +563,6 @@
             font-size: 1.2rem;
             margin-top: 5px;
         }
-        
-        /* --- INSIGHTS/MESSAGES STYLES (INTEGRATED) --- */
-        #messages-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background-color: var(--danger-red);
-            color: white;
-            border-radius: 50%;
-            padding: 0px 5px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            min-width: 18px;
-            text-align: center;
-            line-height: 18px;
-            border: 1px solid var(--surface-dark-alt);
-        }
-        #messages-container {
-            max-width: 900px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        .message-card {
-            display: flex;
-            align-items: flex-start;
-            background: var(--surface-dark-alt);
-            border: 1px solid var(--border-dark-primary);
-            border-radius: var(--border-radius-md);
-            padding: 20px;
-            box-shadow: var(--shadow-subtle);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .message-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
-        }
-        .message-icon {
-            font-size: 1.6em;
-            margin-right: 20px;
-            margin-top: 3px;
-        }
-        .message-content {
-            flex-grow: 1;
-        }
-        .message-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin: 0 0 5px 0;
-        }
-        .message-card.alert .message-title { color: var(--accent-yellow); }
-        .message-card.alert .message-icon { color: var(--accent-yellow); }
-        .message-card.insight .message-title { color: var(--info-blue); }
-        .message-card.insight .message-icon { color: var(--info-blue); }
-        .message-card.recommendation .message-title { color: var(--success-green); }
-        .message-card.recommendation .message-icon { color: var(--success-green); }
-        .message-text {
-            margin: 0 0 10px 0;
-            line-height: 1.5;
-            color: var(--text-on-dark-secondary);
-        }
-        .message-text strong {
-             color: var(--text-on-dark-primary);
-        }
-        .message-timestamp {
-            font-size: 0.8em;
-            color: var(--text-on-dark-placeholder);
-        }
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--text-on-dark-placeholder);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-            transition: color 0.2s ease;
-            font-weight: 300;
-        }
-        .delete-btn:hover {
-            color: var(--danger-red);
-        }
-
 
         /* Responsive adjustments */
         @media (max-width: 400px) {
@@ -738,7 +655,6 @@
 
         <nav class="tab-nav">
             <button class="tab-button active" data-tab="operations">Operations</button>
-            <button class="tab-button" data-tab="messages">Messages<span id="messages-badge" style="display:none;"></span></button>
             <button class="tab-button" data-tab="credit">Credit</button>
             <button class="tab-button" data-tab="analytics">Analytics</button>
             <button class="tab-button" data-tab="profit">Profit</button>
@@ -836,13 +752,6 @@
                             <button type="submit" class="btn btn-primary">Record Profit</button>
                         </form>
                     </section>
-                </div>
-            </div>
-            
-            <!-- Messages Tab -->
-            <div id="messages" class="tab-content">
-                <div id="messages-container">
-                    <!-- Insights and alerts will be generated here by JavaScript -->
                 </div>
             </div>
 
@@ -1091,20 +1000,8 @@
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { 
-                inventory: [], 
-                transactions: [], 
-                holidays: [],
-                messages: [], // <-- INTEGRATED
-                lastReadTimestamp: null // <-- INTEGRATED
-            },
+            state: { inventory: [], transactions: [], holidays: [] },
             ui: {},
-            // Insight engine configuration
-            insightsConfig: {
-                lowStockThreshold: 5,
-                salesPerformanceThreshold: 10, // Units sold to be considered "underperforming"
-                analysisInterval: 60000 // Run analysis every 60 seconds
-            },
             // Chart instances
             salesChartInstance: null, 
             trendProjectionChartInstance: null,
@@ -1168,10 +1065,6 @@
                 this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                 
                 this.renderAll();
-                
-                // Start the insight engine
-                this.runAnalysisEngine(); // Run once on startup
-                setInterval(() => this.runAnalysisEngine(), this.insightsConfig.analysisInterval);
             },
             async _findOrCreateAppFolder() { 
                 if (this.appFolderId) return this.appFolderId;
@@ -1203,29 +1096,21 @@
                                if(t.items && !Array.isArray(t.items)) t.items = [t.items]; 
                            });
                         }
-                        
-                        // INTEGRATION: Ensure messages have proper Date objects
-                        if(loadedState.messages) {
-                            loadedState.messages.forEach(m => m.timestamp = new Date(m.timestamp));
-                        }
-                        if(loadedState.lastReadTimestamp) {
-                            loadedState.lastReadTimestamp = new Date(loadedState.lastReadTimestamp);
-                        }
 
-                        const defaultState = { inventory: [], transactions: [], holidays: [], messages: [], lastReadTimestamp: null };
+                        const defaultState = { inventory: [], transactions: [], holidays: [] };
                         this.state = { ...defaultState, ...loadedState };
                         this.state.holidays = loadedState.holidays || []; 
 
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
-                        this.state = { inventory: [], transactions: [], holidays: [], messages: [], lastReadTimestamp: null };
+                        this.state = { inventory: [], transactions: [], holidays: [] };
                         await this._findOrCreateAppFolder(); 
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
                     this.showToast("Failed to load data. Starting fresh.", "error");
-                    this.state = { inventory: [], transactions: [], holidays: [], messages: [], lastReadTimestamp: null }; 
+                    this.state = { inventory: [], transactions: [], holidays: [] }; 
                 }
             },
             triggerAutoSave() { 
@@ -1269,94 +1154,6 @@
                     this.ui.manualSaveBtn.textContent = originalBtnText;
                 }
             },
-            
-            // --- INSIGHT ENGINE CORE LOGIC (INTEGRATED) ---
-            runAnalysisEngine() {
-                const initialMessageCount = this.state.messages.length;
-                this.analyzeInventory();
-                this.analyzeSalesPerformance();
-                // Future analyses like regional heatmaps can be added here
-                
-                if(this.state.messages.length > initialMessageCount) {
-                    this.renderMessages(); // Re-render only if new messages were added
-                    this.triggerAutoSave(); // Save the new messages
-                }
-            },
-            
-            analyzeInventory() {
-                this.state.inventory.forEach(item => {
-                    if (item.quantity > 0 && item.quantity <= this.insightsConfig.lowStockThreshold) {
-                        const message = {
-                            id: `alert-lowstock-${item.particulars}`,
-                            type: 'alert',
-                            title: 'Low Stock Alert',
-                            text: `Stock for <strong>${item.particulars}</strong> is critically low at ${item.quantity} units. Consider reordering soon to avoid a stockout.`,
-                            timestamp: new Date()
-                        };
-                        this.addMessageIfNotExists(message);
-                    }
-                });
-            },
-
-            analyzeSalesPerformance() {
-                const salesByProduct = {};
-                const cosmeticSalesByProduct = {};
-
-                // Aggregate sales from all transactions
-                this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items).forEach(item => {
-                    const isCosmetic = item.particulars.includes('(Cosmetic)');
-                    const cleanName = item.particulars.replace('(Cosmetic) ', '');
-
-                    if(isCosmetic) {
-                       cosmeticSalesByProduct[cleanName] = (cosmeticSalesByProduct[cleanName] || 0) + item.quantity;
-                    } else {
-                       salesByProduct[cleanName] = (salesByProduct[cleanName] || 0) + item.quantity;
-                    }
-                });
-
-                // Find top selling inventory product
-                let topProduct = { name: null, units: 0 };
-                for(const productName in salesByProduct) {
-                    if(salesByProduct[productName] > topProduct.units) {
-                        topProduct = { name: productName, units: salesByProduct[productName] };
-                    }
-                }
-
-                if(topProduct.name) {
-                    const message = {
-                        id: `insight-topseller-${topProduct.name}`,
-                        type: 'insight',
-                        title: 'Top Performing Product',
-                        text: `<strong>${topProduct.name}</strong> is your current top-selling inventory item with ${topProduct.units} units sold. Ensure you have adequate stock levels.`,
-                        timestamp: new Date()
-                    };
-                    this.addMessageIfNotExists(message);
-                }
-
-                // Check for underperforming inventory items
-                this.state.inventory.forEach(item => {
-                    const unitsSold = salesByProduct[item.particulars] || 0;
-                    if (item.quantity > 0 && unitsSold > 0 && unitsSold < this.insightsConfig.salesPerformanceThreshold) {
-                         const message = {
-                            id: `rec-underperforming-${item.particulars}`,
-                            type: 'recommendation',
-                            title: 'Sales Recommendation',
-                            text: `<strong>${item.particulars}</strong> has low sales velocity (${unitsSold} units sold recently). Consider a marketing promotion or a bundle deal to boost sales.`,
-                            timestamp: new Date()
-                        };
-                        this.addMessageIfNotExists(message);
-                    }
-                });
-            },
-            
-            addMessageIfNotExists(newMessage) {
-                // Use a simpler check: if a message with this ID's prefix already exists, don't add.
-                const exists = this.state.messages.some(msg => msg.id === newMessage.id);
-                if (!exists) {
-                    this.state.messages.push(newMessage);
-                }
-            },
-            // --- END OF INSIGHT ENGINE ---
 
             hexToRgba(hex, alpha = 1) {
                 if (!hex || typeof hex !== 'string' || hex.charAt(0) !== '#') return `rgba(0, 169, 157, ${alpha})`; 
@@ -1393,10 +1190,6 @@
                     tabButtons: document.querySelectorAll('.tab-button'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     manualSaveBtn: document.getElementById('manual-save-btn'),
-                    messages: { // <-- INTEGRATED
-                        container: document.getElementById('messages-container'),
-                        badge: document.getElementById('messages-badge')
-                    },
                     analytics: { 
                         totalProfit: document.getElementById('total-profit'),
                         totalRevenue: document.getElementById('total-revenue'),
@@ -1504,7 +1297,6 @@
                 this.renderCreditorList(); 
                 this.renderHolidays();
                 this.populateHeatmapFilters();
-                this.renderMessages(); // <-- INTEGRATED
                 
                 this.renderAllAnalyticsCharts();
             },
@@ -1517,56 +1309,6 @@
                 }
                 if (activeTab === 'operations') {
                      this.renderSalesTrendChart();
-                }
-            },
-            
-            // --- MESSAGE RENDERING LOGIC (INTEGRATED) ---
-            renderMessages() {
-                const container = this.ui.messages.container;
-                if (!container) return;
-
-                // Sort messages with alerts first, then newest to oldest
-                this.state.messages.sort((a, b) => {
-                    if (a.type === 'alert' && b.type !== 'alert') return -1;
-                    if (a.type !== 'alert' && b.type === 'alert') return 1;
-                    return b.timestamp - a.timestamp;
-                });
-
-                container.innerHTML = ''; // Clear existing
-                if (this.state.messages.length === 0) {
-                    container.innerHTML = `<div class="card"><p style="text-align:center; color: var(--text-on-dark-secondary); padding: 20px 0;">No new insights or alerts. The system is monitoring your data.</p></div>`;
-                } else {
-                    this.state.messages.forEach(message => {
-                        const card = document.createElement('div');
-                        card.className = `message-card ${message.type}`;
-                        card.setAttribute('data-id', message.id);
-                        
-                        let icon = '💡'; // Insight
-                        if (message.type === 'alert') icon = '⚠️';
-                        if (message.type === 'recommendation') icon = '✅';
-
-                        card.innerHTML = `
-                            <div class="message-icon">${icon}</div>
-                            <div class="message-content">
-                                <div class="message-title">${message.title}</div>
-                                <div class="message-text">${message.text}</div>
-                                <div class="message-timestamp">${new Date(message.timestamp).toLocaleString()}</div>
-                            </div>
-                            <button class="delete-btn" title="Delete Message">&times;</button>
-                        `;
-                        container.appendChild(card);
-                    });
-                }
-                
-                // Update notification badge
-                const lastRead = this.state.lastReadTimestamp || new Date(0);
-                const newMessagesCount = this.state.messages.filter(m => m.timestamp > lastRead).length;
-
-                if (newMessagesCount > 0) {
-                    this.ui.messages.badge.textContent = newMessagesCount;
-                    this.ui.messages.badge.style.display = 'block';
-                } else {
-                    this.ui.messages.badge.style.display = 'none';
                 }
             },
             
@@ -1948,8 +1690,8 @@
             handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]); this.state.inventory = json.map(row => ({ particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0 })).filter(item => item.particulars !== "N/A"); this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory loaded successfully!', 'success'); } catch (error) { this.showToast('Error reading Excel file. Ensure columns are: particulars, quantity, rate.', 'error'); console.error(error); } }; reader.readAsArrayBuffer(file); },
             deleteSale(transactionId) { if (!confirm("Are you sure you want to delete this ENTIRE sale record?")) return; const transactionIndex = this.state.transactions.findIndex(t => t.id === transactionId); if (transactionIndex === -1) { this.showToast("Sale not found.", "error"); return; } const transactionToDelete = this.state.transactions[transactionIndex]; if (transactionToDelete.items) { transactionToDelete.items.forEach(soldItem => { if (soldItem.particulars.startsWith('(Cosmetic)')) return; const inventoryItem = this.state.inventory.find(i => i.particulars === soldItem.particulars); if (inventoryItem) inventoryItem.quantity += soldItem.quantity; else this.state.inventory.push({ particulars: soldItem.particulars, quantity: soldItem.quantity, rate: soldItem.costRate }); }); } this.state.transactions.splice(transactionIndex, 1); this.showToast("Sale deleted and stock restored.", "success"); this.renderAll(); this.triggerAutoSave(); },
             handleSalesReturn(transactionId, itemParticulars) { if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale?`)) return; const transaction = this.state.transactions.find(t => t.id === transactionId); if (!transaction) { this.showToast("Sale not found.", "error"); return; } const itemIndex = transaction.items.findIndex(i => i.particulars === itemParticulars); if (itemIndex === -1) { this.showToast("Item not found.", "error"); return; } const [returnedItem] = transaction.items.splice(itemIndex, 1); if (!returnedItem.particulars.startsWith('(Cosmetic)')) { const inventoryItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars); if (inventoryItem) inventoryItem.quantity += returnedItem.quantity; else this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate }); } const returnedValue = returnedItem.quantity * returnedItem.sellingRate; transaction.total -= returnedValue; if (transaction.paidAmount > transaction.total) transaction.paidAmount = transaction.total; if (transaction.items.length === 0) { const transactionIndexGlobal = this.state.transactions.findIndex(t => t.id === transactionId); this.state.transactions.splice(transactionIndexGlobal, 1); this.showToast('Item returned. Sale removed.', 'success'); } else { this.showToast('Item returned.', 'success'); } this.renderAll(); this.triggerAutoSave(); },
-            processSale(isInvoice, isCredit = false, creditForm) { const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer; const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null; const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); if (isCredit && !partyName) { this.showToast("Party Name is required.", "error"); return null; } if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Invalid date.", "error"); return null; } const saleItems = [], errors = []; let isValid = true; container.querySelectorAll('.item-entry').forEach(entry => { const p = this.parseItemNameFromDatalist(entry.querySelector('.particulars').value); const q = parseInt(entry.querySelector('.quantity').value, 10); const r = parseFloat(entry.querySelector('.rate').value); if (!p || !q || isNaN(r)) return; const item = this.state.inventory.find(i => i.particulars === p); if (!item) { isValid = false; errors.push(`Item not found: ${p}`); } else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}.`); } else saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }); if (saleItems.length === 0) { this.showToast("Add at least one item.", "error"); return null; } if (!isValid) { this.showToast("Sale error:\n" + errors.join("\n"), "error"); return null; } saleItems.forEach(soldItem => { this.state.inventory.find(i => i.particulars === soldItem.particulars).quantity -= soldItem.quantity; }); const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, si) => acc + (si.sellingRate * si.quantity), 0), paidAmount: 0 }; this.state.transactions.push(newTransaction); this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); if (isCredit) { creditForm.reset(); this.ui.credit.inventoryDateInput.value = this.getTodayDateString(); container.innerHTML = ''; this.addFormItem(container, true); } else { this.ui.salesItemsContainer.innerHTML = ''; this.addFormItem(this.ui.salesItemsContainer, true); } if (isInvoice) this.generateInvoice(newTransaction); this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded!', "success"); },
-            recordPayment(creditorName, amount) { let paymentToApply = amount; const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date); if (creditorTransactions.length === 0) { this.showToast("No outstanding balance.", "error"); return; } const totalDue = creditorTransactions.reduce((sum, t) => sum + (t.total - (t.paidAmount || 0)), 0); if (amount > totalDue + 0.01) { this.showToast(`Payment (₹${amount.toFixed(2)}) exceeds total due (₹${totalDue.toFixed(2)}).`, 'error'); return; } for (const transaction of creditorTransactions) { if (paymentToApply <= 0) break; const dueOnThisTx = transaction.total - (transaction.paidAmount || 0); const paymentForThisTx = Math.min(paymentToApply, dueOnThisTx); transaction.paidAmount = (transaction.paidAmount || 0) + paymentForThisTx; paymentToApply -= paymentForThisTx; } this.showToast(`Payment of ₹${amount.toFixed(2)} recorded for ${creditorName}.`, 'success'); this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); },
+            processSale(isInvoice, isCredit = false, creditForm) { const container = isCredit ? creditForm.querySelector('#credit-inventory-items-container') : this.ui.salesItemsContainer; const partyName = isCredit ? creditForm.querySelector('#credit-inventory-party-name').value.trim() : null; const saleDate = isCredit ? new Date(creditForm.querySelector('#credit-inventory-date').value + 'T00:00:00') : new Date(); if (isCredit && !partyName) { this.showToast("Party Name is required.", "error"); return null; } if (isCredit && isNaN(saleDate.getTime())) { this.showToast("Invalid date.", "error"); return null; } const saleItems = [], errors = []; let isValid = true; container.querySelectorAll('.item-entry').forEach(entry => { const p = this.parseItemNameFromDatalist(entry.querySelector('.particulars').value); const q = parseInt(entry.querySelector('.quantity').value, 10); const r = parseFloat(entry.querySelector('.rate').value); if (!p || !q || isNaN(r)) return; const item = this.state.inventory.find(i => i.particulars === p); if (!item) { isValid = false; errors.push(`Item not found: ${p}`); } else if (item.quantity < q) { isValid = false; errors.push(`Not enough stock for ${p}.`); } else saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: item.rate }); }); if (saleItems.length === 0) { this.showToast("Add at least one item.", "error"); return null; } if (!isValid) { this.showToast("Sale error:\n" + errors.join("\n"), "error"); return null; } saleItems.forEach(soldItem => { this.state.inventory.find(i => i.particulars === soldItem.particulars).quantity -= soldItem.quantity; }); const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName, date: saleDate, items: saleItems, total: saleItems.reduce((acc, si) => acc + (si.sellingRate * si.quantity), 0), paidAmount: 0 }; this.state.transactions.push(newTransaction); this.renderAll(); this.triggerAutoSave(); if (isCredit) { creditForm.reset(); this.ui.credit.inventoryDateInput.value = this.getTodayDateString(); container.innerHTML = ''; this.addFormItem(container, true); } else { this.ui.salesItemsContainer.innerHTML = ''; this.addFormItem(this.ui.salesItemsContainer, true); } if (isInvoice) this.generateInvoice(newTransaction); this.showToast((isCredit ? 'Credit sale' : 'Sale') + ' recorded!', "success"); },
+            recordPayment(creditorName, amount) { let paymentToApply = amount; const creditorTransactions = this.state.transactions.filter(t => t.saleType === 'Credit' && t.partyName === creditorName && (t.total - (t.paidAmount || 0)) > 0.01).sort((a, b) => a.date - b.date); if (creditorTransactions.length === 0) { this.showToast("No outstanding balance.", "error"); return; } const totalDue = creditorTransactions.reduce((sum, t) => sum + (t.total - (t.paidAmount || 0)), 0); if (amount > totalDue + 0.01) { this.showToast(`Payment (₹${amount.toFixed(2)}) exceeds total due (₹${totalDue.toFixed(2)}).`, 'error'); return; } for (const transaction of creditorTransactions) { if (paymentToApply <= 0) break; const dueOnThisTx = transaction.total - (transaction.paidAmount || 0); const paymentForThisTx = Math.min(paymentToApply, dueOnThisTx); transaction.paidAmount = (transaction.paidAmount || 0) + paymentForThisTx; paymentToApply -= paymentForThisTx; } this.showToast(`Payment of ₹${amount.toFixed(2)} recorded for ${creditorName}.`, 'success'); this.renderAll(); this.triggerAutoSave(); },
             exportTransactionsToExcel() { if (this.state.transactions.length === 0) { this.showToast("No transactions to export.", "error"); return; } const salesData = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(i => ({"Tx ID": t.id, Date: this.formatDateDDMMYYYY(t.date), Type: t.saleType, Party: t.partyName || 'N/A', Paid: t.paidAmount, Item: i.particulars, Qty: i.quantity, "Sell Rate": i.sellingRate, "Cost Rate": i.costRate, Total: i.quantity * i.sellingRate, Profit: (i.sellingRate - i.costRate) * i.quantity }))); const purchaseData = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(i => ({"Tx ID": t.id, Date: this.formatDateDDMMYYYY(t.date), Item: i.particulars, Qty: i.quantity, "Cost Rate": i.rate, Total: i.quantity * i.rate }))); const wsSales = XLSX.utils.json_to_sheet(salesData), wsPurchases = XLSX.utils.json_to_sheet(purchaseData); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsSales, "Sales"); XLSX.utils.book_append_sheet(wb, wsPurchases, "Purchases"); XLSX.writeFile(wb, "Transaction_History.xlsx"); this.showToast("Exported successfully!", "success"); },
             generateInvoice(transaction) { const doc = new jsPDF(); let y = 20; doc.setFontSize(22); doc.text("Tinny Fashion Store", 105, y, { align: "center" }); y += 8; doc.setFontSize(12); doc.text("Run by Rekha ChandraShekhar Mishra", 105, y, { align: "center" }); y += 15; doc.setFontSize(18); doc.text("Sale Invoice", 105, y, { align: "center" }); y += 8; doc.setFontSize(10); if (transaction.saleType === 'Credit') doc.text(`Credit To: ${transaction.partyName}`, 20, y); doc.text(`Date: ${this.formatDateDDMMYYYY(transaction.date)}`, 190, y, { align: "right" }); y += 15; doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text("Item Description", 20, y); doc.text("Qty", 130, y); doc.text("Rate", 150, y); doc.text("Amount", 185, y, { align: "right" }); y += 7; doc.setLineWidth(0.5); doc.line(20, y, 190, y); y += 8; doc.setFont("helvetica", "normal"); transaction.items.forEach(item => { doc.text(item.particulars, 20, y); doc.text(item.quantity.toString(), 130, y); doc.text(item.sellingRate.toFixed(2), 150, y); doc.text((item.quantity * item.sellingRate).toFixed(2), 185, y, { align: "right" }); y += 7; }); y += 5; doc.setLineWidth(0.5); doc.line(130, y, 190, y); y += 7; doc.setFont("helvetica", "bold"); doc.text("Grand Total", 130, y); doc.text(`Rs. ${transaction.total.toFixed(2)}`, 185, y, { align: "right" }); doc.save(`Invoice_${transaction.id}.pdf`); },
             showToast(msg, type='success') { const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `show ${type}`; setTimeout(() => toast.className = toast.className.replace('show',''), 3000); },
@@ -2000,27 +1742,18 @@
                 this.ui.operations.refreshSalesTrendBtn.addEventListener('click', () => this.renderSalesTrendChart());
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { const holidayDateStr = this.ui.settings.holidayDateInput.value; if (!holidayDateStr) { this.showToast("Select a date.", "error"); return; } if (this.state.holidays.includes(holidayDateStr)) { this.showToast("Date is already a holiday.", "info"); return; } this.state.holidays.push(holidayDateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Holiday added!", "success"); this.ui.settings.holidayDateInput.value = ''; this.renderSalesTrendChart(); });
                 this.ui.settings.holidayList.addEventListener('click', (e) => { if (e.target.classList.contains('delete-holiday-btn')) { this.state.holidays = this.state.holidays.filter(d => d !== e.target.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Holiday removed.", "success"); this.renderSalesTrendChart(); } });
-                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const pName = e.target.querySelector('#credit-cosmetic-party-name').value.trim(), dateStr = e.target.querySelector('#credit-cosmetic-date').value, iName = e.target.querySelector('#credit-cosmetic-item-name').value.trim(), qty = parseInt(e.target.querySelector('#credit-cosmetic-qty').value, 10), cRate = parseFloat(e.target.querySelector('#credit-cosmetic-cost-rate').value), sRate = parseFloat(e.target.querySelector('#credit-cosmetic-sell-rate').value); if (!dateStr) { this.showToast("Select a date.", "error"); return; } const sDate = new Date(dateStr + 'T00:00:00'); if (!pName || !iName || isNaN(qty) || isNaN(cRate) || isNaN(sRate) || qty <= 0 || isNaN(sDate.getTime())) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: pName, date: sDate, items: [{ particulars: `(Cosmetic) ${iName}`, quantity: qty, sellingRate: sRate, costRate: cRate }], total: sRate * qty, paidAmount: 0 }); this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString(); this.showToast(`Credit sale to ${pName} recorded!`, 'success'); });
+                this.ui.credit.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const pName = e.target.querySelector('#credit-cosmetic-party-name').value.trim(), dateStr = e.target.querySelector('#credit-cosmetic-date').value, iName = e.target.querySelector('#credit-cosmetic-item-name').value.trim(), qty = parseInt(e.target.querySelector('#credit-cosmetic-qty').value, 10), cRate = parseFloat(e.target.querySelector('#credit-cosmetic-cost-rate').value), sRate = parseFloat(e.target.querySelector('#credit-cosmetic-sell-rate').value); if (!dateStr) { this.showToast("Select a date.", "error"); return; } const sDate = new Date(dateStr + 'T00:00:00'); if (!pName || !iName || isNaN(qty) || isNaN(cRate) || isNaN(sRate) || qty <= 0 || isNaN(sDate.getTime())) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Credit', partyName: pName, date: sDate, items: [{ particulars: `(Cosmetic) ${iName}`, quantity: qty, sellingRate: sRate, costRate: cRate }], total: sRate * qty, paidAmount: 0 }); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.ui.credit.cosmeticDateInput.value = this.getTodayDateString(); this.showToast(`Credit sale to ${pName} recorded!`, 'success'); });
                 this.ui.transactions.exportExcelBtn.addEventListener('click', () => this.exportTransactionsToExcel());
                 this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
                 this.ui.transactions.resetFilterBtn.addEventListener('click', () => { this.ui.transactions.startDateInput.value = ''; this.ui.transactions.endDateInput.value = ''; this.renderTransactions(); });
                 this.ui.transactions.transactionSortOrder.addEventListener('change', () => this.renderTransactions());
                 this.ui.credit.creditorListContainer.addEventListener('click', (e) => { const creditorHeader = e.target.closest('.creditor-header'), recordButton = e.target.closest('.record-payment-btn'); if (creditorHeader) { const details = creditorHeader.nextElementSibling, item = creditorHeader.closest('.creditor-item'); details.classList.toggle('visible'); creditorHeader.classList.toggle('is-open'); if (item) item.classList.toggle('is-expanded'); } else if (recordButton) { const name = recordButton.dataset.creditorName, input = recordButton.closest('.payment-form').querySelector('.payment-amount-input'), amount = parseFloat(input.value); if (isNaN(amount) || amount <= 0) { this.showToast('Enter a valid amount.', 'error'); return; } this.recordPayment(name, amount); input.value = ''; } });
-                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(), q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10), c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value), s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s) || q <= 0) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q }); this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Profit recorded!`, "success"); });
-                this.ui.purchaseForm.addEventListener('submit', (event) => { event.preventDefault(); const { newItems, total } = Array.from(this.ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => { const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value); if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; } return acc; }, { newItems: [], total: 0 }); if (newItems.length === 0) return this.showToast("Add at least one item.", "error"); newItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity, totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total }); this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); this.ui.purchaseItemsContainer.innerHTML = ''; this.addFormItem(this.ui.purchaseItemsContainer, false); this.showToast('Stock updated!', "success"); });
-                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active'); if(button.dataset.tab === 'messages') { this.state.lastReadTimestamp = new Date(); this.renderMessages(); this.triggerAutoSave(); } this.renderAllAnalyticsCharts(); }));
+                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(), q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10), c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value), s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s) || q <= 0) { this.showToast("Fill all fields correctly.", "error"); return; } this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', partyName: null, date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q }); this.renderAll(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Profit recorded!`, "success"); });
+                this.ui.purchaseForm.addEventListener('submit', (event) => { event.preventDefault(); const { newItems, total } = Array.from(this.ui.purchaseItemsContainer.querySelectorAll('.item-entry')).reduce((acc, entry) => { const p = entry.querySelector('.particulars').value, q = parseInt(entry.querySelector('.quantity').value, 10), r = parseFloat(entry.querySelector('.rate').value); if (p && q && !isNaN(r)) { acc.newItems.push({ particulars: p, quantity: q, rate: r }); acc.total += q * r; } return acc; }, { newItems: [], total: 0 }); if (newItems.length === 0) return this.showToast("Add at least one item.", "error"); newItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity, totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: newItems, total }); this.renderAll(); this.triggerAutoSave(); this.ui.purchaseItemsContainer.innerHTML = ''; this.addFormItem(this.ui.purchaseItemsContainer, false); this.showToast('Stock updated!', "success"); });
+                this.ui.tabButtons.forEach(button => button.addEventListener('click', () => { this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(button.dataset.tab).classList.add('active'); this.renderAllAnalyticsCharts(); }));
                 document.body.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === this.parseItemNameFromDatalist(e.target.value)); const rateInput = e.target.closest('.item-entry').querySelector('.rate'); if (item && rateInput && e.target.closest('#sales-form, #credit-inventory-sale-form')) rateInput.value = (item.sellingRate || item.rate).toFixed(2); } });
                 this.ui.transactions.transactionsTab.addEventListener('click', e => { if (e.target.classList.contains('download-invoice-btn')) { const tx = this.state.transactions.find(t => t.id === parseInt(e.target.dataset.id, 10)); if (tx) this.generateInvoice(tx); } else if (e.target.classList.contains('delete-sale-btn')) this.deleteSale(parseInt(e.target.dataset.id, 10)); else if (e.target.classList.contains('return-item-btn')) this.handleSalesReturn(parseInt(e.target.dataset.transactionId, 10), e.target.dataset.itemParticulars); });
-                this.ui.inventoryTableBody.addEventListener('click', (e) => { const particulars = e.target.dataset.particulars, row = e.target.closest('tr'); if (!row) return; if (e.target.classList.contains('edit-btn')) { const editing = this.ui.inventoryTableBody.querySelector('tr.edit-mode'); if(editing) editing.classList.remove('edit-mode'); row.classList.add('edit-mode'); } else if (e.target.classList.contains('cancel-btn')) row.classList.remove('edit-mode'); else if (e.target.classList.contains('delete-btn')) { if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); } } else if (e.target.classList.contains('save-btn')) { const newQty = parseInt(row.querySelector('.edit-quantity').value, 10), newRate = parseFloat(row.querySelector('.edit-rate').value); if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) { this.showToast('Invalid input.', 'error'); return; } const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars); if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; } this.runAnalysisEngine(); this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory updated!', 'success'); } });
-                // Listener for deleting messages
-                this.ui.messages.container.addEventListener('click', e => {
-                    if (e.target.classList.contains('delete-btn')) {
-                        const messageId = e.target.closest('.message-card').dataset.id;
-                        this.state.messages = this.state.messages.filter(msg => msg.id !== messageId);
-                        this.renderMessages();
-                        this.triggerAutoSave();
-                    }
-                });
+                this.ui.inventoryTableBody.addEventListener('click', (e) => { const particulars = e.target.dataset.particulars, row = e.target.closest('tr'); if (!row) return; if (e.target.classList.contains('edit-btn')) { const editing = this.ui.inventoryTableBody.querySelector('tr.edit-mode'); if(editing) editing.classList.remove('edit-mode'); row.classList.add('edit-mode'); } else if (e.target.classList.contains('cancel-btn')) row.classList.remove('edit-mode'); else if (e.target.classList.contains('delete-btn')) { if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); } } else if (e.target.classList.contains('save-btn')) { const newQty = parseInt(row.querySelector('.edit-quantity').value, 10), newRate = parseFloat(row.querySelector('.edit-rate').value); if (isNaN(newQty) || isNaN(newRate) || newQty < 0 || newRate < 0) { this.showToast('Invalid input.', 'error'); return; } const itemToUpdate = this.state.inventory.find(item => item.particulars === particulars); if (itemToUpdate) { itemToUpdate.quantity = newQty; itemToUpdate.rate = newRate; } this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory updated!', 'success'); } });
             }
         };
         app.init();
