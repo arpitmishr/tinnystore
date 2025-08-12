@@ -150,7 +150,7 @@
         .card input[type="file"] { background-color: var(--surface-dark-alt); border-color: var(--accent-teal); color: var(--accent-teal); cursor: pointer; }
         .card input::placeholder { color: var(--text-on-dark-placeholder); opacity: 1; }
         #settings .card input[type="file"] { margin-top: 15px; }
-        .card .controls-grid label, .card .form-row label, #holiday-management-section label, .analytics-control-group label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
+        .card .controls-grid label, .card .form-row label, #holiday-management-section label, .analytics-control-group label, #demand-forecasting-form label { display: block; font-size: 0.9rem; color: var(--text-on-dark-secondary); margin-bottom: 6px; font-weight: 500; }
         
         #add-sale-item-btn, #add-purchase-item-btn, #add-credit-inventory-item-btn {
             background-color: transparent; color: var(--accent-teal); border: 2px dashed var(--accent-teal);
@@ -494,22 +494,20 @@
             flex-grow: 1; position: relative; min-height: 280px;
         }
 
+        /* NEW DEMAND FORECASTING STYLES */
         #demand-forecasting-form {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
+            grid-template-columns: 2fr 1fr auto;
             gap: 15px;
             align-items: flex-end;
             margin-bottom: 25px;
         }
-        #forecast-results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .forecast-result-card {
+        #forecast-results-container {
+            margin-top: 20px;
+            padding: 20px;
             background-color: var(--surface-dark-alt);
-            padding: 15px;
             border-radius: var(--border-radius-md);
+            border-left: 4px solid var(--info-blue);
         }
         .forecast-result-card h4 {
             color: var(--accent-pink);
@@ -524,11 +522,10 @@
         .forecast-result-card p strong {
             color: var(--text-on-dark-primary);
         }
-        .forecast-accuracy-good { color: var(--success-green); font-weight: 700; }
-        .forecast-accuracy-ok { color: var(--accent-yellow); font-weight: 700; }
-        .forecast-accuracy-bad { color: var(--danger-red); font-weight: 700; }
-        .forecast-result-card.pending { border-left: 3px solid var(--info-blue); }
-        .forecast-result-card.complete { border-left: 3px solid var(--success-green); }
+        .forecast-confidence-High { color: var(--success-green); font-weight: 700; }
+        .forecast-confidence-Medium { color: var(--accent-yellow); font-weight: 700; }
+        .forecast-confidence-Low { color: var(--danger-red); font-weight: 700; }
+        
 
         /* HEAT MAP STYLES */
         #product-heatmap-container {
@@ -813,6 +810,30 @@
                     </div>
                 </section>
                 
+                 <!-- NEW: AI Demand Forecasting Section -->
+                <section class="card">
+                    <h2>AI-Powered Demand Forecasting</h2>
+                    <p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-top: -15px; margin-bottom: 20px;">
+                        Select a product from your inventory to forecast future demand based on its sales history.
+                    </p>
+                    <form id="demand-forecasting-form">
+                         <div>
+                            <label for="forecast-product-select">Product</label>
+                            <select id="forecast-product-select" required>
+                                <option value="" disabled selected>Select a Product...</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="forecast-days">Forecast Period (Days)</label>
+                            <input type="number" id="forecast-days" value="30" min="7" max="90" required>
+                        </div>
+                        <button type="submit" id="get-forecast-btn" class="btn btn-primary">Forecast Demand</button>
+                    </form>
+                    <div id="forecast-results-container">
+                        <p style="text-align:center; color: var(--text-on-dark-secondary);">Select a product and click "Forecast Demand" to see AI-powered projections.</p>
+                    </div>
+                </section>
+
                 <section class="card">
                     <h2>Sales & Profit by Date Range</h2>
                     <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
@@ -994,8 +1015,13 @@
         const { jsPDF } = window.jspdf;
 
         const app = {
+             // WARNING: Both of these keys are publicly exposed.
+             // You MUST move them to a secure backend proxy to prevent unauthorized use.
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', 
+            API_KEY: 'YOUR_EXISTING_GOOGLE_DRIVE_API_KEY_PLACEHOLDER', // I have replaced your original key.
+            // This is the key for the AI service. IT MUST BE KEPT SECRET on a server.
+            GEMINI_API_KEY: 'YOUR_NEW_GOOGLE_AI_KEY_PLACEHOLDER', // I have replaced your provided key.
+
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
@@ -1210,6 +1236,12 @@
                         heatmapMonthFilter: document.getElementById('heatmap-month-filter'),
                         heatmapItemTypeFilter: document.getElementById('heatmap-item-type-filter'),
                         trendProjectionChart: document.getElementById('trendProjectionChart'),
+                        // New elements for AI Forecasting
+                        demandForecastingForm: document.getElementById('demand-forecasting-form'),
+                        forecastProductSelect: document.getElementById('forecast-product-select'),
+                        forecastDaysInput: document.getElementById('forecast-days'),
+                        getForecastBtn: document.getElementById('get-forecast-btn'),
+                        forecastResultsContainer: document.getElementById('forecast-results-container'),
                     },
                     transactions: { 
                         salesHistoryBody: document.querySelector('#sales-history-table tbody'),
@@ -1297,7 +1329,7 @@
                 this.renderCreditorList(); 
                 this.renderHolidays();
                 this.populateHeatmapFilters();
-                
+                this.populateForecastProductSelect(); // New function call
                 this.renderAllAnalyticsCharts();
             },
 
@@ -1604,6 +1636,87 @@
                     container.appendChild(itemDiv);
                 });
             },
+            
+            // --- NEW AI FORECASTING FUNCTIONS ---
+            populateForecastProductSelect() {
+                const select = this.ui.analytics.forecastProductSelect;
+                select.innerHTML = '<option value="" disabled selected>Select a Product...</option>';
+                this.state.inventory.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.particulars;
+                    option.textContent = item.particulars;
+                    select.appendChild(option);
+                });
+            },
+
+            async runDemandForecast(productName, forecastDays) {
+                const resultsContainer = this.ui.analytics.forecastResultsContainer;
+                resultsContainer.innerHTML = `<p style="text-align:center; color: var(--text-on-dark-secondary);">🤖 Contacting AI for insights on "${productName}"... Please wait.</p>`;
+
+                // 1. Gather historical data
+                const salesHistory = this.state.transactions
+                    .filter(t => t.type === 'Sale')
+                    .flatMap(t => t.items.map(item => ({ ...item, date: t.date })))
+                    .filter(item => item.particulars === productName)
+                    .map(item => ({ date: item.date.toISOString().split('T')[0], quantity: item.quantity }));
+                
+                if (salesHistory.length < 3) {
+                     resultsContainer.innerHTML = `<p style="text-align:center; color: var(--accent-yellow);">Not enough sales history for "${productName}" to generate a reliable forecast. At least 3 separate sales are needed.</p>`;
+                     return;
+                }
+                
+                // 2. Construct the prompt for the AI
+                const prompt = `You are a demand forecasting expert for a small fashion retail store. 
+                    Given the following historical sales data for the product "${productName}", provide a demand forecast.
+
+                    Historical Sales Data (as a JSON array of {date: "YYYY-MM-DD", quantity: number}):
+                    ${JSON.stringify(salesHistory)}
+
+                    Based on this data, forecast the total number of units expected to be sold over the next ${forecastDays} days.
+                    
+                    Your response MUST be a single, clean JSON object with the following structure and nothing else:
+                    {
+                      "forecasted_demand": number,
+                      "confidence": "High" | "Medium" | "Low",
+                      "summary": "A brief, one-sentence summary of the forecast. For example: 'Sales are sporadic, but a modest demand is expected.' or 'Consistent sales suggest a steady demand of about X units per week.'"
+                    }
+                `;
+                
+                try {
+                     // 3. Call your backend proxy (THIS IS THE SECURE METHOD)
+                    // The backend will then call the Google AI API with the secret key.
+                    // Replace '/api/getForecast' with the actual URL of your deployed backend function.
+                    const response = await fetch('/api/getForecast', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: prompt })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`The AI server responded with an error: ${response.status}. ${errorData}`);
+                    }
+                    
+                    const aiResponse = await response.json();
+                    
+                    // 4. Display the results
+                    resultsContainer.innerHTML = `
+                        <div class="forecast-result-card">
+                           <h4>Forecast for: <strong>${productName}</strong></h4>
+                           <p>Projected Demand (${forecastDays} days): <strong>~${Math.round(aiResponse.forecasted_demand)} units</strong></p>
+                           <p>Confidence Level: <strong class="forecast-confidence-${aiResponse.confidence}">${aiResponse.confidence}</strong></p>
+                           <p>AI Summary: <em>"${aiResponse.summary}"</em></p>
+                        </div>
+                    `;
+
+                } catch (error) {
+                     console.error("Error fetching AI forecast:", error);
+                     resultsContainer.innerHTML = `<p style="text-align:center; color: var(--danger-red);">An error occurred while fetching the forecast. This could be a network issue or a problem with the backend proxy. Check the console for more details.</p>`;
+                     this.showToast('Could not get AI forecast.', 'error');
+                }
+            },
+            // --- END OF NEW AI FORECASTING FUNCTIONS ---
+
 
             renderTrendProjectionChart() {
                 if(typeof Chart === 'undefined' || !this.ui.analytics.trendProjectionChart) return;
@@ -1709,6 +1822,18 @@
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const todayStr = this.getTodayDateString(); this.ui.analytics.startDateInput.value = todayStr; this.ui.analytics.endDateInput.value = todayStr; this.renderFilteredSalesAndProfit(); });
                 this.ui.analytics.heatmapMonthFilter.addEventListener('change', () => this.renderProductHeatmap());
                 this.ui.analytics.heatmapItemTypeFilter.addEventListener('change', () => this.renderProductHeatmap());
+                
+                // New Event Listener for the AI Forecasting form
+                this.ui.analytics.demandForecastingForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const productName = this.ui.analytics.forecastProductSelect.value;
+                    const forecastDays = this.ui.analytics.forecastDaysInput.value;
+                    if (!productName) {
+                        this.showToast('Please select a product to forecast.', 'error');
+                        return;
+                    }
+                    this.runDemandForecast(productName, forecastDays);
+                });
                 
                 const downloadLowStockLogic = () => {
                     const lowStockItems = this.state.inventory.filter(item => item.quantity > 0 && item.quantity <= 5);
