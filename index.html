@@ -427,6 +427,43 @@
                     </div>
                 </section>
 
+                <section class="dashboard-main-area">
+                    <div class="dashboard-chart-container card">
+                        <h2>Sales Trend</h2>
+                         <div id="sales-trend-controls" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <label for="sales-trend-mode" style="margin-bottom: 0; color: var(--text-on-dark-secondary);">View:</label>
+                            <select id="sales-trend-mode" style="padding: 8px 10px; font-size: 0.9rem; max-width: 150px;">
+                                <option value="last7days" selected>Last 7 Days</option>
+                                <option value="currentMonth">Current Month</option>
+                                <option value="customRange">Custom Range</option>
+                            </select>
+                            <div id="sales-trend-custom-range-inputs" style="display:none; gap: 10px; align-items: center;">
+                                <input type="date" id="sales-trend-start-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                                <span style="color: var(--text-on-dark-secondary);">-</span>
+                                <input type="date" id="sales-trend-end-date" style="padding: 8px 10px; font-size: 0.9rem;">
+                            </div>
+                            <button id="refresh-sales-trend-btn" class="btn btn-secondary btn-small" style="margin-left:auto;">Refresh</button>
+                        </div>
+                        <div style="flex-grow: 1; position: relative; min-height: 250px; padding-bottom: 15px;">
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                        <div class="quick-stats-grid">
+                            <div><span>Total Revenue (All Time):</span> <strong id="dashboard-total-revenue">₹0.00</strong></div>
+                            <div><span>Total Profit (All Time):</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-low-stock-list card">
+                        <div class="list-header">
+                            <h2>Products Low in Stock</h2>
+                            <button class="btn btn-primary btn-small" id="dashboard-download-low-stock-btn">Download</button>
+                        </div>
+                        <ul id="dashboard-low-stock-items-ul">
+                            <li><p style="text-align:center; color: var(--text-on-dark-secondary);">No low stock items.</p></li>
+                        </ul>
+                    </div>
+                </section>
+
                 <div class="main-columns action-forms-section">
                     <section class="card">
                         <h2>Make a Sale (From Inventory)</h2>
@@ -928,6 +965,7 @@
                         heatmapMonthFilter: document.getElementById('heatmap-month-filter'),
                         heatmapItemTypeFilter: document.getElementById('heatmap-item-type-filter'),
                         trendProjectionChart: document.getElementById('trendProjectionChart'),
+                        // NEW UI ELEMENTS FOR PREDICTOR
                         runPredictionBtn: document.getElementById('run-prediction-btn'),
                         predictionResultsContainer: document.getElementById('prediction-results-container'),
                     },
