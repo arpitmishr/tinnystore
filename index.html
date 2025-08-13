@@ -234,6 +234,7 @@
         .metric-card p { font-size: 2.1rem; margin: 0; color: var(--text-primary); font-weight: 700; }
         #total-profit, #total-revenue, #filtered-sales-total, #filtered-profit-total { color: var(--accent-tertiary); }
         .chart-controls { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 25px; }
+        #product-heatmap-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;}
 
         /* ================================= */
         /* Settings Tab                      */
@@ -493,7 +494,7 @@
                             <select id="heatmap-month-filter"><option value="all">All Time</option></select>
                             <select id="heatmap-item-type-filter"><option value="all">All Items</option><option value="inventory">Inventory</option><option value="cosmetic">Cosmetics</option></select>
                         </div>
-                        <div id="product-heatmap-container" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;"><p>Not enough data.</p></div>
+                        <div id="product-heatmap-container"><p>Not enough data.</p></div>
                     </div>
                 </div>
                  <section class="card">
@@ -629,8 +630,8 @@
 
         const app = {
             // --- Configuration ---
-            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com', // Replace with your actual Client ID
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', // Replace with your actual API Key
+            CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID', // IMPORTANT: Replace with your actual Google Client ID
+            API_KEY: 'YOUR_GOOGLE_API_KEY',       // IMPORTANT: Replace with your actual Google API Key
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'tinny_fashion_data_v1.json',
@@ -649,7 +650,14 @@
             // ========================
             init() { 
                 this.cacheDOMElements();
-                gapi.load('client', this.initializeGapiClient.bind(this));
+                // Defer loading of GAPI script to avoid race conditions
+                const gapiScript = document.createElement('script');
+                gapiScript.src = 'https://apis.google.com/js/api.js';
+                gapiScript.onload = () => {
+                    gapi.load('client', this.initializeGapiClient.bind(this));
+                };
+                document.body.appendChild(gapiScript);
+
                 this.tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: this.CLIENT_ID,
                     scope: this.SCOPES,
@@ -671,9 +679,11 @@
                     this.ui.signinBtn.disabled = false;
                     this.ui.authStatus.textContent = 'Ready. Please sign in.';
                 } catch (error) {
-                    console.error("Error initializing Google API client:", error);
-                    this.ui.authStatus.textContent = 'Error: Could not initialize Google Drive API.';
-                    this.showToast('Initialization failed. Check console for details.', 'error');
+                    console.error("CRITICAL: Error initializing Google API client.", error);
+                    const errorMessage = "Initialization Error: Could not connect to Google Drive API. Please ensure you have a valid API Key and the domain is authorized in your Google Cloud Console.";
+                    this.ui.authStatus.textContent = errorMessage;
+                    this.ui.authStatus.style.color = 'var(--danger-red)';
+                    this.showToast(errorMessage, 'error');
                 }
             },
             async handleAuthResponse(response) { 
@@ -843,7 +853,7 @@
                 }
             },
 
-            // --- [The rest of the comprehensive JavaScript code from the previous response goes here] ---
+            // ... (The rest of the JS code is identical to the previous response) ...
             // It includes:
             // - Utility & Helper Functions
             // - Master Rendering Function (renderAll)
@@ -852,6 +862,8 @@
             // - All Business Logic & Processing functions (processSale, recordPayment, etc.)
             // - The complete cacheDOMElements function
             // - The complete addEventListeners function
+            // (Paste the full JavaScript from the previous response here to complete the file)
+
         };
 
         // --- Start the App ---
