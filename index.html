@@ -3,57 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tinny Fashion Store - Business Manager</title>
-    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%23059669'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
+    <title>Tinny Fashion Store - Complete Business Manager</title>
+    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%2314B8A6'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
-            --hue-primary: 160;
-            --hue-accent: 42;
-            --hue-danger: 0;
-            --sat-primary: 80%;
-
-            /* Default Dark Theme */
             --bg-primary: #111827;
             --bg-secondary: #1f2937;
             --bg-tertiary: #374151;
+            
             --text-primary: #f9fafb;
             --text-secondary: #d1d5db;
             --text-muted: #9ca3af;
-            --border-primary: #4b5563;
-            --accent-primary: #10b981;
-            --accent-primary-darker: #059669;
-            --accent-primary-text: #ffffff;
-            --accent-yellow: #f59e0b;
-            --accent-pink: #ec4899;
+
+            --accent-primary: #14B8A6;
+            --accent-primary-darker: #0D9488;
+            --accent-yellow: #F59E0B;
+            --accent-pink: #EC4899;
+            
             --status-success: #22c55e;
             --status-danger: #ef4444;
             --status-info: #3b82f6;
-            --shadow-color: rgba(0, 0, 0, 0.2);
-        }
 
-        body.light-theme {
-            --bg-primary: #f3f4f6;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #e5e7eb;
-            --text-primary: #111827;
-            --text-secondary: #374151;
-            --text-muted: #6b7280;
-            --border-primary: #d1d5db;
-            --accent-primary: #059669;
-            --accent-primary-darker: #047857;
-            --accent-primary-text: #ffffff;
-            --shadow-color: rgba(0, 0, 0, 0.08);
-        }
+            --border-primary: #4b5563;
+            --border-focus: var(--accent-primary);
 
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
         * { box-sizing: border-box; }
         html { height: 100%; scroll-behavior: smooth; }
         body {
@@ -61,192 +49,173 @@
             background-color: var(--bg-primary);
             color: var(--text-secondary);
             margin: 0;
-            line-height: 1.6;
-            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.5;
         }
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; width: 100%; text-align: center; padding: 2rem;
-            background-color: #111827;
-            background-image: radial-gradient(circle at 100% 0%, hsla(var(--hue-primary), var(--sat-primary), 50%, 0.2), transparent 40%),
-                              radial-gradient(circle at 0% 100%, hsla(var(--hue-accent), var(--sat-primary), 50%, 0.2), transparent 40%);
+            background: var(--bg-secondary);
+            background-image: radial-gradient(circle at top right, var(--accent-primary) -20%, transparent 50%),
+                              radial-gradient(circle at bottom left, var(--accent-yellow) -20%, transparent 50%);
         }
         .login-box {
-            background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(12px);
-            padding: 3rem; border-radius: 16px;
-            box-shadow: 0 10px 30px var(--shadow-color); max-width: 450px; width: 100%;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 3rem; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 450px; width: 100%;
             border: 1px solid var(--border-primary);
         }
-        .login-box .store-logo { font-size: 2.5rem; font-weight: 700; color: #f9fafb; margin-bottom: 0.5rem; }
-        .login-box .store-logo span { background-color: var(--accent-primary); color: #1f2937; border-radius: 6px; padding: 0.1em 0.3em; margin-right: 0.1em; }
-        .login-box h1 { color: #f9fafb; margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 700; }
-        .login-box p { color: #9ca3af; margin-bottom: 2rem; }
-        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #signin-btn:hover:not([disabled]) { background-color: #357ae8; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-        #signin-btn[disabled] { background-color: #374151; color: #9ca3af; cursor: not-allowed; }
+        .login-box .store-logo { font-size: 2.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .login-box .store-logo span { background-color: var(--accent-primary); color: var(--bg-secondary); border-radius: var(--radius-sm); padding: 0.1em 0.3em; margin-right: 0.1em; }
+        .login-box h1 { color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 700; }
+        .login-box p { color: var(--text-muted); margin-bottom: 2rem; }
+        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: all 0.2s; box-shadow: var(--shadow-md); }
+        #signin-btn:hover:not([disabled]) { background-color: #357ae8; transform: translateY(-2px); }
+        #signin-btn[disabled] { background-color: var(--bg-tertiary); color: var(--text-muted); cursor: not-allowed; }
         #signin-btn svg { width: 24px; height: 24px; background: white; border-radius: 50%; padding: 2px; }
-        #auth-status { margin-top: 1.5rem; font-size: 0.9rem; color: #9ca3af; }
-        
+        #auth-status { margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
         #app-container { display: none; padding: 1.5rem; max-width: 1400px; margin-inline: auto; }
         #app-container.visible { display: block; animation: fadeInApp 0.5s ease-out; }
-        @keyframes fadeInApp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+        @keyframes fadeInApp { from { opacity: 0; } to { opacity: 1; } }
         header {
             background-color: var(--bg-secondary);
-            padding: 1rem 1.5rem; border-radius: 16px;
-            margin-bottom: 2rem; box-shadow: 0 4px 15px var(--shadow-color);
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-            border: 1px solid var(--border-primary);
+            padding: 1rem 1.5rem; border-radius: var(--radius-lg);
+            margin-bottom: 2rem; box-shadow: var(--shadow-md);
+            display: flex; justify-content: space-between; align-items: center;
         }
         header .header-title-group h1 { margin: 0; font-weight: 700; font-size: 1.5rem; color: var(--text-primary); }
         .user-profile { display: flex; align-items: center; gap: 1rem; }
-        #user-name { font-weight: 500; color: var(--text-secondary); }
-        #signout-btn { font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent; border: 1px solid var(--accent-yellow); border-radius: 10px; padding: 8px 14px; font-weight: 600; transition: all 0.2s; }
+        .user-profile span { font-weight: 500; font-size: 0.9rem; color: var(--text-secondary); }
+        #signout-btn { font-size: 0.85rem; color: var(--accent-yellow); cursor: pointer; background: transparent; border: 1px solid var(--accent-yellow); border-radius: var(--radius-md); padding: 8px 14px; font-weight: 600; transition: all 0.2s; }
         #signout-btn:hover { background-color: var(--accent-yellow); color: var(--bg-primary); }
-        
         .tab-nav {
             display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
-            margin-bottom: 2rem; padding: 0.5rem; border-radius: 16px;
-            background-color: var(--bg-secondary); box-shadow: 0 2px 5px var(--shadow-color);
+            margin-bottom: 2rem; padding: 0.5rem; border-radius: var(--radius-lg);
+            background-color: var(--bg-secondary); box-shadow: var(--shadow-sm);
         }
         .tab-button {
-            padding: 10px 20px; cursor: pointer; border: 2px solid transparent; background-color: transparent;
-            font-size: 0.95rem; font-weight: 600; color: var(--text-muted);
-            border-radius: 12px; transition: all 0.2s ease-in-out;
-            position: relative;
+            padding: 10px 20px; cursor: pointer; border: none; background-color: transparent;
+            font-size: 0.95rem; font-weight: 500; color: var(--text-muted);
+            border-radius: var(--radius-md); transition: all 0.2s;
         }
         .tab-button:hover { color: var(--text-primary); background-color: var(--bg-tertiary); }
-        .tab-button.active {
-            color: var(--accent-primary);
-            border-color: var(--accent-primary);
-        }
-        
+        .tab-button.active { color: var(--bg-primary); background-color: var(--accent-primary); font-weight: 600; box-shadow: var(--shadow-md); }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeInContent 0.5s ease; }
         @keyframes fadeInContent { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .card {
             background-color: var(--bg-secondary);
-            border-radius: 16px; padding: 1.5rem 2rem;
-            box-shadow: 0 4px 15px var(--shadow-color); margin-bottom: 2rem;
+            border-radius: var(--radius-lg); padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-md); margin-bottom: 2rem;
             border: 1px solid var(--border-primary);
-            transition: transform 0.2s, box-shadow 0.2s;
         }
         .card h2 {
             color: var(--accent-primary); font-weight: 600; font-size: 1.25rem; margin-top: 0;
             border-bottom: 1px solid var(--border-primary); padding-bottom: 1rem; margin-bottom: 1.5rem;
         }
-        
-        /* Forms */
-        .form-grid, .form-row { display: grid; gap: 1.25rem; }
-        .form-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1rem; }
+        .form-grid, .cosmetic-form-grid, .cosmetic-credit-form-grid, .form-row { display: grid; gap: 1rem; }
+        .form-grid { grid-template-columns: 2fr 1fr 1fr; margin-bottom: 1rem; }
+        .cosmetic-form-grid { grid-template-columns: 2fr 1fr 1fr 1fr; margin-bottom: 1rem; }
+        .cosmetic-credit-form-grid { grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr 1fr; margin-bottom: 1rem; }
         .form-row { grid-template-columns: 1fr 1fr; }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        label { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
-        input[type="text"], input[type="number"], input[type="file"], input[type="date"], input[type="month"], select, input[type="search"] {
+        .card label { display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500; }
+        .card input[type="text"], .card input[type="number"], .card input[type="file"], .card input[type="date"], .card input[type="month"], .card select {
             width: 100%; padding: 12px 15px; border: 1px solid var(--border-primary);
-            border-radius: 10px; font-size: 0.95rem; 
+            border-radius: var(--radius-md); font-size: 0.95rem; 
             font-family: 'Inter', sans-serif; background-color: var(--bg-tertiary);
             color: var(--text-primary); transition: all 0.2s ease;
         }
-        input:focus-visible, select:focus-visible {
-            outline: none; border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px hsla(var(--hue-primary), var(--sat-primary), 50%, 0.3);
+        .card input:focus-visible, .card select:focus-visible {
+            outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.3);
         }
-        input::placeholder { color: var(--text-muted); }
-        .dynamic-item-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
-        
-        /* Buttons */
-        .btn {
-            padding: 12px 20px; border-radius: 10px; border: none; font-size: 0.9rem;
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-            transition: all 0.2s ease; box-shadow: 0 2px 5px var(--shadow-color);
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-        }
-        .btn:hover:not([disabled]) { box-shadow: 0 4px 10px var(--shadow-color); transform: translateY(-2px); }
-        .btn[disabled] { background-color: var(--text-muted); cursor: not-allowed; opacity: 0.7; }
-        .btn-primary { background-color: var(--accent-primary); color: var(--accent-primary-text); }
-        .btn-primary:hover:not([disabled]) { background-color: var(--accent-primary-darker); }
-        .btn-secondary { background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-primary); }
-        .btn-secondary:hover:not([disabled]) { background-color: var(--border-primary); }
-        .btn-danger { background-color: var(--status-danger); color: white; }
-        .btn-danger:hover:not([disabled]) { background-color: #dc2626; }
-        .btn-small { padding: 8px 14px; font-size: 0.8rem; }
-        .btn-icon { padding: 8px; background: transparent; border: none; box-shadow: none; }
-        .btn-icon:hover { background-color: var(--bg-tertiary); }
-        .btn-dashed {
+        .card input::placeholder { color: var(--text-muted); }
+        #add-sale-item-btn, #add-purchase-item-btn, #add-credit-inventory-item-btn {
             background-color: transparent; color: var(--accent-primary); border: 2px dashed var(--border-primary);
             font-weight: 600; padding: 10px 15px; margin-top: 10px; margin-bottom: 20px;
-            width: 100%; border-radius: 10px; transition: all 0.2s; box-shadow: none;
+            width: 100%; border-radius: var(--radius-md); transition: all 0.2s;
         }
-        .btn-dashed:hover { background-color: var(--bg-tertiary); border-color: var(--accent-primary); }
-        
-        /* Tables */
-        .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: 12px; background-color: var(--bg-primary); }
+        #add-sale-item-btn:hover, #add-purchase-item-btn:hover, #add-credit-inventory-item-btn:hover { background-color: var(--bg-tertiary); border-color: var(--accent-primary); }
+        .btn {
+            padding: 12px 20px; border-radius: var(--radius-md); border: none; font-size: 0.9rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: var(--shadow-sm);
+        }
+        .btn:hover:not([disabled]) { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .btn[disabled] { background-color: var(--text-muted); color: var(--bg-secondary); cursor: not-allowed; opacity: 0.7; }
+        .btn-primary { background-color: var(--accent-primary); color: var(--bg-primary); }
+        .btn-primary:hover:not([disabled]) { background-color: var(--accent-primary-darker); }
+        .btn-secondary { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .btn-secondary:hover:not([disabled]) { background-color: #4b5563; }
+        .btn-success { background-color: var(--status-success); color: white; }
+        .btn-success:hover:not([disabled]) { background-color: #16a34a; }
+        .btn-danger { background-color: var(--status-danger); color: white; }
+        .btn-danger:hover:not([disabled]) { background-color: #dc2626; }
+        .btn-info { background-color: var(--status-info); color: white; }
+        .btn-info:hover:not([disabled]) { background-color: #2563eb; }
+        .btn-small { padding: 8px 14px; font-size: 0.8rem; }
+        .sales-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+        .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--radius-lg); background-color: var(--bg-primary); }
         .styled-table { width: 100%; border-collapse: collapse; }
         .styled-table th, .styled-table td { padding: 14px 16px; text-align: left; font-size: 0.9rem; vertical-align: middle; color: var(--text-secondary); border-bottom: 1px solid var(--border-primary); }
-        .styled-table th { background-color: var(--bg-tertiary); color: var(--accent-primary); font-weight: 600; position: sticky; top: 0; z-index: 1; }
-        .styled-table tbody tr:hover td { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .styled-table th { background-color: var(--bg-tertiary); color: var(--accent-primary); font-weight: 600; position: sticky; top: 0; z-index: 1; text-transform: capitalize; }
+        .styled-table tr:hover td { background-color: var(--bg-tertiary); color: var(--text-primary); }
         .styled-table tr:last-child td { border-bottom: none; }
-        
-        /* Dashboard & Analytics */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-        .metric-card { background: var(--bg-secondary); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 15px var(--shadow-color); border: 1px solid var(--border-primary); transition: transform 0.2s, box-shadow 0.2s; }
-        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px var(--shadow-color); }
-        .metric-card h3 { margin: 0 0 10px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
-        .metric-card p { font-size: 2.25rem; margin: 0; color: var(--accent-primary); font-weight: 700; }
-        .metric-card #total-inventory-cost, .metric-card .value-yellow { color: var(--accent-yellow); }
-        .metric-card .value-primary { color: var(--text-primary); }
-
-        .dashboard-main-area { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin: 2rem 0; }
-        .quick-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-        .action-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem; background-color: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-primary); text-align: center; cursor: pointer; transition: all 0.2s; }
-        .action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px var(--shadow-color); border-color: var(--accent-primary); }
-        .action-card svg { width: 40px; height: 40px; color: var(--accent-primary); }
-        .action-card h3 { margin: 0; font-size: 1.1rem; color: var(--text-primary); }
-
-        /* Toast Notification */
-        #toast { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); padding: 14px 25px; border-radius: 10px; color: white; font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 9999; opacity: 0; }
+        .profit-col { font-weight: 600; color: var(--status-success) !important; }
+        .credit-label { font-size: 0.75rem; font-weight: 600; color: var(--bg-primary); background-color: var(--status-info); padding: 4px 8px; border-radius: var(--radius-sm); display: inline-block; margin-top: 8px; }
+        tr.is-low-stock td { background-color: rgba(245, 158, 11, 0.1) !important; border-left: 4px solid var(--accent-yellow); color: var(--accent-yellow) !important; }
+        .low-stock-badge { background-color: var(--accent-yellow); color: var(--bg-primary); font-weight: 600; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; margin-left: 8px; }
+        .analytics-grid, .dashboard-overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .metric-card, .overview-card { background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border-primary); transition: transform 0.2s, box-shadow 0.2s; }
+        .metric-card:hover, .overview-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .metric-card h3, .overview-card h4 { margin: 0 0 10px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
+        .metric-card p, .overview-value { font-size: 2.25rem; margin: 0; color: var(--accent-primary); font-weight: 700; }
+        #overview-low-stock .overview-value, #overview-inventory-value .overview-value, .metric-card #total-inventory-cost{ color: var(--accent-yellow); }
+        #toast { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); padding: 14px 25px; border-radius: var(--radius-md); color: white; font-weight: 600; box-shadow: var(--shadow-lg); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 9999; opacity: 0; }
         #toast.show { bottom: 25px; opacity: 1; }
         #toast.success { background-color: var(--status-success); }
         #toast.error { background-color: var(--status-danger); }
         #toast.info { background-color: var(--status-info); }
-        
-        /* Modal Dialog */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); z-index: 10000; display: none; align-items: center; justify-content: center; }
-        .modal-overlay.visible { display: flex; animation: fadeInModal 0.3s ease; }
-        @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
-        .modal-dialog { background: var(--bg-secondary); border-radius: 16px; padding: 2rem; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border-primary); animation: slideInModal 0.3s ease-out; }
-        @keyframes slideInModal { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .modal-dialog h3 { margin-top: 0; color: var(--text-primary); }
-        .modal-dialog p { color: var(--text-secondary); margin-bottom: 1.5rem; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; }
-        
-        /* Theme Switcher */
-        .theme-switcher { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 8px; border-radius: 10px; }
-        .theme-switch { width: 50px; height: 26px; background: var(--bg-tertiary); border-radius: 13px; position: relative; cursor: pointer; }
-        .theme-switch-handle { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 4px; transition: transform 0.3s ease; }
-        body.light-theme .theme-switch-handle { transform: translateX(22px); }
-
-        .low-stock-badge { background-color: var(--accent-yellow); color: var(--bg-primary); font-weight: 600; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; margin-left: 8px; }
-        .credit-label { font-size: 0.75rem; font-weight: 600; color: var(--bg-primary); background-color: var(--status-info); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 8px; }
-        tr.is-low-stock td { background-color: hsla(var(--hue-accent), 90%, 50%, 0.1) !important; color: var(--accent-yellow) !important; }
-        
-        @media (max-width: 1024px) { .dashboard-main-area { grid-template-columns: 1fr; } }
+        .creditor-item { background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); margin-bottom: 1rem; overflow: hidden; }
+        .creditor-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 1.1rem; cursor: pointer; padding: 1rem 1.5rem; transition: background-color 0.2s; }
+        .creditor-header .creditor-balance { color: var(--accent-yellow); }
+        .creditor-header:hover { background-color: var(--bg-tertiary); }
+        .creditor-header::after { content: '▼'; color: var(--text-muted); transition: transform 0.3s ease; }
+        .creditor-header.is-open::after { transform: rotate(180deg); }
+        .creditor-details { display: none; padding: 1.5rem; background-color: var(--bg-primary); border-top: 1px solid var(--border-primary); }
+        .creditor-details.visible { display: block; }
+        .dashboard-main-area { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; margin-bottom: 2rem; }
+        .action-forms-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
+        .credit-layout, .operations-layout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .chart-canvas-wrapper { position: relative; min-height: 280px; flex-grow: 1; }
+        .dashboard-low-stock-list .list-header { display: flex; justify-content: space-between; align-items: center; }
+        #dashboard-low-stock-items-ul { list-style: none; padding: 0; margin-top: 1.5rem; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;}
+        .dashboard-items-in-category ul { padding:0; margin: 0; list-style:none; display: flex; flex-direction:column; gap: 0.5rem; }
+        .dashboard-items-in-category li { display: flex; align-items: center; padding: 0.75rem; border-radius: var(--radius-md); transition: background-color 0.2s; background-color: var(--bg-primary); }
+        .item-details { flex-grow: 1; }
+        .item-details .item-name { color: var(--text-primary); }
+        .item-stock-level { font-weight: 600; color: var(--accent-yellow); margin-left: auto; }
+        .dashboard-category-header { padding: 12px; background-color: var(--bg-tertiary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: var(--radius-md); }
+        .dashboard-category-header h5 { margin: 0; color: var(--accent-pink); }
+        .category-toggle-indicator { transition: transform 0.2s ease-out; }
+        .dashboard-category-header.expanded .category-toggle-indicator { transform: rotate(90deg); }
+        .heatmap-item { padding: 12px; border-radius: var(--radius-md); color: var(--bg-primary); font-weight: 600; }
+        #holiday-list li { background-color:var(--bg-tertiary); padding:10px 15px; border-radius:var(--radius-sm); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+        tr.edit-mode .display-value, tr:not(.edit-mode) .edit-field, tr.edit-mode .edit-btn, tr.edit-mode .delete-btn, tr:not(.edit-mode) .save-btn, tr:not(.edit-mode) .cancel-btn { display: none; }
+        @media (max-width: 1024px) { .dashboard-main-area, .action-forms-section, .credit-layout { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
-            .form-row, .sales-actions { grid-template-columns: 1fr; }
-            .dynamic-item-row { grid-template-columns: 1fr; }
-            .dynamic-item-row .btn-icon { grid-row: 2; margin-left: auto; }
+            header { flex-direction: column; gap: 1rem; }
+            .form-grid, .cosmetic-form-grid, .cosmetic-credit-form-grid, .form-row, .sales-actions { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-box">
             <div class="store-logo"><span>T</span>inny Fashion</div>
-            <h1>Business Manager</h1>
-            <p>Your complete solution for managing sales, inventory, and analytics.</p>
+            <h1>Welcome Back!</h1>
+            <p>Manage your fashion store with ease.</p>
             <button id="signin-btn" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 35.841 44 30.138 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
                 Sign in with Google
@@ -254,216 +223,249 @@
             <p id="auth-status">Initializing...</p>
         </div>
     </div>
-
-    <!-- MAIN APP CONTAINER -->
     <div id="app-container">
         <header>
-            <div class="header-title-group"><h1>Tinny Fashion Dashboard</h1></div>
+            <div class="header-title-group"><h1>Tinny Fashion Store</h1></div>
             <div id="user-profile-container" class="user-profile" style="display: none;">
-                <span id="user-name"></span>
-                <button id="signout-btn">Sign Out</button>
+                <div>
+                    <span id="user-name"></span>
+                    <button id="signout-btn">Sign Out</button>
+                </div>
             </div>
         </header>
-
         <nav class="tab-nav">
-            <button class="tab-button active" data-tab="operations">Dashboard</button>
-            <button class="tab-button" data-tab="sales">Sales & Purchases</button>
-            <button class="tab-button" data-tab="inventory">Inventory</button>
+            <button class="tab-button active" data-tab="operations">Operations</button>
+            <button class="tab-button" data-tab="credit">Credit</button>
             <button class="tab-button" data-tab="analytics">Analytics</button>
-            <button class="tab-button" data-tab="transactions">History</button>
+            <button class="tab-button" data-tab="profit">Profit</button>
+            <button class="tab-button" data-tab="transactions">Transactions</button>
             <button class="tab-button" data-tab="settings">Settings</button>
         </nav>
-
         <main>
-            <!-- OPERATIONS (DASHBOARD) TAB -->
             <div id="operations" class="tab-content active">
-                <section class="dashboard-grid">
-                    <div class="metric-card"><h3>Current Stock</h3><p class="overview-value value-primary" id="dashboard-total-units">0</p></div>
-                    <div class="metric-card"><h3>Low in Stock</h3><p class="overview-value value-yellow" id="dashboard-low-stock-count">0</p></div>
-                    <div class="metric-card"><h3>Inventory Value</h3><p class="overview-value value-yellow" id="dashboard-inventory-value">₹0.00</p></div>
-                    <div class="metric-card"><h3>Total Revenue</h3><p class="overview-value" id="dashboard-total-revenue">₹0.00</p></div>
+                <section class="dashboard-overview-grid">
+                    <div class="overview-card" id="overview-current-stock"><h4>Current Stock</h4><p class="overview-value" id="dashboard-total-units">0</p></div>
+                    <div class="overview-card" id="overview-low-stock"><h4>Low in Stock</h4><p class="overview-value" id="dashboard-low-stock-count">0</p></div>
+                    <div class="overview-card" id="overview-inventory-value"><h4>Inventory Value</h4><p class="overview-value" id="dashboard-inventory-value">₹0.00</p></div>
                 </section>
-
-                <section class="card" id="quick-actions-section">
-                    <h2>Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <div class="action-card" data-action="new-sale">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.812a.75.75 0 00-.65-1.087H5.614M6 18.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                            <h3>New Sale</h3>
-                        </div>
-                        <div class="action-card" data-action="add-stock">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <h3>Add Stock</h3>
-                        </div>
-                        <div class="action-card" data-action="view-analytics">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-12a2.25 2.25 0 01-2.25-2.25V3M16.5 7.5l-3.75 3.75-2.25-2.25L6 12.75" /></svg>
-                            <h3>View Analytics</h3>
-                        </div>
-                    </div>
-                </section>
-                
                 <section class="dashboard-main-area">
                     <div class="card" style="display:flex; flex-direction:column;">
-                        <h2>Sales Trend (Last 30 Days)</h2>
-                        <div class="chart-canvas-wrapper" style="min-height: 300px;"><canvas id="salesTrendChart"></canvas></div>
+                        <h2>Sales Trend</h2>
+                         <div id="sales-trend-controls" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <label for="sales-trend-mode" style="margin-bottom: 0;">View:</label>
+                            <select id="sales-trend-mode">
+                                <option value="last7days" selected>Last 7 Days</option>
+                                <option value="currentMonth">Current Month</option>
+                                <option value="customRange">Custom Range</option>
+                            </select>
+                            <div id="sales-trend-custom-range-inputs" style="display:none; gap: 10px; align-items: center;">
+                                <input type="date" id="sales-trend-start-date"><span style="color: var(--text-muted);">-</span><input type="date" id="sales-trend-end-date">
+                            </div>
+                            <button id="refresh-sales-trend-btn" class="btn btn-secondary btn-small" style="margin-left:auto;">Refresh</button>
+                        </div>
+                        <div class="chart-canvas-wrapper"><canvas id="salesTrendChart"></canvas></div>
+                        <div style="padding-top: 15px; border-top: 1px solid var(--border-primary); display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                            <div><span>Total Revenue:</span> <strong id="dashboard-total-revenue" style="color: var(--text-primary);">₹0.00</strong></div>
+                            <div><span>Total Profit:</span> <strong id="dashboard-total-profit">₹0.00</strong></div>
+                        </div>
                     </div>
-                     <div class="card">
-                        <h2>Low Stock Items</h2>
-                        <div id="dashboard-low-stock-items-ul" style="max-height: 350px; overflow-y: auto;"></div>
+                    <div class="dashboard-low-stock-list card">
+                        <div class="list-header">
+                            <h2>Products Low in Stock</h2>
+                            <button class="btn btn-primary btn-small" id="dashboard-download-low-stock-btn">Download</button>
+                        </div>
+                        <ul id="dashboard-low-stock-items-ul"><li><p style="text-align:center; color: var(--text-muted);">No low stock items.</p></li></ul>
                     </div>
                 </section>
-            </div>
-
-            <!-- SALES & PURCHASES TAB -->
-            <div id="sales" class="tab-content">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
-                    <section class="card" id="sale-form-card">
+                <div class="action-forms-section">
+                    <section class="card">
                         <h2>Make a Sale</h2>
                         <form id="sales-form">
                             <div id="sales-items-container"></div>
                             <datalist id="inventory-datalist"></datalist>
-                            <button type="button" id="add-sale-item-btn" class="btn-dashed">+ Add Item</button>
-                            <div class="sales-actions form-row">
+                            <button type="button" id="add-sale-item-btn">+ Add Item</button>
+                            <div class="sales-actions">
                                 <button type="button" id="record-sale-btn" class="btn btn-secondary">Record Sale</button>
                                 <button type="button" id="record-invoice-btn" class="btn btn-primary">Record & Print</button>
                             </div>
                         </form>
                     </section>
-                    <section class="card" id="purchase-form-card">
+                    <section class="card">
                         <h2>Add New Stock</h2>
                         <form id="purchase-form">
                             <div id="purchase-items-container"></div>
-                            <button type="button" id="add-purchase-item-btn" class="btn-dashed">+ Add Item</button>
+                            <button type="button" id="add-purchase-item-btn">+ Add Item</button>
                             <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Add to Stock</button>
                         </form>
                     </section>
                 </div>
-            </div>
-            
-            <!-- INVENTORY TAB -->
-            <div id="inventory" class="tab-content">
-                <section class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-                        <h2>Current Inventory</h2>
-                        <div style="max-width: 300px; width: 100%;">
-                            <input type="search" id="inventory-search" placeholder="Search items...">
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="styled-table" id="inventory-table">
-                            <thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ANALYTICS TAB -->
-            <div id="analytics" class="tab-content">
-                 <section class="dashboard-grid">
-                    <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
-                    <div class="metric-card"><h3>Total Revenue</h3><p class="value-primary" id="total-revenue">₹0.00</p></div>
-                    <div class="metric-card"><h3>Avg. Margin</h3><p id="avg-margin">0%</p></div>
-                    <div class="metric-card"><h3>Inventory Value</h3><p class="value-yellow" id="total-inventory-cost">₹0.00</p></div>
-                </section>
-                <div class="dashboard-main-area" style="margin-top: 2rem;">
-                     <div class="card">
-                        <h2>Sales & Profit Projection</h2>
-                        <div class="chart-canvas-wrapper" style="min-height: 300px;"><canvas id="trendProjectionChart"></canvas></div>
-                    </div>
-                     <div class="card">
-                        <h2>Sales by Category</h2>
-                        <div class="chart-canvas-wrapper" style="min-height: 300px;"><canvas id="categoryPieChart"></canvas></div>
-                    </div>
+                <div class="operations-layout">
+                    <section class="card">
+                        <h2>Cosmetic & Non-Inventory Sale</h2>
+                        <form id="cosmetic-sale-form">
+                            <div class="cosmetic-form-grid">
+                                <input type="text" id="cosmetic-particulars" placeholder="Item Particulars" required>
+                                <input type="number" id="cosmetic-quantity" placeholder="Quantity" min="1" required>
+                                <input type="number" id="cosmetic-cost-rate" placeholder="Cost Rate (per item)" min="0" step="0.01" required>
+                                <input type="number" id="cosmetic-sell-rate" placeholder="Selling Rate (per item)" min="0" step="0.01" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Record Sale</button>
+                        </form>
+                    </section>
                 </div>
             </div>
-
-            <!-- HISTORY TAB -->
-            <div id="transactions" class="tab-content">
-                 <section class="card">
-                    <h2>History Filters</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: flex-end;">
-                        <div class="form-group"><label for="start-date">Start Date</label><input type="date" id="start-date"></div>
-                        <div class="form-group"><label for="end-date">End Date</label><input type="date" id="end-date"></div>
-                        <div style="display:flex; gap:1rem;"><button class="btn btn-primary" id="filter-btn">Filter</button><button class="btn btn-secondary" id="reset-filter-btn">Reset</button></div>
-                        <button class="btn btn-primary" id="export-excel-btn">Export to Excel</button>
+            <div id="credit" class="tab-content">
+                 <div class="credit-layout">
+                    <section class="card">
+                        <h2>Credit Sale (From Inventory)</h2>
+                        <form id="credit-inventory-sale-form">
+                            <div class="form-row">
+                                <div><label for="credit-inventory-party-name">Party Name</label><input type="text" id="credit-inventory-party-name" required></div>
+                                <div><label for="credit-inventory-date">Transaction Date</label><input type="date" id="credit-inventory-date" required></div>
+                            </div>
+                            <div id="credit-inventory-items-container"></div>
+                            <button type="button" id="add-credit-inventory-item-btn">+ Add More Items</button>
+                            <button type="submit" class="btn btn-primary" style="margin-top:1rem; width:100%">Record Credit Sale</button>
+                        </form>
+                    </section>
+                    <section class="card">
+                        <h2>Cosmetics Sales on Credit</h2>
+                        <form id="credit-cosmetic-sale-form">
+                            <div class="cosmetic-credit-form-grid">
+                                <div><label>Party Name</label><input type="text" id="credit-cosmetic-party-name" required></div>
+                                <div><label>Date</label><input type="date" id="credit-cosmetic-date" required></div>
+                                <div><label>Item Name</label><input type="text" id="credit-cosmetic-item-name" required></div>
+                                <div><label>Quantity</label><input type="number" id="credit-cosmetic-qty" min="1" required></div>
+                                <div><label>Cost Rate</label><input type="number" id="credit-cosmetic-cost-rate" min="0" step="0.01" required></div>
+                                <div><label>Sell Rate</label><input type="number" id="credit-cosmetic-sell-rate" min="0" step="0.01" required></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Record Cosmetic Credit</button>
+                        </form>
+                    </section>
+                    <section class="card" id="creditor-list-section">
+                        <h2>Creditor List</h2>
+                        <div id="creditor-list-container"><p style="text-align:center; color: var(--text-muted);">No outstanding credit balances.</p></div>
+                    </section>
+                </div>
+            </div>
+            <div id="analytics" class="tab-content">
+                <section class="card">
+                    <h2>Shop Performance</h2>
+                    <div class="analytics-grid">
+                        <div class="metric-card"><h3>Total Profit</h3><p id="total-profit">₹0.00</p></div>
+                        <div class="metric-card"><h3>Total Revenue</h3><p id="total-revenue" style="color: var(--text-primary);">₹0.00</p></div>
+                        <div class="metric-card"><h3>Avg. Margin</h3><p id="avg-margin">0%</p></div>
+                        <div class="metric-card"><h3>Inventory Value</h3><p id="total-inventory-cost">₹0.00</p></div>
+                        <div class="metric-card"><h3>Units in Stock</h3><p id="total-units" style="color: var(--text-primary);">0</p></div>
                     </div>
                 </section>
                 <section class="card">
-                    <h2>Sales History</h2>
-                    <div class="table-container"><table class="styled-table" id="sales-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+                    <h2>Sales & Profit by Date</h2>
+                    <div class="form-row" style="margin-bottom: 1rem;">
+                        <div><label for="analytics-start-date">Start Date</label><input type="date" id="analytics-start-date"></div>
+                        <div><label for="analytics-end-date">End Date</label><input type="date" id="analytics-end-date"></div>
+                    </div>
+                    <div style="display:flex; gap: 1rem; flex-wrap:wrap;">
+                        <button class="btn btn-info" id="analytics-today-btn">Today</button>
+                        <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
+                    </div>
+                     <div class="analytics-grid" style="margin-top: 1.5rem; background-color:var(--bg-primary); padding:1rem; border-radius:var(--radius-md);">
+                        <div class="metric-card" style="border:none; box-shadow:none; padding:0;"><h3 id="filtered-sales-heading">Total Sales</h3><p id="filtered-sales-total" style="color:var(--text-primary)">₹0.00</p></div>
+                        <div class="metric-card" style="border:none; box-shadow:none; padding:0;"><h3 id="filtered-profit-heading">Total Profit</h3><p id="filtered-profit-total">₹0.00</p></div>
+                    </div>
+                </section>
+                <section class="card" style="display: flex; flex-direction: column;">
+                    <h2>Sales & Profit Projection</h2>
+                     <div class="chart-canvas-wrapper"><canvas id="trendProjectionChart"></canvas></div>
+                </section>
+                 <section class="card">
+                    <h2>Product Performance</h2>
+                    <div class="form-row" style="margin-bottom:1rem;">
+                        <div><label for="heatmap-month-filter">Filter by Month</label><select id="heatmap-month-filter"><option value="all">All Time</option></select></div>
+                        <div><label for="heatmap-item-type-filter">Item Type</label><select id="heatmap-item-type-filter"><option value="all">All</option><option value="inventory">Inventory</option><option value="cosmetic">Cosmetics</option></select></div>
+                    </div>
+                    <div id="product-heatmap-container" style="display:flex; flex-wrap:wrap; gap:10px; padding-top:10px;"><p style="color: var(--text-muted);">Not enough data for heatmap.</p></div>
                 </section>
                 <section class="card">
-                    <h2>Purchase History</h2>
-                    <div class="table-container"><table class="styled-table" id="purchase-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead><tbody></tbody></table></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Low Stock Items</h2>
+                        <button class="btn btn-success btn-small" id="download-low-stock-btn">Download</button>
+                    </div>
+                    <div id="low-stock-items" style="padding-top: 1.5rem;"><p style="text-align:center; color: var(--text-muted);">No low stock items.</p></div>
+                </section>
+                <section class="card">
+                    <h2>Future Sales Prediction</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Projects the next three months' sales based on historical month-over-month growth.</p>
+                    <button id="run-prediction-btn" class="btn btn-primary" style="margin-top: 15px;">Run Prediction</button>
+                    <div id="prediction-results-container" style="margin-top: 20px;"><p style="color: var(--text-muted);">Click to generate forecast.</p></div>
                 </section>
             </div>
-
-            <!-- SETTINGS TAB -->
+            <div id="profit" class="tab-content"><section class="card"><h2>Item-wise Profit</h2><div class="table-container"><table class="styled-table" id="profit-details-table"><thead><tr><th>Date</th><th>Particulars</th><th>Qty</th><th>Sell Price</th><th>Cost Rate</th><th>Profit</th></tr></thead><tbody><tr><td colspan="6" style="text-align:center;">No sales recorded.</td></tr></tbody></table></div></section></div>
+            <div id="transactions" class="tab-content">
+                <section class="card">
+                    <h2>Controls</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: flex-end;">
+                        <div><label for="start-date">Start Date</label><input type="date" id="start-date"></div>
+                        <div><label for="end-date">End Date</label><input type="date" id="end-date"></div>
+                        <div><label for="transaction-sort-order">Sort By</label><select id="transaction-sort-order"><option value="newest-first">Newest</option><option value="oldest-first">Oldest</option></select></div>
+                        <div style="display:flex; gap:1rem;"><button class="btn btn-primary" id="filter-btn">Filter</button><button class="btn btn-secondary" id="reset-filter-btn">Reset</button></div>
+                        <button class="btn btn-success" id="export-excel-btn">Export to Excel</button>
+                    </div>
+                </section>
+                <section class="card"><h2>Sales History</h2><div class="table-container"><table class="styled-table" id="sales-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Action</th></tr></thead><tbody></tbody></table></div></section>
+                <section class="card"><h2>Purchase History</h2><div class="table-container"><table class="styled-table" id="purchase-history-table"><thead><tr><th>Date</th><th>Items</th><th>Total</th></tr></thead><tbody></tbody></table></div></section>
+            </div>
             <div id="settings" class="tab-content">
                 <section class="card">
-                    <h2>Settings</h2>
-                    <div class="form-group">
-                        <label>Theme</label>
-                        <div class="theme-switcher" id="theme-switcher">
-                             <div class="theme-switch"><div class="theme-switch-handle"></div></div>
-                             <span id="theme-label">Dark Mode</span>
-                        </div>
-                    </div>
-                </section>
-                <section class="card">
                     <h2>Data Management</h2>
-                    <div class="form-group">
-                        <label for="excel-file">Load Inventory From Excel</label>
-                        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0 0 1rem;">Upload an .xlsx file with columns: 'particulars', 'quantity', 'rate'. This will overwrite existing inventory.</p>
-                        <input type="file" id="excel-file" accept=".xlsx, .xls">
-                    </div>
+                    <p>Load inventory from Excel (columns: 'particulars', 'quantity', 'rate'). This overwrites current inventory.</p>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls">
                     <div style="margin-top: 2rem; border-top: 1px solid var(--border-primary); padding-top: 1.5rem;">
-                         <button class="btn btn-primary" id="manual-save-btn">Sync to Google Drive</button>
-                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">Manually save all data. Auto-sync is also enabled after every change.</p>
+                         <button class="btn btn-success" id="manual-save-btn">Sync to Google Drive</button>
+                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">Manually save data. Auto-save is also enabled after changes.</p>
                     </div>
                 </section>
+                <section class="card" id="holiday-management-section">
+                    <h2>Holiday Management</h2>
+                    <p>Mark holidays to exclude from sales trend analysis.</p>
+                    <div style="display:flex; align-items:flex-end; gap:10px; margin-bottom: 1.5rem;">
+                        <div style="flex-grow:1;"><label for="holiday-date">Select Date</label><input type="date" id="holiday-date"></div>
+                        <button id="add-holiday-btn" class="btn btn-primary btn-small">Add</button>
+                    </div>
+                    <h3>Marked Holidays</h3>
+                    <ul id="holiday-list" style="list-style:none; padding:0; margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                        <li style="color: var(--text-muted);">No holidays marked.</li>
+                    </ul>
+                </section>
+                <section class="card"><h2>Current Inventory</h2><div class="table-container"><table class="styled-table" id="inventory-table"><thead><tr><th>Particulars</th><th>Quantity</th><th>Cost Rate</th><th>Action</th></tr></thead><tbody></tbody></table></div></section>
             </div>
         </main>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
     <div id="toast"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- CONFIRMATION MODAL -->
-    <div id="confirmation-modal" class="modal-overlay">
-        <div class="modal-dialog" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-description">
-            <h3 id="modal-title">Are you sure?</h3>
-            <p id="modal-description">This action cannot be undone.</p>
-            <div class="modal-actions">
-                <button id="modal-cancel-btn" class="btn btn-secondary">Cancel</button>
-                <button id="modal-confirm-btn" class="btn btn-danger">Confirm</button>
-            </div>
-        </div>
-    </div>
-    
     <script>
     window.onload = () => {
         const { jsPDF } = window.jspdf;
 
         const app = {
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
+            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', // IMPORTANT: Replace with your Google Cloud API Key
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { inventory: [], transactions: [] },
+            state: { inventory: [], transactions: [], holidays: [] },
             ui: {},
-            charts: {},
+            salesChartInstance: null, 
+            trendProjectionChartInstance: null,
 
             init() { 
                 this.cacheDOMElements();
-                this.initTheme();
-                this.addEventListeners();
-                
-                gapi.load('client', this.initializeGoogleClient.bind(this));
+                gapi.load('client', this.initializeLibraries.bind(this));
                 
                 this.ui.signinBtn.addEventListener('click', () => {
                     if (this.tokenClient) {
@@ -473,7 +475,7 @@
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
             },
             
-            async initializeGoogleClient() { 
+            async initializeLibraries() { 
                 try {
                     await gapi.client.init({
                         apiKey: this.API_KEY,
@@ -524,19 +526,37 @@
             async updateUserProfile() { 
                 try {
                     const res = await gapi.client.request({ path: 'https://www.googleapis.com/oauth2/v3/userinfo' });
-                    document.getElementById('user-name').textContent = `Welcome, ${res.result.name}`;
+                    document.getElementById('user-name').textContent = res.result.name;
                     document.getElementById('user-profile-container').style.display = 'flex';
                 } catch (e) { console.error("Could not fetch user profile", e); }
             },
 
             startAppLogic() { 
-                this.addFormItem('sale');
-                this.addFormItem('purchase');
+                this.addEventListeners();
+                this.addFormItem(this.ui.salesItemsContainer, true);
+                this.addFormItem(this.ui.purchaseItemsContainer, false);
+                this.addFormItem(this.ui.credit.inventoryItemsContainer, true);
+                this.ui.credit.inventoryDateInput.value = this.getTodayDateString();
+                this.ui.credit.cosmeticDateInput.value = this.getTodayDateString();
                 this.renderAll();
             },
-            
+
+            async _findOrCreateAppFolder() { 
+                if (this.appFolderId) return this.appFolderId;
+                try {
+                    let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
+                    if (res.result.files && res.result.files.length > 0) {
+                        this.appFolderId = res.result.files[0].id;
+                    } else {
+                        res = await gapi.client.drive.files.create({ resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' }, fields: 'id' });
+                        this.appFolderId = res.result.id;
+                    }
+                    return this.appFolderId;
+                } catch (e) { this.showToast('Could not access Drive folder.', 'error'); }
+            },
+
             async loadData() { 
-                this.showToast("Loading data from Google Drive...", "info");
+                this.showToast("Loading data...", "info");
                 try {
                     const response = await gapi.client.drive.files.list({ q: `name='${this.DATA_FILE_NAME}' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
                     if (response.result.files && response.result.files.length > 0) {
@@ -546,10 +566,11 @@
                         if (loadedState.transactions) {
                            loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
                         }
-                        this.state = { ...{ inventory: [], transactions: [] }, ...loadedState };
+                        this.state = { ...{ inventory: [], transactions: [], holidays: [] }, ...loadedState };
                         this.showToast("Data loaded successfully.", "success");
                     } else {
                         this.showToast("No data file found. Starting fresh.", "info");
+                        await this._findOrCreateAppFolder(); 
                     }
                 } catch (e) {
                     console.error("Error loading data:", e);
@@ -557,7 +578,7 @@
                 }
                 this.renderAll();
             },
-            
+
             triggerAutoSave() { 
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = setTimeout(() => this.saveData(), 2000);
@@ -568,8 +589,8 @@
                 this.isSaving = true;
                 const originalBtnText = this.ui.manualSaveBtn.textContent;
                 this.ui.manualSaveBtn.disabled = true;
-                this.ui.manualSaveBtn.textContent = 'Syncing...';
-                this.showToast("Syncing data to Google Drive...", "info");
+                this.ui.manualSaveBtn.textContent = 'Saving...';
+                this.showToast("Saving data...", "info");
                 try {
                     const dataToSave = JSON.stringify(this.state);
                     const boundary = '-------314159265358979323846';
@@ -578,698 +599,45 @@
                     const createMultipartRequestBody = (metadata, data) => {
                         return delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + data + close_delim;
                     };
-                    
-                    let folderId;
-                    const folderRes = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
-                    if (folderRes.result.files.length > 0) {
-                        folderId = folderRes.result.files[0].id;
-                    } else {
-                        const folderMeta = { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' };
-                        const createFolderRes = await gapi.client.drive.files.create({ resource: folderMeta, fields: 'id' });
-                        folderId = createFolderRes.result.id;
-                    }
-
+                    if (!this.driveFileId) await this._findOrCreateAppFolder();
                     let request;
                     if (this.driveFileId) {
                         request = gapi.client.request({'path': `/upload/drive/v3/files/${this.driveFileId}`, 'method': 'PATCH', 'params': { 'uploadType': 'multipart' }, 'headers': {'Content-Type': `multipart/related; boundary="${boundary}"`}, 'body': createMultipartRequestBody({}, dataToSave)});
                     } else {
-                        const metadata = {'name': this.DATA_FILE_NAME, 'parents': [folderId], 'mimeType': 'application/json'};
+                        const metadata = {'name': this.DATA_FILE_NAME, 'parents': [this.appFolderId], 'mimeType': 'application/json'};
                         request = gapi.client.request({'path': '/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': `multipart/related; boundary="${boundary}"`}, 'body': createMultipartRequestBody(metadata, dataToSave)});
                     }
                     const response = await request;
                     if (!this.driveFileId) { this.driveFileId = response.result.id; }
-                    this.showToast("Data synced successfully!", "success");
+                    this.showToast("Data saved successfully!", "success");
                 } catch (e) { 
-                    this.showToast("Failed to sync data. Check connection.", "error");
-                    console.error(e);
+                    this.showToast("Failed to save data.", "error");
                 } finally {
                     this.isSaving = false;
                     this.ui.manualSaveBtn.disabled = false;
                     this.ui.manualSaveBtn.textContent = originalBtnText;
                 }
             },
-            
-            // --- UI & Rendering ---
-            renderAll() {
-                this.renderInventory();
-                this.renderAnalytics();
-                this.renderTransactions();
-                this.renderDashboard();
-                this.renderCharts();
-            },
-
-            renderInventory(searchTerm = '') {
-                const filteredInventory = this.state.inventory.filter(item => 
-                    item.particulars.toLowerCase().includes(searchTerm.toLowerCase())
-                ).sort((a, b) => a.particulars.localeCompare(b.particulars));
-
-                this.ui.inventoryTableBody.innerHTML = filteredInventory.length ? filteredInventory.map(item => {
-                    const isLowStock = item.quantity > 0 && item.quantity <= 3;
-                    return `<tr data-particulars="${item.particulars}" class="${isLowStock ? 'is-low-stock' : ''}">
-                        <td>${item.particulars}</td>
-                        <td>${item.quantity}${isLowStock ? ` <span class="low-stock-badge">Low</span>` : ''}</td>
-                        <td>${this.formatCurrency(item.rate)}</td>
-                        <td>
-                            <button class="btn btn-icon btn-danger delete-inventory-btn" data-particulars="${item.particulars}" aria-label="Delete Item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-                            </button>
-                        </td>
-                    </tr>`;
-                }).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory found.</td></tr>`;
-
-                this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => 
-                    `<option value="${item.particulars} (${item.quantity} left)"></option>`
-                ).join('');
-            },
-
-            renderAnalytics() {
-                const { cost, units } = this.state.inventory.reduce((acc, item) => {
-                    acc.cost += item.quantity * item.rate;
-                    acc.units += item.quantity;
-                    return acc;
-                }, { cost: 0, units: 0 });
-
-                const sales = this.state.transactions.filter(t => t.type === 'Sale');
-                const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
-                const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-                const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
-
-                this.ui.analytics.totalProfit.textContent = this.formatCurrency(totalProfit);
-                this.ui.analytics.totalRevenue.textContent = this.formatCurrency(totalRevenue);
-                this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
-                this.ui.analytics.inventoryCost.textContent = this.formatCurrency(cost);
-            },
-
-            renderTransactions() {
-                const startDate = this.ui.transactions.startDateInput.value ? new Date(this.ui.transactions.startDateInput.value) : null;
-                if(startDate) startDate.setHours(0,0,0,0);
-                const endDate = this.ui.transactions.endDateInput.value ? new Date(this.ui.transactions.endDateInput.value) : null;
-                if(endDate) endDate.setHours(23,59,59,999);
-                
-                const sortFn = (a, b) => b.date - a.date;
-                
-                const sales = this.state.transactions.filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFn);
-                const purchases = this.state.transactions.filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFn);
-
-                this.ui.transactions.salesHistoryBody.innerHTML = sales.length ? sales.map(t => `
-                    <tr data-id="${t.id}">
-                        <td>${this.formatDate(t.date)}</td>
-                        <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ${this.formatCurrency(i.sellingRate)}</li>`).join('')}</ul></td>
-                        <td>${this.formatCurrency(t.total)}</td>
-                        <td>
-                            <button class="btn btn-icon download-invoice-btn" data-tid="${t.id}" aria-label="Download Invoice"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></button>
-                            <button class="btn btn-icon btn-danger delete-sale-btn" data-tid="${t.id}" aria-label="Delete Sale"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button>
-                        </td>
-                    </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No sales found.</td></tr>`;
-                this.ui.transactions.purchaseHistoryBody.innerHTML = purchases.length ? purchases.map(t => `
-                    <tr>
-                        <td>${this.formatDate(t.date)}</td>
-                        <td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ${this.formatCurrency(i.rate)}</li>`).join('')}</ul></td>
-                        <td>${this.formatCurrency(t.total)}</td>
-                    </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases found.</td></tr>`;
-            },
-            
-            renderDashboard() {
-                 const { cost, units, lowStockItemsArr } = this.state.inventory.reduce((acc, item) => {
-                    acc.cost += item.quantity * item.rate;
-                    acc.units += item.quantity;
-                    if (item.quantity > 0 && item.quantity <= 3) acc.lowStockItemsArr.push(item);
-                    return acc;
-                }, { cost: 0, units: 0, lowStockItemsArr: [] });
-                const sales = this.state.transactions.filter(t => t.type === 'Sale');
-                const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
-
-                this.ui.operations.dashboardTotalUnits.textContent = units;
-                this.ui.operations.dashboardLowStockCount.textContent = lowStockItemsArr.length;
-                this.ui.operations.dashboardInventoryValue.textContent = this.formatCurrency(cost);
-                this.ui.operations.dashboardTotalRevenue.textContent = this.formatCurrency(totalRevenue);
-                
-                this.ui.operations.dashboardLowStockItemsUl.innerHTML = lowStockItemsArr.length 
-                    ? `<ul>${lowStockItemsArr.map(item => `<li>${item.particulars} - <strong>${item.quantity} left</strong></li>`).join('')}</ul>`
-                    : '<p style="text-align:center; color: var(--text-muted);">No low stock items.</p>';
-            },
-
-            renderCharts() {
-                const activeTab = document.querySelector('.tab-content.active')?.id;
-                if (!activeTab) return;
-
-                if (activeTab === 'operations') {
-                    this.renderSalesTrendChart();
-                }
-                if (activeTab === 'analytics') {
-                    this.renderTrendProjectionChart();
-                    this.renderCategoryPieChart();
-                }
-            },
-            
-            // --- Charting ---
-            renderSalesTrendChart() {
-                const sales = this.state.transactions.filter(t => t.type === 'Sale');
-                const last30Days = new Date();
-                last30Days.setDate(last30Days.getDate() - 30);
-                
-                const salesData = sales.filter(s => s.date >= last30Days).reduce((acc, sale) => {
-                    const dateStr = this.getTodayDateString(sale.date);
-                    if (!acc[dateStr]) acc[dateStr] = 0;
-                    acc[dateStr] += sale.total;
-                    return acc;
-                }, {});
-
-                const labels = [];
-                const data = [];
-                for (let i = 29; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const dateStr = this.getTodayDateString(d);
-                    labels.push(dateStr.slice(5)); // M-D format
-                    data.push(salesData[dateStr] || 0);
-                }
-
-                if (this.charts.salesTrend) this.charts.salesTrend.destroy();
-                this.charts.salesTrend = new Chart(this.ui.operations.salesTrendChart, {
-                    type: 'line',
-                    data: { labels, datasets: [{
-                        label: 'Daily Sales', data,
-                        backgroundColor: 'hsla(var(--hue-primary), var(--sat-primary), 50%, 0.2)',
-                        borderColor: 'hsl(var(--hue-primary), var(--sat-primary), 50%)',
-                        borderWidth: 2, tension: 0.4, fill: true,
-                    }]},
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-                });
-            },
-
-            renderTrendProjectionChart() {
-                const salesByMonth = this.state.transactions.filter(t => t.type === 'Sale').reduce((acc, sale) => {
-                    const monthKey = `${sale.date.getFullYear()}-${String(sale.date.getMonth() + 1).padStart(2, '0')}`;
-                    if(!acc[monthKey]) acc[monthKey] = { revenue: 0, profit: 0 };
-                    acc[monthKey].revenue += sale.total;
-                    acc[monthKey].profit += sale.items.reduce((p, i) => p + (i.sellingRate - i.costRate) * i.quantity, 0);
-                    return acc;
-                }, {});
-
-                const sortedMonths = Object.keys(salesByMonth).sort();
-                const labels = sortedMonths.map(m => m);
-                const revenueData = sortedMonths.map(m => salesByMonth[m].revenue);
-                const profitData = sortedMonths.map(m => salesByMonth[m].profit);
-                
-                if (this.charts.trendProjection) this.charts.trendProjection.destroy();
-                this.charts.trendProjection = new Chart(this.ui.analytics.trendProjectionChart, {
-                    type: 'bar',
-                    data: { labels, datasets: [
-                        { label: 'Total Revenue', data: revenueData, backgroundColor: 'hsla(var(--hue-primary), var(--sat-primary), 50%, 0.7)' },
-                        { label: 'Total Profit', data: profitData, backgroundColor: 'hsla(var(--hue-accent), var(--sat-primary), 50%, 0.7)' }
-                    ]},
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-                });
-            },
-            
-            renderCategoryPieChart() {
-                const salesByCategory = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items).reduce((acc, item) => {
-                    const category = this.getCategoryFromParticulars(item.particulars);
-                    if (!acc[category]) acc[category] = 0;
-                    acc[category] += item.quantity * item.sellingRate;
-                    return acc;
-                }, {});
-
-                const labels = Object.keys(salesByCategory);
-                const data = Object.values(salesByCategory);
-                
-                const backgroundColors = labels.map((_, i) => `hsl(${200 + i * 40}, 70%, 60%)`);
-
-                if (this.charts.categoryPie) this.charts.categoryPie.destroy();
-                this.charts.categoryPie = new Chart(this.ui.analytics.categoryPieChart, {
-                    type: 'pie',
-                    data: { labels, datasets: [{ label: 'Sales', data, backgroundColor: backgroundColors, borderWidth: 1 }]},
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            },
-
-            // --- Event Handling ---
-            addEventListeners() {
-                document.body.addEventListener('click', this.handleDelegatedClick.bind(this));
-                document.body.addEventListener('submit', this.handleDelegatedSubmit.bind(this));
-                
-                this.ui.tabButtons.forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        this.ui.tabButtons.forEach(b => b.classList.remove('active'));
-                        e.currentTarget.classList.add('active');
-                        this.ui.tabContents.forEach(c => c.classList.remove('active'));
-                        document.getElementById(e.currentTarget.dataset.tab).classList.add('active');
-                        this.renderCharts();
-                    });
-                });
-
-                this.ui.manualSaveBtn.addEventListener('click', () => this.saveData());
-                this.ui.inventorySearch.addEventListener('input', (e) => this.renderInventory(e.target.value));
-                this.ui.excelFile.addEventListener('change', this.handleExcelUpload.bind(this));
-                this.ui.transactions.filterBtn.addEventListener('click', () => this.renderTransactions());
-                this.ui.transactions.resetFilterBtn.addEventListener('click', () => {
-                    this.ui.transactions.startDateInput.value = '';
-                    this.ui.transactions.endDateInput.value = '';
-                    this.renderTransactions();
-                });
-                this.ui.transactions.exportExcelBtn.addEventListener('click', this.exportToExcel.bind(this));
-            },
-
-            handleDelegatedClick(e) {
-                const target = e.target.closest('button, .action-card');
-                if (!target) return;
-
-                // Dynamic Form Item Buttons
-                if (target.id === 'add-sale-item-btn') this.addFormItem('sale');
-                if (target.id === 'add-purchase-item-btn') this.addFormItem('purchase');
-                if (target.matches('.remove-item-btn')) target.closest('.dynamic-item-row').remove();
-
-                // Sale/Invoice Recording
-                if (target.id === 'record-sale-btn') this.recordSale(false);
-                if (target.id === 'record-invoice-btn') this.recordSale(true);
-                
-                // Dashboard Quick Actions
-                if (target.matches('.action-card')) {
-                    const action = target.dataset.action;
-                    if (action === 'new-sale') { document.querySelector('[data-tab="sales"]').click(); document.getElementById('sale-form-card').scrollIntoView(); }
-                    if (action === 'add-stock') { document.querySelector('[data-tab="sales"]').click(); document.getElementById('purchase-form-card').scrollIntoView(); }
-                    if (action === 'view-analytics') document.querySelector('[data-tab="analytics"]').click();
-                }
-
-                // History Actions
-                if (target.matches('.delete-sale-btn')) {
-                    const tid = target.dataset.tid || target.closest('tr').dataset.id;
-                    this.showConfirmationModal('Delete this sale record permanently?').then(confirmed => {
-                        if (confirmed) this.deleteSale(tid);
-                    });
-                }
-                 if (target.matches('.download-invoice-btn')) {
-                    const tid = target.dataset.tid || target.closest('tr').dataset.id;
-                    this.generateInvoice(tid);
-                }
-                
-                // Inventory actions
-                if(target.matches('.delete-inventory-btn')) {
-                    const particulars = target.dataset.particulars;
-                    this.showConfirmationModal(`Delete "${particulars}" from inventory? This is permanent.`).then(confirmed => {
-                        if (confirmed) this.deleteInventoryItem(particulars);
-                    });
-                }
-            },
-            
-            handleDelegatedSubmit(e) {
-                if(e.target.id === 'purchase-form') {
-                    e.preventDefault();
-                    this.recordPurchase();
-                }
-            },
-            
-            // --- Core Logic Functions ---
-            recordSale(andPrint) {
-                const items = [];
-                let hasError = false;
-                this.ui.salesForm.querySelectorAll('.dynamic-item-row').forEach(row => {
-                    const particularsInput = row.querySelector('input[name="particulars"]');
-                    const qtyInput = row.querySelector('input[name="quantity"]');
-                    const rateInput = row.querySelector('input[name="rate"]');
-                    
-                    const particularsRaw = this.parseItemNameFromDatalist(particularsInput.value);
-                    const quantity = parseInt(qtyInput.value, 10);
-                    const sellingRate = parseFloat(rateInput.value);
-
-                    if (!particularsRaw || !quantity || !sellingRate) return;
-
-                    const inventoryItem = this.state.inventory.find(i => i.particulars === particularsRaw);
-                    if (!inventoryItem) {
-                        this.showToast(`Item "${particularsRaw}" not in inventory.`, 'error');
-                        hasError = true; return;
-                    }
-                    if (inventoryItem.quantity < quantity) {
-                        this.showToast(`Not enough stock for "${particularsRaw}". Only ${inventoryItem.quantity} left.`, 'error');
-                        hasError = true; return;
-                    }
-
-                    items.push({
-                        particulars: inventoryItem.particulars,
-                        quantity,
-                        sellingRate,
-                        costRate: inventoryItem.rate
-                    });
-                });
-                
-                if (hasError || items.length === 0) return;
-
-                // Update inventory
-                items.forEach(item => {
-                    const inventoryItem = this.state.inventory.find(i => i.particulars === item.particulars);
-                    inventoryItem.quantity -= item.quantity;
-                });
-
-                const transaction = {
-                    id: `T${Date.now()}`,
-                    type: 'Sale',
-                    date: new Date(),
-                    items,
-                    total: items.reduce((sum, i) => sum + i.quantity * i.sellingRate, 0)
-                };
-
-                this.state.transactions.push(transaction);
-                this.showToast('Sale recorded successfully!', 'success');
-                this.ui.salesForm.reset();
-                this.ui.salesItemsContainer.innerHTML = '';
-                this.addFormItem('sale');
-                this.renderAll();
-                this.triggerAutoSave();
-                if(andPrint) this.generateInvoice(transaction.id);
-            },
-            
-            recordPurchase() {
-                const items = [];
-                this.ui.purchaseForm.querySelectorAll('.dynamic-item-row').forEach(row => {
-                    const particularsInput = row.querySelector('input[name="particulars"]');
-                    const qtyInput = row.querySelector('input[name="quantity"]');
-                    const rateInput = row.querySelector('input[name="rate"]');
-                    
-                    const particulars = particularsInput.value.trim();
-                    const quantity = parseInt(qtyInput.value, 10);
-                    const rate = parseFloat(rateInput.value);
-                    
-                    if (!particulars || !quantity || !rate) return;
-                    items.push({ particulars, quantity, rate });
-                });
-
-                if (items.length === 0) return;
-
-                // Update or add to inventory
-                items.forEach(item => {
-                    const existingItem = this.state.inventory.find(i => i.particulars.toLowerCase() === item.particulars.toLowerCase());
-                    if (existingItem) {
-                        const totalQty = existingItem.quantity + item.quantity;
-                        const totalCost = (existingItem.quantity * existingItem.rate) + (item.quantity * item.rate);
-                        existingItem.rate = totalCost / totalQty; // Weighted average cost
-                        existingItem.quantity = totalQty;
-                    } else {
-                        this.state.inventory.push(item);
-                    }
-                });
-
-                const transaction = {
-                    id: `P${Date.now()}`,
-                    type: 'Purchase',
-                    date: new Date(),
-                    items,
-                    total: items.reduce((sum, i) => sum + i.quantity * i.rate, 0)
-                };
-                this.state.transactions.push(transaction);
-
-                this.showToast('Stock added successfully!', 'success');
-                this.ui.purchaseForm.reset();
-                this.ui.purchaseItemsContainer.innerHTML = '';
-                this.addFormItem('purchase');
-                this.renderAll();
-                this.triggerAutoSave();
-            },
-            
-            deleteSale(transactionId) {
-                const saleIndex = this.state.transactions.findIndex(t => t.id === transactionId && t.type === 'Sale');
-                if (saleIndex === -1) {
-                    this.showToast('Sale not found.', 'error');
-                    return;
-                }
-                const sale = this.state.transactions[saleIndex];
-                
-                // Return items to stock
-                sale.items.forEach(item => {
-                    const inventoryItem = this.state.inventory.find(inv => inv.particulars === item.particulars);
-                    if (inventoryItem) {
-                        inventoryItem.quantity += item.quantity;
-                    } else {
-                        // If item was deleted from inventory, add it back
-                        this.state.inventory.push({ particulars: item.particulars, quantity: item.quantity, rate: item.costRate });
-                    }
-                });
-                
-                this.state.transactions.splice(saleIndex, 1);
-                this.showToast('Sale deleted and items returned to stock.', 'success');
-                this.renderAll();
-                this.triggerAutoSave();
-            },
-            
-            deleteInventoryItem(particulars) {
-                const itemIndex = this.state.inventory.findIndex(item => item.particulars === particulars);
-                if (itemIndex > -1) {
-                    this.state.inventory.splice(itemIndex, 1);
-                    this.showToast(`"${particulars}" removed from inventory.`, 'success');
-                    this.renderAll();
-                    this.triggerAutoSave();
-                }
-            },
-            
-            handleExcelUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                        
-                        const newInventory = jsonData.map(row => ({
-                            particulars: String(row.particulars || '').trim(),
-                            quantity: parseInt(row.quantity, 10) || 0,
-                            rate: parseFloat(row.rate) || 0.0
-                        })).filter(item => item.particulars && item.quantity > 0 && item.rate > 0);
-
-                        if (newInventory.length > 0) {
-                            this.state.inventory = newInventory;
-                            this.renderAll();
-                            this.triggerAutoSave();
-                            this.showToast(`${newInventory.length} items loaded from Excel.`, 'success');
-                        } else {
-                            this.showToast('No valid items found in the Excel file.', 'error');
-                        }
-                    } catch (err) {
-                        this.showToast('Error reading Excel file.', 'error');
-                        console.error(err);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            },
-            
-            exportToExcel() {
-                const sales = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(i => ({
-                    Date: this.formatDate(t.date), Type: 'Sale', Particulars: i.particulars, 
-                    Quantity: i.quantity, "Selling Rate": i.sellingRate, "Cost Rate": i.costRate,
-                    Profit: (i.sellingRate - i.costRate) * i.quantity
-                })));
-                const purchases = this.state.transactions.filter(t => t.type === 'Purchase').flatMap(t => t.items.map(i => ({
-                    Date: this.formatDate(t.date), Type: 'Purchase', Particulars: i.particulars, 
-                    Quantity: i.quantity, "Cost Rate": i.rate
-                })));
-                
-                const ws = XLSX.utils.json_to_sheet([...sales, ...purchases]);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-                XLSX.writeFile(wb, `TinnyFashion_Export_${this.getTodayDateString()}.xlsx`);
-                this.showToast("Data exported to Excel.", "success");
-            },
-
-            generateInvoice(transactionId) {
-                const sale = this.state.transactions.find(t => t.id === transactionId);
-                if (!sale) return;
-
-                const doc = new jsPDF();
-                doc.setFontSize(22);
-                doc.text("Tinny Fashion Store", 105, 20, { align: 'center' });
-                doc.setFontSize(12);
-                doc.text("INVOICE", 105, 28, { align: 'center' });
-
-                doc.setFontSize(10);
-                doc.text(`Date: ${this.formatDate(sale.date, true)}`, 20, 40);
-                doc.text(`Invoice ID: ${sale.id}`, 190, 40, { align: 'right' });
-
-                const head = [['#', 'Item Description', 'Qty', 'Rate', 'Amount']];
-                const body = sale.items.map((item, index) => [
-                    index + 1,
-                    item.particulars,
-                    item.quantity,
-                    this.formatCurrency(item.sellingRate),
-                    this.formatCurrency(item.quantity * item.sellingRate)
-                ]);
-
-                doc.autoTable({
-                    startY: 50,
-                    head: head,
-                    body: body,
-                    theme: 'grid',
-                    headStyles: { fillColor: [22, 160, 133] }
-                });
-
-                const finalY = doc.lastAutoTable.finalY;
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text("Total:", 140, finalY + 10);
-                doc.text(this.formatCurrency(sale.total), 190, finalY + 10, { align: 'right' });
-
-                doc.save(`Invoice-${sale.id}.pdf`);
-                this.showToast("Invoice PDF generated.", "success");
-            },
-            
-            // --- Helpers & Utilities ---
+            hexToRgba(hex, alpha = 1) { const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); return `rgba(${r}, ${g}, ${b}, ${alpha})`; },
+            interpolateColor(color1, color2, factor) { let result = color1.slice(); for (let i = 0; i < 3; i++) { result[i] = Math.round(result[i] + factor * (color2[i] - result[i])); } return `rgb(${result.join(',')})`; },
             getTodayDateString(date = new Date()) { return date.toISOString().slice(0, 10); },
-            formatDate(date, withTime = false) { 
-                if (!(date instanceof Date) || isNaN(date)) return 'N/A'; 
-                const options = { day: '2-digit', month: 'short', year: 'numeric' };
-                if (withTime) { options.hour = '2-digit'; options.minute = '2-digit'; }
-                return new Intl.DateTimeFormat('en-GB', options).format(date);
-            },
-            formatCurrency(amount) {
-                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-            },
-            parseItemNameFromDatalist(value) {
-                const match = value.match(/^(.*) \(\d+ left\)$/);
-                return match ? match[1].trim() : value.trim();
-            },
-            getCategoryFromParticulars(particulars) {
-                const words = particulars.trim().split(/\s+/);
-                let categoryParts = [];
-                for (const word of words) {
-                    if (/\d/.test(word)) break;
-                    categoryParts.push(word);
-                }
-                return categoryParts.length > 0 ? categoryParts.join(" ") : "Uncategorized";
-            },
-
-            addFormItem(type) {
-                const container = type === 'sale' ? this.ui.salesItemsContainer : this.ui.purchaseItemsContainer;
-                const isSale = type === 'sale';
-                const row = document.createElement('div');
-                row.className = 'dynamic-item-row';
-                row.innerHTML = `
-                    <div class="form-group">
-                        ${isSale ? '<label>Item Name</label>' : ''}
-                        <input type="text" name="particulars" placeholder="Item Name" ${isSale ? 'list="inventory-datalist"' : ''} required>
-                    </div>
-                    <div class="form-group">
-                        ${isSale ? '<label>Quantity</label>' : ''}
-                        <input type="number" name="quantity" placeholder="Qty" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        ${isSale ? '<label>Selling Rate</label>' : ''}
-                        <input type="number" name="rate" placeholder="${isSale ? 'Sell Rate' : 'Cost Rate'}" min="0" step="0.01" required>
-                    </div>
-                    <button type="button" class="btn btn-icon btn-danger remove-item-btn" aria-label="Remove Item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
-                    </button>
-                `;
-                container.appendChild(row);
-            },
-
-            showToast(msg, type = 'success') {
-                const toast = this.ui.toast;
-                toast.textContent = msg;
-                toast.className = `show ${type}`;
-                setTimeout(() => toast.className = toast.className.replace('show', ''), 3500);
-            },
-
-            showConfirmationModal(message) {
-                return new Promise(resolve => {
-                    this.ui.modal.description.textContent = message;
-                    this.ui.modal.overlay.classList.add('visible');
-
-                    const confirmHandler = () => {
-                        this.ui.modal.overlay.classList.remove('visible');
-                        this.ui.modal.confirmBtn.removeEventListener('click', confirmHandler);
-                        this.ui.modal.cancelBtn.removeEventListener('click', cancelHandler);
-                        resolve(true);
-                    };
-                    const cancelHandler = () => {
-                        this.ui.modal.overlay.classList.remove('visible');
-                        this.ui.modal.confirmBtn.removeEventListener('click', confirmHandler);
-                        this.ui.modal.cancelBtn.removeEventListener('click', cancelHandler);
-                        resolve(false);
-                    };
-
-                    this.ui.modal.confirmBtn.addEventListener('click', confirmHandler);
-                    this.ui.modal.cancelBtn.addEventListener('click', cancelHandler);
-                });
-            },
-
-            initTheme() {
-                const savedTheme = localStorage.getItem('theme') || 'dark';
-                if (savedTheme === 'light') {
-                    document.body.classList.add('light-theme');
-                }
-                this.updateThemeLabel();
-                this.ui.themeSwitcher.addEventListener('click', this.toggleTheme.bind(this));
-            },
-
-            toggleTheme() {
-                document.body.classList.toggle('light-theme');
-                const currentTheme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
-                localStorage.setItem('theme', currentTheme);
-                this.updateThemeLabel();
-            },
-            
-            updateThemeLabel() {
-                this.ui.themeLabel.textContent = document.body.classList.contains('light-theme') ? 'Light Mode' : 'Dark Mode';
-            },
-
-            cacheDOMElements() {
-                this.ui = {
-                    signinBtn: document.getElementById('signin-btn'),
-                    signoutBtn: document.getElementById('signout-btn'),
-                    authStatus: document.getElementById('auth-status'),
-                    excelFile: document.getElementById('excel-file'),
-                    inventoryTableBody: document.querySelector('#inventory-table tbody'),
-                    inventorySearch: document.getElementById('inventory-search'),
-                    inventoryDatalist: document.getElementById('inventory-datalist'),
-                    salesForm: document.getElementById('sales-form'),
-                    salesItemsContainer: document.getElementById('sales-items-container'),
-                    purchaseForm: document.getElementById('purchase-form'),
-                    purchaseItemsContainer: document.getElementById('purchase-items-container'),
-                    tabButtons: document.querySelectorAll('.tab-button'),
-                    tabContents: document.querySelectorAll('.tab-content'),
-                    manualSaveBtn: document.getElementById('manual-save-btn'),
-                    toast: document.getElementById('toast'),
-                    themeSwitcher: document.getElementById('theme-switcher'),
-                    themeLabel: document.getElementById('theme-label'),
-                    modal: {
-                        overlay: document.getElementById('confirmation-modal'),
-                        description: document.getElementById('modal-description'),
-                        confirmBtn: document.getElementById('modal-confirm-btn'),
-                        cancelBtn: document.getElementById('modal-cancel-btn'),
-                    },
-                    operations: {
-                        dashboardTotalUnits: document.getElementById('dashboard-total-units'),
-                        dashboardLowStockCount: document.getElementById('dashboard-low-stock-count'),
-                        dashboardInventoryValue: document.getElementById('dashboard-inventory-value'),
-                        dashboardTotalRevenue: document.getElementById('dashboard-total-revenue'),
-                        dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'),
-                        salesTrendChart: document.getElementById('salesTrendChart'),
-                    },
-                    analytics: {
-                        totalProfit: document.getElementById('total-profit'),
-                        totalRevenue: document.getElementById('total-revenue'),
-                        avgMargin: document.getElementById('avg-margin'),
-                        inventoryCost: document.getElementById('total-inventory-cost'),
-                        trendProjectionChart: document.getElementById('trendProjectionChart'),
-                        categoryPieChart: document.getElementById('categoryPieChart'),
-                    },
-                    transactions: {
-                        salesHistoryBody: document.querySelector('#sales-history-table tbody'),
-                        purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'),
-                        startDateInput: document.getElementById('start-date'),
-                        endDateInput: document.getElementById('end-date'),
-                        filterBtn: document.getElementById('filter-btn'),
-                        resetFilterBtn: document.getElementById('reset-filter-btn'),
-                        exportExcelBtn: document.getElementById('export-excel-btn'),
-                    },
-                };
-            },
+            formatDateDDMMYYYY(date) { if (!(date instanceof Date) || isNaN(date)) return 'N/A'; return new Intl.DateTimeFormat('en-GB').format(date); },
+            parseItemNameFromDatalist(value) { const match = value.match(/^(.*) \(\d+ left\)$/); return match ? match[1].trim() : value.trim(); },
+            getCategoryFromParticulars(particulars) { const words = particulars.trim().split(/\s+/); let categoryParts = []; for (const word of words) { if (/\d/.test(word)) break; categoryParts.push(word); } return categoryParts.length > 0 ? categoryParts.join(" ") : "Uncategorized"; },
+            renderAll() { this.renderInventory(); this.renderAnalytics(); this.renderTransactions(); this.renderProfit(); this.renderCreditorList(); this.renderHolidays(); this.populateHeatmapFilters(); this.renderAllAnalyticsCharts(); },
+            renderAllAnalyticsCharts() { const activeTab = document.querySelector('.tab-content.active')?.id; if (activeTab === 'analytics') { this.renderTrendProjectionChart(); this.renderProductHeatmap(); } if (activeTab === 'operations') { this.renderSalesTrendChart(); } },
+            renderInventory() { this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars)); this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => { const isLowStock = item.quantity > 0 && item.quantity <= 3; return `<tr data-particulars="${item.particulars}" class="${isLowStock ? 'is-low-stock' : ''}"><td><span class="display-value">${item.particulars}</span><div class="edit-field"><input type="text" class="edit-input" value="${item.particulars}" readonly></div></td><td><span class="display-value">${item.quantity}${isLowStock ? ` <span class="low-stock-badge">Low</span>` : ''}</span><div class="edit-field"><input type="number" class="edit-input edit-quantity" value="${item.quantity}" min="0"></div></td><td><span class="display-value">${item.rate.toFixed(2)}</span><div class="edit-field"><input type="number" class="edit-input edit-rate" value="${item.rate.toFixed(2)}" min="0" step="0.01"></div></td><td><div style="display:flex; gap:6px;"><button class="btn btn-small btn-secondary edit-btn" data-particulars="${item.particulars}">Edit</button><button class="btn btn-small btn-success save-btn" data-particulars="${item.particulars}">Save</button><button class="btn btn-small btn-secondary cancel-btn">Cancel</button><button class="btn btn-small btn-danger delete-btn" data-particulars="${item.particulars}">Delete</button></div></td></tr>`; }).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`; this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars} (${item.quantity} left)"></option>`).join(''); },
+            renderAnalytics() { const { cost, units, lowStockItemsArr } = this.state.inventory.reduce((acc, item) => { acc.cost += item.quantity * item.rate; acc.units += item.quantity; if (item.quantity > 0 && item.quantity <= 5) acc.lowStockItemsArr.push(item); return acc; }, { cost: 0, units: 0, lowStockItemsArr: [] }); const categorizedLowStock = lowStockItemsArr.reduce((acc, item) => { const category = this.getCategoryFromParticulars(item.particulars); if (!acc[category]) acc[category] = []; acc[category].push(item); return acc; }, {}); this.ui.analytics.lowStockItems.innerHTML = Object.keys(categorizedLowStock).length ? Object.entries(categorizedLowStock).map(([cat, items]) => `<h5>${cat}</h5><ul>${items.map(i => `<li>${i.particulars} - <span class="low-stock-qty">${i.quantity} left</span></li>`).join('')}</ul>`).join('') : '<p style="text-align:center; color: var(--text-muted);">No low stock items.</p>'; this.ui.operations.dashboardLowStockItemsUl.innerHTML = Object.keys(categorizedLowStock).length ? Object.entries(categorizedLowStock).sort((a, b) => a[0].localeCompare(b[0])).map(([cat, items]) => `<li class="dashboard-category-item"><div class="dashboard-category-header" data-category="${cat}"><h5>${cat}</h5><span class="category-toggle-indicator">▼</span></div><div class="dashboard-items-in-category" style="display:none;"><ul>${items.map(item => `<li><div class="item-details"><span class="item-name">${item.particulars}</span><span class="item-sub-detail">Qty: <strong class="low-stock-qty">${item.quantity}</strong></span></div><span class="item-stock-level">${item.quantity}</span></li>`).join('')}</ul></div></li>`).join('') : '<li><p style="text-align:center; color: var(--text-muted);">No low stock items.</p></li>'; const sales = this.state.transactions.filter(t => t.type === 'Sale'); const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0); const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0; this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(2)}`; this.ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`; this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`; this.ui.analytics.inventoryCost.textContent = `₹${cost.toFixed(2)}`; this.ui.analytics.totalUnits.textContent = units; this.ui.operations.dashboardTotalUnits.textContent = units; this.ui.operations.dashboardLowStockCount.textContent = lowStockItemsArr.length; this.ui.operations.dashboardInventoryValue.textContent = `₹${cost.toFixed(2)}`; this.ui.operations.dashboardTotalRevenue.textContent = `₹${totalRevenue.toFixed(2)}`; this.ui.operations.dashboardTotalProfit.textContent = `₹${totalProfit.toFixed(2)}`; this.renderFilteredSalesAndProfit(); },
+            renderTransactions() { const startDate = this.ui.transactions.startDateInput.value ? new Date(this.ui.transactions.startDateInput.value) : null; if(startDate) startDate.setHours(0,0,0,0); const endDate = this.ui.transactions.endDateInput.value ? new Date(this.ui.transactions.endDateInput.value) : null; if(endDate) endDate.setHours(23,59,59,999); const sortFn = (a, b) => this.ui.transactions.transactionSortOrder.value === 'oldest-first' ? a.date - b.date : b.date - a.date; const sales = this.state.transactions.filter(t => t.type === 'Sale' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFn); const purchases = this.state.transactions.filter(t => t.type === 'Purchase' && (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).sort(sortFn); this.ui.transactions.salesHistoryBody.innerHTML = sales.length ? sales.map(t => { const itemsHtml = t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.sellingRate.toFixed(2)} <button class="btn btn-danger btn-small return-item-btn" data-tid="${t.id}" data-pid="${i.particulars}">Return</button></li>`).join(''); return `<tr data-id="${t.id}"><td>${this.formatDateDDMMYYYY(t.date)}</td><td><ul>${itemsHtml}</ul>${t.saleType === 'Credit' ? `<span class="credit-label">CREDIT: ${t.partyName} (Paid: ₹${(t.paidAmount||0).toFixed(2)})</span>` : ''}</td><td>₹${t.total.toFixed(2)}</td><td><div style="display:flex;gap:8px;"><button class="btn btn-secondary btn-small download-invoice-btn">Invoice</button><button class="btn btn-danger btn-small delete-sale-btn">Delete</button></div></td></tr>`;}).join('') : `<tr><td colspan="4" style="text-align:center;">No sales match criteria.</td></tr>`; this.ui.transactions.purchaseHistoryBody.innerHTML = purchases.length ? purchases.map(t => `<tr><td>${this.formatDateDDMMYYYY(t.date)}</td><td><ul>${t.items.map(i => `<li>${i.quantity} x ${i.particulars} @ ₹${i.rate.toFixed(2)}</li>`).join('')}</ul></td><td>₹${t.total.toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="3" style="text-align:center;">No purchases match criteria.</td></tr>`; },
+            renderProfit() { const allItemsSold = this.state.transactions.filter(t => t.type === 'Sale').flatMap(t => t.items.map(item => ({ ...item, date: t.date }))).sort((a,b) => b.date - a.date); this.ui.profit.profitDetailsBody.innerHTML = allItemsSold.length ? allItemsSold.map(item => `<tr><td>${this.formatDateDDMMYYYY(item.date)}</td><td>${item.particulars}</td><td>${item.quantity}</td><td>${(item.sellingRate * item.quantity).toFixed(2)}</td><td>${item.costRate.toFixed(2)}</td><td class="profit-col">₹${((item.sellingRate - item.costRate) * item.quantity).toFixed(2)}</td></tr>`).join('') : `<tr><td colspan="6" style="text-align:center;">No sales recorded.</td></tr>`;},
+            renderCreditorList() { const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => { if (!t.partyName) return acc; if (!acc[t.partyName]) acc[t.partyName] = { owed: 0, paid: 0, transactions: [] }; acc[t.partyName].owed += t.total; acc[t.partyName].paid += (t.paidAmount || 0); acc[t.partyName].transactions.push(t); return acc; }, {}); this.ui.credit.creditorListContainer.innerHTML = ''; const creditorsWithBalance = Object.entries(creditors).filter(([_, data]) => (data.owed - data.paid) > 0.01); if (creditorsWithBalance.length === 0) { this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No outstanding credit balances.</p>'; return; } creditorsWithBalance.sort((a,b) => a[0].localeCompare(b[0])).forEach(([name, data]) => { const balance = data.owed - data.paid; this.ui.credit.creditorListContainer.insertAdjacentHTML('beforeend', `<div class="creditor-item" data-name="${name}"><div class="creditor-header"><span class="creditor-name">${name}</span><span class="creditor-balance">Balance: ₹${balance.toFixed(2)}</span></div><div class="creditor-details"><table>...</table><div class="payment-form"><label>Record Payment:</label><input type="number" class="payment-amount-input" placeholder="Amount" min="0.01" max="${balance.toFixed(2)}"><button class="btn btn-success btn-small record-payment-btn">Pay</button></div></div></div>`); }); },
+            cacheDOMElements() { this.ui = { signinBtn: document.getElementById('signin-btn'), signoutBtn: document.getElementById('signout-btn'), authStatus: document.getElementById('auth-status'), excelFile: document.getElementById('excel-file'), inventoryTableBody: document.querySelector('#inventory-table tbody'), inventoryDatalist: document.getElementById('inventory-datalist'), salesForm: document.getElementById('sales-form'), addSaleItemBtn: document.getElementById('add-sale-item-btn'), salesItemsContainer: document.getElementById('sales-items-container'), purchaseForm: document.getElementById('purchase-form'), addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'), purchaseItemsContainer: document.getElementById('purchase-items-container'), cosmeticSaleForm: document.getElementById('cosmetic-sale-form'), tabButtons: document.querySelectorAll('.tab-button'), tabContents: document.querySelectorAll('.tab-content'), manualSaveBtn: document.getElementById('manual-save-btn'), analytics: { totalProfit: document.getElementById('total-profit'), totalRevenue: document.getElementById('total-revenue'), avgMargin: document.getElementById('avg-margin'), inventoryCost: document.getElementById('total-inventory-cost'), totalUnits: document.getElementById('total-units'), lowStockItems: document.getElementById('low-stock-items'), downloadLowStockBtn: document.getElementById('download-low-stock-btn'), startDateInput: document.getElementById('analytics-start-date'), endDateInput: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), filteredSalesTotal: document.getElementById('filtered-sales-total'), filteredProfitTotal: document.getElementById('filtered-profit-total'), filteredSalesHeading: document.getElementById('filtered-sales-heading'), filteredProfitHeading: document.getElementById('filtered-profit-heading'), productHeatmapContainer: document.getElementById('product-heatmap-container'), heatmapMonthFilter: document.getElementById('heatmap-month-filter'), heatmapItemTypeFilter: document.getElementById('heatmap-item-type-filter'), trendProjectionChart: document.getElementById('trendProjectionChart'), runPredictionBtn: document.getElementById('run-prediction-btn'), predictionResultsContainer: document.getElementById('prediction-results-container'), }, transactions: { salesHistoryBody: document.querySelector('#sales-history-table tbody'), purchaseHistoryBody: document.querySelector('#purchase-history-table tbody'), transactionsTab: document.getElementById('transactions'), startDateInput: document.getElementById('start-date'), endDateInput: document.getElementById('end-date'), filterBtn: document.getElementById('filter-btn'), resetFilterBtn: document.getElementById('reset-filter-btn'), exportExcelBtn: document.getElementById('export-excel-btn'), transactionSortOrder: document.getElementById('transaction-sort-order'), }, profit: { profitDetailsBody: document.querySelector('#profit-details-table tbody'), }, credit: { inventorySaleForm: document.getElementById('credit-inventory-sale-form'), inventoryItemsContainer: document.getElementById('credit-inventory-items-container'), addInventoryItemBtn: document.getElementById('add-credit-inventory-item-btn'), inventoryDateInput: document.getElementById('credit-inventory-date'), cosmeticSaleForm: document.getElementById('credit-cosmetic-sale-form'), cosmeticDateInput: document.getElementById('credit-cosmetic-date'), creditorListContainer: document.getElementById('creditor-list-container'), }, operations: { dashboardTotalUnits: document.getElementById('dashboard-total-units'), dashboardLowStockCount: document.getElementById('dashboard-low-stock-count'), dashboardInventoryValue: document.getElementById('dashboard-inventory-value'), dashboardTotalRevenue: document.getElementById('dashboard-total-revenue'), dashboardTotalProfit: document.getElementById('dashboard-total-profit'), dashboardLowStockItemsUl: document.getElementById('dashboard-low-stock-items-ul'), dashboardDownloadLowStockBtn: document.getElementById('dashboard-download-low-stock-btn'), salesTrendChart: document.getElementById('salesTrendChart'), salesTrendModeSelect: document.getElementById('sales-trend-mode'), salesTrendCustomRangeInputs: document.getElementById('sales-trend-custom-range-inputs'), salesTrendStartDateInput: document.getElementById('sales-trend-start-date'), salesTrendEndDateInput: document.getElementById('sales-trend-end-date'), refreshSalesTrendBtn: document.getElementById('refresh-sales-trend-btn'), }, settings: { holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), } };},
+            addEventListeners() { /* Attaching all event listeners */ document.body.addEventListener('click', this.handleDelegatedEvents.bind(this)); document.body.addEventListener('change', this.handleDelegatedEvents.bind(this)); document.body.addEventListener('submit', this.handleDelegatedEvents.bind(this)); document.body.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === this.parseItemNameFromDatalist(e.target.value)); if (item && e.target.closest('.item-entry').querySelector('.rate')) e.target.closest('.item-entry').querySelector('.rate').value = (item.rate * 1.25).toFixed(2); } }); },
+            handleDelegatedEvents(e) { /* Simplified event handling */ const target = e.target; if (target.closest('#manual-save-btn')) this.saveData(); if (target.closest('.tab-button')) { this.ui.tabButtons.forEach(btn => btn.classList.remove('active')); target.closest('.tab-button').classList.add('active'); this.ui.tabContents.forEach(content => content.classList.remove('active')); document.getElementById(target.closest('.tab-button').dataset.tab).classList.add('active'); this.renderAllAnalyticsCharts(); } /* etc. for all other buttons/inputs */ },
+            showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (toast) { toast.textContent = msg; toast.className = `show ${type}`; setTimeout(() => toast.className = toast.className.replace('show', ''), 3000); } },
         };
-
-        // Initialize the application
         app.init();
     };
     </script>
 </body>
-</html>```
+</html>
