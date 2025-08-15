@@ -169,12 +169,14 @@
             color: var(--text-secondary);
         }
         .styled-table td { font-weight: 500; }
+        .actions-cell { display: flex; gap: 0.5rem; }
         .action-icon {
             display: inline-flex; cursor: pointer; color: var(--text-secondary);
             padding: 0.25rem; border-radius: 50%;
             transition: color 0.2s, background-color 0.2s;
         }
-        .action-icon:hover { color: var(--danger-red); background-color: #FEE2E2; }
+        .action-icon.edit:hover { color: var(--info-blue); background-color: #EBF8FF; }
+        .action-icon.delete:hover { color: var(--danger-red); background-color: #FEE2E2; }
         .action-icon svg { width: 20px; height: 20px; }
 
         /* Multi-item Form */
@@ -207,19 +209,13 @@
 
         @media (max-width: 768px) {
             #top-nav {
-                display: none;
-                position: absolute;
-                top: 100%; left: 0;
-                width: 100%;
-                background-color: var(--surface-card);
+                display: none; position: absolute; top: 100%; left: 0;
+                width: 100%; background-color: var(--surface-card);
                 border-bottom: 1px solid var(--border-color);
-                flex-direction: column;
-                padding: 1rem;
+                flex-direction: column; padding: 1rem;
             }
             #top-nav.active { display: flex; }
-            .mobile-menu-btn {
-                display: block; background: transparent; border: none; cursor: pointer;
-            }
+            .mobile-menu-btn { display: block; background: transparent; border: none; cursor: pointer; }
             .mobile-menu-btn svg { width: 28px; height: 28px; }
 
             .dashboard-grid { grid-template-columns: 1fr; }
@@ -268,11 +264,11 @@
                 </div>
                 <div class="dashboard-grid">
                     <div class="card kpi-card">
-                        <h3>Revenue (30 Days)</h3>
+                        <h3>Overall Revenue</h3>
                         <p id="dashboard-revenue">₹0</p>
                     </div>
                     <div class="card kpi-card">
-                        <h3>Profit (30 Days)</h3>
+                        <h3>Overall Profit</h3>
                         <p id="dashboard-profit">₹0</p>
                     </div>
                     <div class="card kpi-card">
@@ -284,7 +280,14 @@
                         <p id="dashboard-inv-value">₹0</p>
                     </div>
                     <div class="card main-chart-card">
-                        <h2>Sales Trend (Last 7 Days)</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                            <h2>Sales Trend</h2>
+                            <div class="form-grid" style="gap: 0.5rem; max-width: 500px; flex-grow: 1;">
+                                <input type="date" id="dashboard-start-date">
+                                <input type="date" id="dashboard-end-date">
+                                <button id="dashboard-filter-btn" class="btn btn-primary">Filter</button>
+                            </div>
+                        </div>
                         <canvas id="salesTrendChart" style="max-height: 300px;"></canvas>
                     </div>
                 </div>
@@ -333,20 +336,6 @@
 
             <div id="analytics" class="page">
                  <div class="page-header"><h1>Analytics</h1><p>Explore your sales data and store performance.</p></div>
-                 <div class="card dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-                    <div class="kpi-card">
-                        <h3>Total Revenue (All Time)</h3>
-                        <p id="analytics-total-revenue">₹0</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Total Profit (All Time)</h3>
-                        <p id="analytics-total-profit">₹0</p>
-                    </div>
-                    <div class="kpi-card">
-                        <h3>Avg. Margin (All Time)</h3>
-                        <p id="analytics-avg-margin">0%</p>
-                    </div>
-                </div>
                 <div class="card">
                     <h2>Filter by Date</h2>
                     <div class="form-grid" style="align-items: flex-end;">
@@ -354,9 +343,14 @@
                         <div><label>End Date</label><input type="date" id="analytics-end-date"></div>
                         <button class="btn btn-primary" id="analytics-filter-btn">Filter</button>
                     </div>
-                    <div id="filtered-results-container" class="dashboard-grid" style="display:none; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <div class="kpi-card"><h3>Filtered Sales</h3><p id="filtered-sales-total">₹0</p></div>
-                        <div class="kpi-card"><h3>Filtered Profit</h3><p id="filtered-profit-total">₹0</p></div>
+                </div>
+                 <div class="card">
+                    <h2>Top Selling Products</h2>
+                    <div class="table-container">
+                        <table class="styled-table" id="top-products-table">
+                            <thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -384,8 +378,21 @@
                  <div class="card">
                     <h2>Data Management</h2>
                     <p style="color: var(--text-secondary); margin-bottom: 1rem;">Load inventory from an Excel file (columns: 'particulars', 'quantity', 'rate'). This will overwrite your current inventory.</p>
-                    <button class="btn btn-primary" id="import-data-btn">Import from Excel</button>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="import-data-btn">Import from Excel</button>
+                        <button class="btn btn-secondary" id="manual-sync-btn">Sync to Drive</button>
+                    </div>
                     <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
+                </div>
+                <div class="card">
+                    <h2>Holiday Exceptions</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">By default, all Mondays are considered holidays. Add a date here to mark a specific Monday as a working day.</p>
+                    <div class="form-grid" style="align-items: flex-end; max-width: 600px;">
+                        <div><label>Select Monday to make a working day</label><input type="date" id="holiday-date"></div>
+                         <button id="add-holiday-btn" class="btn btn-primary">Add Exception</button>
+                    </div>
+                    <h3 style="font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem;">Working Day Mondays List</h3>
+                    <ul id="holiday-list" style="list-style: none; padding-top: 0.5rem;"></ul>
                 </div>
             </div>
         </main>
@@ -397,8 +404,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
     window.onload = () => {
-        const { jsPDF } = window.jspdf;
-
         const app = {
             CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
             API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg', 
@@ -406,7 +411,7 @@
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
             DATA_FILE_NAME: 'fashion_store_data.json',
             tokenClient: null, driveFileId: null, isSaving: false, saveTimeout: null,
-            state: { inventory: [], transactions: [], holidays: [] },
+            state: { inventory: [], transactions: [], holidays: [] }, // holidays stores exceptions
             ui: {},
             salesChartInstance: null,
 
@@ -446,33 +451,32 @@
                 this.renderPage('dashboard');
             },
             async loadData() {
-                this.showToast("Loading data...", "info");
                 try {
                     const response = await gapi.client.drive.files.list({ q: `name='${this.DATA_FILE_NAME}' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
                     if (response.result.files && response.result.files.length > 0) {
                         this.driveFileId = response.result.files[0].id;
                         const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
                         const loadedState = JSON.parse(fileContentResponse.body);
-                        
                         if (loadedState.transactions) {
                            loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
                         }
-                        const defaultState = { inventory: [], transactions: [], holidays: [] };
-                        this.state = { ...defaultState, ...loadedState };
-                    } else {
-                        this.state = { inventory: [], transactions: [], holidays: [] };
-                    }
-                } catch (e) {
-                    this.state = { inventory: [], transactions: [], holidays: [] }; 
-                }
+                        this.state = { 
+                            inventory: loadedState.inventory || [], 
+                            transactions: loadedState.transactions || [], 
+                            holidays: loadedState.holidays || [] 
+                        };
+                    } else { this.state = { inventory: [], transactions: [], holidays: [] }; }
+                } catch (e) { this.state = { inventory: [], transactions: [], holidays: [] }; }
             },
             triggerAutoSave() {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = setTimeout(() => this.saveData(), 2000);
             },
-            async saveData() {
+            async saveData(isManual = false) {
                 if (this.isSaving) return;
-                this.isSaving = true; this.showToast("Saving...", "info");
+                this.isSaving = true; 
+                if(isManual) this.showToast("Syncing data to Drive...", "info");
+
                 try {
                     const dataToSave = JSON.stringify(this.state, null, 2);
                     const boundary = '-------314159265358979323846';
@@ -495,66 +499,51 @@
                     }
                     const response = await request;
                     if (!this.driveFileId) { this.driveFileId = response.result.id; }
-                    this.showToast("Data saved!", "success");
+                    if(isManual) this.showToast("Data synced successfully!", "success");
                 } catch (e) { 
-                    this.showToast("Failed to save.", "error");
+                    if(isManual) this.showToast("Failed to sync data.", "error");
                 } finally {
                     this.isSaving = false;
                 }
             },
             cacheDOMElements() {
                 this.ui = {
-                    signinBtn: document.getElementById('signin-btn'),
-                    signoutBtn: document.getElementById('signout-btn'),
-                    navLinks: document.querySelectorAll('.nav-link'),
-                    pages: document.querySelectorAll('.page'),
-                    mobileMenuBtn: document.querySelector('.mobile-menu-btn'),
-                    topNav: document.getElementById('top-nav'),
-
+                    signinBtn: document.getElementById('signin-btn'), signoutBtn: document.getElementById('signout-btn'),
+                    navLinks: document.querySelectorAll('.nav-link'), pages: document.querySelectorAll('.page'),
+                    mobileMenuBtn: document.querySelector('.mobile-menu-btn'), topNav: document.getElementById('top-nav'),
                     dashboard: {
-                        revenue: document.getElementById('dashboard-revenue'),
-                        profit: document.getElementById('dashboard-profit'),
-                        lowStock: document.getElementById('dashboard-low-stock'),
-                        invValue: document.getElementById('dashboard-inv-value'),
+                        revenue: document.getElementById('dashboard-revenue'), profit: document.getElementById('dashboard-profit'),
+                        lowStock: document.getElementById('dashboard-low-stock'), invValue: document.getElementById('dashboard-inv-value'),
                         salesChart: document.getElementById('salesTrendChart'),
+                        startDate: document.getElementById('dashboard-start-date'), endDate: document.getElementById('dashboard-end-date'),
+                        filterBtn: document.getElementById('dashboard-filter-btn'),
                     },
-
-                    salesForm: document.getElementById('sales-form'),
-                    salesItemsContainer: document.getElementById('sales-items-container'),
-                    addSaleItemBtn: document.getElementById('add-sale-item-btn'),
-                    inventoryDatalist: document.getElementById('inventory-datalist'),
-
-                    purchaseForm: document.getElementById('purchase-form'),
-                    purchaseItemsContainer: document.getElementById('purchase-items-container'),
+                    salesForm: document.getElementById('sales-form'), salesItemsContainer: document.getElementById('sales-items-container'),
+                    addSaleItemBtn: document.getElementById('add-sale-item-btn'), inventoryDatalist: document.getElementById('inventory-datalist'),
+                    purchaseForm: document.getElementById('purchase-form'), purchaseItemsContainer: document.getElementById('purchase-items-container'),
                     addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
-                    
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
-
                     analytics: {
-                        totalRevenue: document.getElementById('analytics-total-revenue'),
-                        totalProfit: document.getElementById('analytics-total-profit'),
+                        totalRevenue: document.getElementById('analytics-total-revenue'), totalProfit: document.getElementById('analytics-total-profit'),
                         avgMargin: document.getElementById('analytics-avg-margin'),
-                        startDate: document.getElementById('analytics-start-date'),
-                        endDate: document.getElementById('analytics-end-date'),
+                        startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'),
                         filterBtn: document.getElementById('analytics-filter-btn'),
                         filteredResultsContainer: document.getElementById('filtered-results-container'),
-                        filteredSales: document.getElementById('filtered-sales-total'),
-                        filteredProfit: document.getElementById('filtered-profit-total'),
+                        topProductsTableBody: document.querySelector('#top-products-table'),
                     },
-                    
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'),
                     creditorListContainer: document.querySelector('#creditor-list-container'),
-
                     settings: {
-                        importDataBtn: document.getElementById('import-data-btn'),
-                        excelFile: document.getElementById('excel-file'),
+                        importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'),
+                        manualSyncBtn: document.getElementById('manual-sync-btn'),
+                        holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'),
+                        holidayList: document.getElementById('holiday-list'),
                     }
                 };
             },
             renderPage(pageId) {
                 this.ui.pages.forEach(p => p.classList.remove('active'));
                 document.getElementById(pageId)?.classList.add('active');
-
                 this.ui.navLinks.forEach(l => l.classList.remove('active'));
                 document.querySelector(`.nav-link[data-page="${pageId}"]`)?.classList.add('active');
                 
@@ -564,56 +553,60 @@
                 if (pageId === 'stocks') this.renderInventory();
                 if (pageId === 'analytics') this.renderAnalytics();
                 if (pageId === 'credit') this.renderCreditorList();
-                if (pageId === 'sales') {
-                    this.ui.salesItemsContainer.innerHTML = '';
-                    this.addSaleItemRow();
-                }
-                if (pageId === 'purchase') {
-                     this.ui.purchaseItemsContainer.innerHTML = '';
-                    this.addPurchaseItemRow();
-                }
+                if (pageId === 'settings') this.renderHolidays();
+                if (pageId === 'sales') { this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); }
+                if (pageId === 'purchase') { this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); }
             },
             
             renderDashboard() {
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                const recentSales = this.state.transactions.filter(t => t.type === 'Sale' && t.date >= thirtyDaysAgo);
-                const recentRevenue = recentSales.reduce((sum, t) => sum + t.total, 0);
-                const recentProfit = recentSales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                const sales = this.state.transactions.filter(t => t.type === 'Sale');
+                const overallRevenue = sales.reduce((sum, t) => sum + t.total, 0);
+                const overallProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const { cost, lowStockCount } = this.state.inventory.reduce((acc, item) => {
                     acc.cost += item.quantity * item.rate;
                     if (item.quantity > 0 && item.quantity <= 5) acc.lowStockCount++;
                     return acc;
                 }, { cost: 0, lowStockCount: 0 });
-                this.ui.dashboard.revenue.textContent = `₹${recentRevenue.toFixed(0)}`;
-                this.ui.dashboard.profit.textContent = `₹${recentProfit.toFixed(0)}`;
+                this.ui.dashboard.revenue.textContent = `₹${overallRevenue.toFixed(0)}`;
+                this.ui.dashboard.profit.textContent = `₹${overallProfit.toFixed(0)}`;
                 this.ui.dashboard.lowStock.textContent = lowStockCount;
                 this.ui.dashboard.invValue.textContent = `₹${cost.toFixed(0)}`;
-                this.renderSalesChart();
+                
+                const today = new Date();
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(today.getDate() - 6);
+                this.ui.dashboard.startDate.value = sevenDaysAgo.toISOString().split('T')[0];
+                this.ui.dashboard.endDate.value = today.toISOString().split('T')[0];
+
+                this.renderSalesChart(sevenDaysAgo, today);
             },
 
-            renderSalesChart() {
+            renderSalesChart(startDate, endDate) {
                 const ctx = this.ui.dashboard.salesChart.getContext('2d');
                 const labels = [];
-                const dataPoints = [];
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date(); d.setDate(d.getDate() - i);
+                const dataPoints = {};
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    const dateString = d.toISOString().split('T')[0];
                     labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                    dataPoints.push(0);
+                    dataPoints[dateString] = 0;
                 }
-                const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                
                 this.state.transactions.forEach(t => {
-                    if (t.type === 'Sale' && t.date >= sevenDaysAgo) {
-                        const dayIndex = 6 - Math.floor((new Date() - t.date) / (1000 * 60 * 60 * 24));
-                        if(dayIndex >= 0 && dayIndex < 7) dataPoints[dayIndex] += t.total;
+                    if (t.type === 'Sale' && t.date >= startDate && t.date <= endDate) {
+                        if (!this.isDateHoliday(t.date)) {
+                            const dateString = t.date.toISOString().split('T')[0];
+                            if (dataPoints.hasOwnProperty(dateString)) {
+                                dataPoints[dateString] += t.total;
+                            }
+                        }
                     }
                 });
+                
                 if (this.salesChartInstance) this.salesChartInstance.destroy();
                 this.salesChartInstance = new Chart(ctx, {
                     type: 'line',
-                    data: { labels, datasets: [{ label: 'Daily Sales', data: dataPoints, 
-                        backgroundColor: 'rgba(221, 107, 32, 0.1)',
-                        borderColor: 'rgba(221, 107, 32, 1)', 
+                    data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), 
+                        backgroundColor: 'rgba(221, 107, 32, 0.1)', borderColor: 'rgba(221, 107, 32, 1)', 
                         borderWidth: 2, tension: 0.4, fill: true
                     }] },
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
@@ -628,9 +621,16 @@
                             <td>${item.particulars}</td>
                             <td>${item.quantity}</td>
                             <td>₹${item.rate.toFixed(2)}</td>
-                            <td><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete">
-                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>
-                            </span></td>
+                            <td>
+                                <div class="actions-cell">
+                                    <span class="action-icon edit" data-particulars="${item.particulars}" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>
+                                    </span>
+                                    <span class="action-icon delete" data-particulars="${item.particulars}" title="Delete">
+                                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>
+                                    </span>
+                                </div>
+                            </td>
                         </tr>`).join('')
                     : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
             },
@@ -640,58 +640,57 @@
                     .map(item => `<option value="${item.particulars}"></option>`).join('');
             },
 
-            renderAnalytics() {
-                const sales = this.state.transactions.filter(t => t.type === 'Sale');
-                const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
+            renderAnalytics(startDate = null, endDate = null) {
+                const sales = this.state.transactions.filter(t => {
+                    if (t.type !== 'Sale') return false;
+                    if (startDate && t.date < startDate) return false;
+                    if (endDate && t.date > endDate) return false;
+                    return true;
+                });
+                
                 const allSoldItems = sales.flatMap(t => t.items);
-                const totalProfit = allSoldItems.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-                const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                const productSales = allSoldItems.reduce((acc, item) => {
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
+                    return acc;
+                }, {});
+                const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a).slice(0, 10);
+                
+                this.ui.analytics.topProductsTableBody.innerHTML = `
+                    <thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead>
+                    <tbody>${topProducts.length > 0 ? topProducts.map(([name, qty]) => `<tr><td>${name}</td><td>${qty}</td></tr>`).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period.</td></tr>`}</tbody>`;
 
-                this.ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(0)}`;
-                this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(0)}`;
-                this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
-
-                this.ui.analytics.filteredResultsContainer.style.display = 'none';
-                this.ui.analytics.startDate.value = '';
-                this.ui.analytics.endDate.value = '';
-            },
-
-            renderFilteredAnalytics() {
-                const startDateStr = this.ui.analytics.startDate.value;
-                const endDateStr = this.ui.analytics.endDate.value;
-                if (!startDateStr || !endDateStr) {
-                    this.showToast("Please select both start and end dates.", "error"); return;
+                if(!startDate && !endDate) { // Only update all-time KPIs if no filter is applied
+                    const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
+                    const totalProfit = allSoldItems.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                    const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                    this.ui.analytics.totalRevenue.textContent = `₹${totalRevenue.toFixed(0)}`;
+                    this.ui.analytics.totalProfit.textContent = `₹${totalProfit.toFixed(0)}`;
+                    this.ui.analytics.avgMargin.textContent = `${avgMargin.toFixed(1)}%`;
                 }
-                const startDate = new Date(startDateStr); startDate.setHours(0,0,0,0);
-                const endDate = new Date(endDateStr); endDate.setHours(23,59,59,999);
-                const sales = this.state.transactions.filter(t => t.type === 'Sale' && t.date >= startDate && t.date <= endDate);
-                const filteredRevenue = sales.reduce((sum, t) => sum + t.total, 0);
-                const filteredProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
-                this.ui.analytics.filteredSales.textContent = `₹${filteredRevenue.toFixed(0)}`;
-                this.ui.analytics.filteredProfit.textContent = `₹${filteredProfit.toFixed(0)}`;
-                this.ui.analytics.filteredResultsContainer.style.display = 'grid';
             },
-
+            
              renderCreditorList() { 
                 const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => { if (!t.partyName) return acc; if (!acc[t.partyName]) acc[t.partyName] = 0; acc[t.partyName] += t.total - (t.paidAmount || 0); return acc; }, {});
                 const creditorsWithBalance = Object.entries(creditors).filter(([_, balance]) => balance > 0.01);
-                if (creditorsWithBalance.length === 0) {
-                     this.ui.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>'; return;
-                }
-                this.ui.creditorListContainer.innerHTML = `
-                    <table class="styled-table">
-                        <thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead>
-                        <tbody>
-                        ${creditorsWithBalance.map(([name, balance]) => `
-                            <tr>
-                                <td>${name}</td>
-                                <td>₹${balance.toFixed(2)}</td>
-                                <td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td>
-                            </tr>`).join('')}
-                        </tbody>
-                    </table>`;
+                if (creditorsWithBalance.length === 0) { this.ui.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>'; return; }
+                this.ui.creditorListContainer.innerHTML = `<table class="styled-table"><thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead><tbody>${creditorsWithBalance.map(([name, balance]) => `<tr><td>${name}</td><td>₹${balance.toFixed(2)}</td><td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td></tr>`).join('')}</tbody></table>`;
+            },
+
+            isDateHoliday(dateObj) {
+                if (dateObj.getDay() !== 1) return false; // Not a Monday
+                const dateString = dateObj.toISOString().split('T')[0];
+                return !this.state.holidays.includes(dateString); // Is a holiday unless it's in the exception list
             },
             
+            renderHolidays() {
+                const holidayListEl = this.ui.settings.holidayList; holidayListEl.innerHTML = ''; 
+                if (this.state.holidays.length === 0) { holidayListEl.innerHTML = '<li>No exceptions added. All Mondays are holidays.</li>'; return; }
+                [...this.state.holidays].sort().forEach(dateStr => { 
+                    const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    holidayListEl.insertAdjacentHTML('beforeend', `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;"><span>${formattedDate}</span><span class="action-icon delete" data-date="${dateStr}" title="Remove Exception"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg></span></li>`); 
+                });
+            },
+
             handleFileUpload(event) {
                  const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); 
                  reader.onload = (e) => { 
@@ -706,25 +705,13 @@
             },
             
             addSaleItemRow() {
-                const div = document.createElement('div');
-                div.className = 'item-row';
-                div.innerHTML = `
-                    <div><label>Item Name</label><input type="text" class="particulars" list="inventory-datalist" required></div>
-                    <div><label>Quantity</label><input type="number" class="quantity" min="1" required></div>
-                    <div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div>
-                    <div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>
-                `;
+                const div = document.createElement('div'); div.className = 'item-row';
+                div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" list="inventory-datalist" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`;
                 this.ui.salesItemsContainer.appendChild(div);
             },
             addPurchaseItemRow() {
-                const div = document.createElement('div');
-                div.className = 'item-row';
-                div.innerHTML = `
-                    <div><label>Item Name</label><input type="text" class="particulars" required></div>
-                    <div><label>Quantity</label><input type="number" class="quantity" min="1" required></div>
-                    <div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div>
-                    <div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>
-                `;
+                const div = document.createElement('div'); div.className = 'item-row';
+                div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`;
                 this.ui.purchaseItemsContainer.appendChild(div);
             },
             
@@ -749,17 +736,18 @@
             },
 
             addEventListeners() { 
-                this.ui.navLinks.forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        this.renderPage(e.currentTarget.dataset.page);
-                        this.ui.topNav.classList.remove('active');
-                    });
-                });
+                this.ui.navLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); this.renderPage(e.currentTarget.dataset.page); this.ui.topNav.classList.remove('active'); }));
                 this.ui.mobileMenuBtn.addEventListener('click', () => this.ui.topNav.classList.toggle('active'));
+
+                this.ui.dashboard.filterBtn.addEventListener('click', () => {
+                    const start = new Date(this.ui.dashboard.startDate.value);
+                    const end = new Date(this.ui.dashboard.endDate.value);
+                    this.renderSalesChart(start, end);
+                });
 
                 this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.settings.excelFile.click());
                 this.ui.settings.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
+                this.ui.settings.manualSyncBtn.addEventListener('click', () => this.saveData(true));
                 
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow());
                 this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); });
@@ -770,44 +758,48 @@
                     e.preventDefault();
                     const purchasedItems = [];
                     for(const row of e.target.querySelectorAll('.item-row')) {
-                        const p = row.querySelector('.particulars').value.trim();
-                        const q = parseInt(row.querySelector('.quantity').value, 10);
-                        const r = parseFloat(row.querySelector('.rate').value);
+                        const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value);
                         if(p && q && !isNaN(r)) purchasedItems.push({particulars:p, quantity:q, rate:r});
                     }
                     if(purchasedItems.length === 0) { this.showToast("No valid items.", "error"); return; }
                     purchasedItems.forEach(newItem => {
                          const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
                         if (existing) {
-                            const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity;
-                            const totalQty = existing.quantity + newItem.quantity;
+                            const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity; const totalQty = existing.quantity + newItem.quantity;
                             existing.rate = totalVal / totalQty; existing.quantity = totalQty;
                         } else this.state.inventory.push(newItem);
                     });
                     this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: purchasedItems, total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) });
-                    this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow();
-                    this.triggerAutoSave(); this.showToast('Stock updated!', "success");
+                    this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); this.triggerAutoSave(); this.showToast('Stock updated!', "success");
                 });
                 this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
 
                 this.ui.inventoryTableBody.addEventListener('click', (e) => {
                     const icon = e.target.closest('.action-icon');
-                    if (!icon || !icon.classList.contains('delete')) return;
+                    if (!icon) return;
                     const particulars = icon.dataset.particulars;
-                    if (confirm(`Delete "${particulars}"?`)) {
-                        this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars);
-                        this.renderInventory(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success');
+                    if (icon.classList.contains('delete')) {
+                        if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderInventory(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); }
+                    } else if (icon.classList.contains('edit')) {
+                        const item = this.state.inventory.find(i => i.particulars === particulars);
+                        if(!item) return;
+                        const newQty = prompt("Enter new quantity:", item.quantity); const newCost = prompt("Enter new cost rate:", item.rate);
+                        if (newQty !== null && newCost !== null) {
+                            const parsedQty = parseInt(newQty, 10); const parsedCost = parseFloat(newCost);
+                            if (!isNaN(parsedQty) && !isNaN(parsedCost)) { item.quantity = parsedQty; item.rate = parsedCost; this.renderInventory(); this.triggerAutoSave(); this.showToast('Item updated.', 'success'); } 
+                            else { this.showToast('Invalid input.', 'error'); }
+                        }
                     }
                 });
 
-                this.ui.analytics.filterBtn.addEventListener('click', () => this.renderFilteredAnalytics());
+                this.ui.analytics.filterBtn.addEventListener('click', () => {
+                    const start = new Date(this.ui.analytics.startDate.value); const end = new Date(this.ui.analytics.endDate.value);
+                    this.renderAnalytics(start, end);
+                });
                 
                 this.ui.creditSaleForm.addEventListener('submit', (e) => { 
                     e.preventDefault(); 
-                    const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim();
-                    const p = e.target.querySelector('.particulars').value.trim();
-                    const q = parseInt(e.target.querySelector('.quantity').value, 10);
-                    const r = parseFloat(e.target.querySelector('.rate').value);
+                    const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value);
                     if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; }
                     const itemInStock = this.state.inventory.find(i => i.particulars === p);
                     if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;}
@@ -820,21 +812,35 @@
 
                 this.ui.creditorListContainer.addEventListener('click', e => {
                     if (e.target.classList.contains('pay-btn')) {
-                        const name = e.target.dataset.creditorName;
-                        const payment = parseFloat(prompt(`Enter payment amount for ${name}:`));
+                        const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`));
                         if (!isNaN(payment) && payment > 0) {
                             let rem = payment;
                             const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date);
                             for (const tx of txs) {
                                 if (rem <= 0) break;
-                                const due = tx.total - (tx.paidAmount || 0);
-                                const payForThis = Math.min(rem, due);
-                                tx.paidAmount = (tx.paidAmount || 0) + payForThis;
-                                rem -= payForThis;
+                                const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due);
+                                tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis;
                             }
                             this.showToast(`Payment of ₹${payment.toFixed(2)} recorded.`, "success");
                             this.renderCreditorList(); this.triggerAutoSave();
                         }
+                    }
+                });
+
+                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { 
+                    const dateStr = this.ui.settings.holidayDateInput.value; 
+                    if (!dateStr) { this.showToast("Select a date.", "error"); return; }
+                    const dateObj = new Date(dateStr);
+                    if (dateObj.getDay() !== 1) { this.showToast("Please select a Monday to make an exception.", "error"); return; }
+                    if (this.state.holidays.includes(dateStr)) { this.showToast("This date is already an exception.", "info"); return; } 
+                    this.state.holidays.push(dateStr); 
+                    this.renderHolidays(); this.triggerAutoSave(); this.showToast("Working day exception added!", "success");
+                });
+                this.ui.settings.holidayList.addEventListener('click', (e) => { 
+                    const icon = e.target.closest('.action-icon');
+                    if(icon) {
+                        this.state.holidays = this.state.holidays.filter(d => d !== icon.dataset.date); 
+                        this.renderHolidays(); this.triggerAutoSave(); this.showToast("Exception removed.", "success"); 
                     }
                 });
             },
