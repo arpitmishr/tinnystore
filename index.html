@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tinny Fashion - Business Manager</title>
-   <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%236B46C1'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
+    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%233182CE'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,22 +14,24 @@
 
     <style>
         :root {
-            --background-body: #E0E0E0;
-            --surface-light: #FFFFFF;
-            --text-dark: #333333;
-            --text-light: #FFFFFF;
-            --border-color: #BDBDBD;
+            --background-body: #F4F7F9;
+            --surface-card: #FFFFFF;
+            --text-primary: #2D3748;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
             
-            --input-bg: #E3F2FD;
-            --input-border: #90CAF9;
+            --accent-primary: #3182CE;
+            --accent-primary-hover: #2B6CB0;
+            --accent-secondary: #4A5568;
+            --accent-secondary-hover: #2D3748;
 
-            --btn-orange: #EF6C00;
-            --btn-green: #2E7D32;
-            --btn-red: #C62828;
-            --btn-blue: #1565C0;
+            --success-green: #38A169;
+            --danger-red: #E53E3E;
+            --info-orange: #ED8936;
             
             --border-radius-md: 8px;
-            --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
         }
 
         * {
@@ -38,19 +40,19 @@
             padding: 0;
         }
 
-        html { height: 100%; }
+        html { height: 100%; scroll-behavior: smooth; }
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background-color: var(--background-body);
-            color: var(--text-dark);
-            line-height: 1.5;
+            color: var(--text-primary);
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 1rem;
         }
 
         #login-screen {
@@ -58,215 +60,263 @@
             width: 100%; text-align: center;
         }
         .login-box {
-            background: var(--surface-light);
-            padding: 2.5rem 3rem; border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-strong); max-width: 480px; width: 100%;
+            background: var(--surface-card);
+            padding: 2rem 2.5rem; border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md); max-width: 450px; width: 100%;
         }
         .login-box h1 { margin-bottom: 0.5rem; font-size: 1.8rem; font-weight: 700; }
-        .login-box p { color: #555; margin-bottom: 1.5rem; font-size: 0.95rem; }
-        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 14px 28px; font-size: 1rem; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: background-color 0.3s; }
-        #signin-btn:hover:not([disabled]) { background-color: #357ae8; }
-        #signin-btn[disabled] { background-color: #9E9E9E; cursor: not-allowed; }
-        #signin-btn svg { width: 24px; height: 24px; background: white; border-radius: 50%; padding: 2px; }
+        .login-box p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        #signin-btn { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 1rem; font-weight: 500; border-radius: var(--border-radius-md); cursor: pointer; display: inline-flex; align-items: center; gap: 1rem; transition: background-color 0.3s; box-shadow: var(--shadow-sm); }
+        #signin-btn:hover:not([disabled]) { background-color: #357ae8; box-shadow: var(--shadow-md);}
+        #signin-btn[disabled] { background-color: #A0AEC0; cursor: not-allowed; }
+        #signin-btn svg { width: 22px; height: 22px; background: white; border-radius: 50%; padding: 2px; }
         #auth-status { margin-top: 1.5rem; font-size: 0.9rem; }
 
-        #app-container { display: none; }
+        #app-container { display: none; width: 100%; max-width: 900px; }
         #app-container.visible { display: block; }
         
         .tab-nav { display: none; } /* Hide original tab navigation */
         
-        .mobile-screen {
-            background-color: var(--surface-light);
-            border: 8px solid #424242;
-            border-radius: 20px;
+        .page-card {
+            background-color: var(--surface-card);
+            border-radius: var(--border-radius-md);
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-            box-shadow: var(--shadow-strong);
-            position: relative;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
         }
 
         .screen-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-color);
         }
         .screen-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
+            color: var(--text-primary);
             flex-grow: 1;
             text-align: center;
         }
         .nav-arrow {
+            background: transparent;
+            border: none;
             font-size: 1.5rem;
             font-weight: bold;
             cursor: pointer;
-            color: #555;
-            padding: 0 5px;
+            color: var(--text-secondary);
+            padding: 0 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, color 0.2s;
         }
+        .nav-arrow:hover { background-color: var(--background-body); color: var(--text-primary); }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeInContent 0.4s ease-out; }
-        @keyframes fadeInContent { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInContent { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Home Screen */
         .home-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
         }
         .home-button {
-            background-color: var(--surface-light);
+            background-color: var(--surface-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius-md);
-            padding: 20px 10px;
+            padding: 1.25rem 0.75rem;
             text-align: center;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease-in-out;
+            box-shadow: var(--shadow-sm);
         }
-        .home-button:hover { background-color: #f5f5f5; }
-        .home-button .icon { font-size: 2rem; margin-bottom: 8px; }
-        .home-button .title { font-weight: 500; }
+        .home-button:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-primary);
+        }
+        .home-button svg {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 0.5rem;
+            color: var(--accent-primary);
+        }
+        .home-button .title { font-weight: 500; color: var(--text-primary); }
 
         /* Forms */
-        .form-section { margin-bottom: 20px; }
+        .form-section { margin-bottom: 1.75rem; }
+        .form-section:last-child { margin-bottom: 0; }
         .form-section h3 {
             font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--accent-primary);
         }
-        .form-section h3::before { content: '❯ '; }
         
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
         }
-        .form-grid input[placeholder="Item Name"] { grid-column: 1 / -1; }
+        .form-grid.single-item-name input:first-child { grid-column: 1 / -1; }
 
         input[type="text"], input[type="number"], input[type="date"], input[type="file"], select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--input-border);
-            border-radius: 4px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
             font-size: 0.95rem;
-            background-color: var(--input-bg);
-            color: var(--text-dark);
+            background-color: var(--background-body);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input::placeholder { color: #616161; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+        }
+        input::placeholder { color: var(--text-secondary); }
+        label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.9rem; color: var(--text-secondary); }
 
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 0.8rem;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius-md);
             font-size: 1rem;
             font-weight: 500;
-            color: var(--text-light);
+            color: #fff;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
         }
-        .btn-orange { background-color: var(--btn-orange); }
-        .btn-green { background-color: var(--btn-green); }
-        .btn-blue { background-color: var(--btn-blue); }
-        .btn-small { padding: 6px 10px; font-size: 0.8rem; width: auto; margin-top: 0;}
-        .btn-danger { background-color: var(--btn-red); }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background-color: var(--accent-primary); }
+        .btn-primary:hover { background-color: var(--accent-primary-hover); }
+        .btn-secondary { background-color: var(--accent-secondary); }
+        .btn-secondary:hover { background-color: var(--accent-secondary-hover); }
+        .btn-success { background-color: var(--success-green); }
+        .btn-orange { background-color: var(--info-orange); }
+        .btn-danger { background-color: var(--danger-red); }
 
         .filter-controls {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
-        .filter-controls input[type="date"] {
-            flex-grow: 1;
-            padding: 8px;
-        }
-        .filter-controls .btn {
-            margin-top: 0;
-            padding: 8px 12px;
-        }
-        
+
         /* Tables */
         .table-container { 
             width: 100%; 
             overflow-x: auto; 
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
         }
         .styled-table {
             width: 100%;
             border-collapse: collapse;
         }
         .styled-table th, .styled-table td {
-            border: 1px solid var(--border-color);
-            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem;
             text-align: left;
             font-size: 0.9rem;
             vertical-align: middle;
+            white-space: nowrap;
         }
-        .styled-table th { background-color: #f5f5f5; font-weight: 700; }
+        .styled-table th { 
+            background-color: var(--background-body); 
+            font-weight: 700; 
+            position: sticky; 
+            top: 0;
+            z-index: 1;
+        }
+        .styled-table tr:nth-child(even) { background-color: #F7FAFC; }
 
         /* Specific Screen Styles */
-        /* Stocks */
-        .inventory-actions { display: flex; gap: 8px; align-items: center; justify-content: center;}
-        .action-icon { cursor: pointer; font-size: 1.2rem; }
-        .action-icon.delete { color: var(--btn-red); }
-        .action-icon.edit { color: var(--btn-blue); }
+        .inventory-actions { display: flex; gap: 1rem; align-items: center; justify-content: center;}
+        .action-icon { cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
+        .action-icon:hover { color: var(--text-primary); }
+        .action-icon svg { width: 18px; height: 18px; }
+        .action-icon.delete:hover { color: var(--danger-red); }
+        .action-icon.edit:hover { color: var(--accent-primary); }
+        .action-icon.return:hover { color: var(--info-orange); }
 
-        /* Analytics */
         .analytics-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
         .metric-card {
-            background-color: #fafafa;
-            border: 1px solid var(--border-color);
-            padding: 10px;
+            background-color: var(--background-body);
+            border-left: 4px solid var(--accent-primary);
+            padding: 0.75rem 1rem;
             border-radius: 4px;
-            font-size: 0.9rem;
+        }
+        .metric-card h4 {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
         }
         .metric-card p {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 700;
         }
         #stock-value-card {
             grid-column: 1 / -1;
-            text-align: center;
-        }
-        .top-products h3 {
-             font-size: 1rem;
-            font-weight: 700;
-            margin-top: 20px;
+            border-color: var(--info-orange);
         }
 
-        /* Settings */
-        .setting-section { margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-        .setting-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
-        .setting-section p { font-size: 0.9rem; color: #555; margin-bottom: 10px;}
         #holiday-list { list-style: none; padding: 0; }
-        #holiday-list li { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #eee; }
-        .delete-holiday-icon { cursor: pointer; color: var(--btn-red); font-weight: bold; font-size: 1.2rem; }
+        #holiday-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color); }
+        #holiday-list li:last-child { border-bottom: none; }
+        .delete-holiday-icon { cursor: pointer; color: var(--danger-red); font-weight: bold; font-size: 1.2rem; }
 
-        #toast { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); padding: 14px 25px; border-radius: var(--border-radius-md); color: var(--text-light); font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-strong); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 9999; opacity: 0; }
+        #toast { position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%); padding: 14px 25px; border-radius: var(--border-radius-md); color: #fff; font-weight: 600; font-size: 0.95rem; box-shadow: var(--shadow-md); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 9999; opacity: 0; text-align: center; }
         #toast.show { bottom: 25px; opacity: 1; }
-        #toast.success { background-color: var(--btn-green); }
-        #toast.error { background-color: var(--btn-red); }
-        #toast.info { background-color: var(--btn-blue); }
+        #toast.success { background-color: var(--success-green); }
+        #toast.error { background-color: var(--danger-red); }
+        #toast.info { background-color: var(--accent-primary); }
+        
+        /* Responsive Adjustments */
+        @media (min-width: 640px) {
+            .home-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .filter-controls {
+                flex-direction: row;
+                align-items: flex-end;
+            }
+            .filter-controls .btn {
+                margin-top: 0;
+                flex-shrink: 0;
+            }
+            .form-grid.single-item-name {
+                grid-template-columns: 2fr 1fr 1fr;
+            }
+            .form-grid.single-item-name input:first-child { grid-column: auto; }
+        }
 
     </style>
 </head>
 <body>
-    <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-box">
             <h1>Tinny Fashion</h1>
@@ -279,9 +329,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
     <div id="app-container">
-        <!-- HIDDEN TAB NAVIGATION FOR JS CONTROL -->
          <nav class="tab-nav">
             <button class="tab-button active" data-tab="home">Home</button>
             <button class="tab-button" data-tab="sales">Sales</button>
@@ -295,145 +343,137 @@
         </nav>
 
         <main>
-            <!-- Home Tab -->
             <div id="home" class="tab-content active">
-                <div class="mobile-screen">
+                <div class="page-card">
                     <header class="screen-header">
-                        <span class="nav-arrow" style="visibility: hidden;">◀</span>
+                        <button class="nav-arrow" style="visibility: hidden;">◀</button>
                         <h2>TINNY FASHION</h2>
-                         <span class="nav-arrow" id="signout-btn" title="Sign Out">⏏</span>
+                        <button class="nav-arrow" id="signout-btn" title="Sign Out">⏏</button>
                     </header>
                     <div class="home-grid">
                         <div class="home-button" data-target-tab="sales">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>
                             <div class="title">SALE</div>
                         </div>
                         <div class="home-button" data-target-tab="purchase">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.831a1.5 1.5 0 00-1.423-2.182H5.518M5.121 17.25c.387.02.75.029 1.121.029h11.218m-11.218 0l-1.022-.165m-1.022-.165L2.11 4.111" /></svg>
                             <div class="title">PURCHASE</div>
                         </div>
                         <div class="home-button" data-target-tab="stocks">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
                             <div class="title">STOCKS</div>
                         </div>
                          <div class="home-button" data-target-tab="records">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                             <div class="title">RECORDS</div>
                         </div>
                         <div class="home-button" data-target-tab="analytics">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
                             <div class="title">ANALYTICS</div>
                         </div>
                         <div class="home-button" data-target-tab="profit">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <div class="title">PROFIT</div>
                         </div>
                         <div class="home-button" data-target-tab="credit">
-                            <div class="icon">😊</div>
+                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.228a4.5 4.5 0 00-1.875-2.073l-1.736.653a3 3 0 00-2.72 4.682A4.5 4.5 0 006 18.72m7.5-2.228l1.736-.653a3 3 0 012.72 4.682 4.5 4.5 0 01-1.875 2.073M18 18.72v-7.5a2.25 2.25 0 00-2.25-2.25h-5.25a2.25 2.25 0 00-2.25 2.25v7.5m1.5-4.5h3.75" /></svg>
                             <div class="title">CREDIT</div>
                         </div>
                         <div class="home-button" data-target-tab="settings">
-                            <div class="icon">😊</div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.48.398.668 1.03.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.941-1.11.941h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438-.613.438-.995s-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.072-.044.146-.087.22-.127.331-.183.581-.495.645-.87l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             <div class="title">SETTING</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Sales Tab -->
             <div id="sales" class="tab-content">
-                <div class="mobile-screen">
+                <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>SALES</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
                     <div class="form-section">
                         <h3>SALES ENTRY - INVENTORY</h3>
                         <form id="sales-form">
-                            <div class="form-grid">
+                            <div class="form-grid single-item-name">
                                 <input type="text" class="particulars" placeholder="ITEM NAME" list="inventory-datalist" required>
                                 <input type="number" class="quantity" placeholder="QTY" min="1" required>
                                 <input type="number" class="rate" placeholder="SALE RATE" min="0" step="0.01" required>
                             </div>
-                            <button type="button" class="btn btn-orange" id="add-sale-item-btn">ADD ITEMS</button>
-                            <button type="button" class="btn btn-green" id="record-sale-btn">RECORD SALES</button>
+                            <button type="button" class="btn btn-secondary" id="add-sale-item-btn">+ ADD ANOTHER ITEM</button>
+                            <button type="button" class="btn btn-primary" id="record-sale-btn">RECORD SALES</button>
                         </form>
                     </div>
                     <div class="form-section">
                         <h3>SALES ENTRY - COSMETICS</h3>
                         <form id="cosmetic-sale-form">
-                           <div class="form-grid">
+                           <div class="form-grid single-item-name">
                                 <input type="text" id="cosmetic-particulars" placeholder="ITEM NAME" required>
                                 <input type="number" id="cosmetic-quantity" placeholder="QTY" min="1" required>
                                 <input type="number" id="cosmetic-sell-rate" placeholder="SALE RATE" min="0" step="0.01" required>
                                 <input type="number" id="cosmetic-cost-rate" placeholder="COST RATE" min="0" step="0.01" style="display:none;" value="0">
                             </div>
-                            <button type="submit" class="btn btn-orange">ADD ITEMS</button>
-                            <button type="submit" class="btn btn-green">RECORD SALES</button>
+                            <button type="submit" class="btn btn-primary">RECORD COSMETIC SALE</button>
                         </form>
                     </div>
                      <datalist id="inventory-datalist"></datalist>
                 </div>
             </div>
 
-            <!-- Purchase Tab -->
             <div id="purchase" class="tab-content">
-                <div class="mobile-screen">
+                <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>PURCHASE</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
                      <div class="form-section">
                         <h3>PURCHASE ENTRY</h3>
                         <form id="purchase-form">
-                            <div class="form-grid">
+                            <div class="form-grid single-item-name">
                                 <input type="text" class="particulars" placeholder="ITEM NAME" required>
                                 <input type="number" class="quantity" placeholder="QTY" min="1" required>
                                 <input type="number" class="rate" placeholder="COST RATE" min="0" step="0.01" required>
                             </div>
-                            <button type="button" id="add-purchase-item-btn" class="btn btn-orange">ADD ITEMS</button>
-                            <button type="submit" class="btn btn-green">RECORD PURCHASE</button>
+                            <button type="submit" class="btn btn-primary">RECORD PURCHASE</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Stocks Tab -->
              <div id="stocks" class="tab-content">
-                 <div class="mobile-screen">
+                 <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>STOCKS</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
-                     <h3>STOCKS DATA (INVENTORY)</h3>
                      <div class="table-container">
                         <table class="styled-table" id="inventory-table">
-                            <thead><tr><th>ITEM</th><th>QTY</th><th>COST</th><th>EDIT</th><th>DELETE</th></tr></thead>
+                            <thead><tr><th>ITEM</th><th>QTY</th><th>COST</th><th>ACTION</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Records Tab -->
             <div id="records" class="tab-content">
-                 <div class="mobile-screen">
+                 <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>RECORDS</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
-                     <h3>RECORD (TRANSACTION)</h3>
+                     <h3>TRANSACTION HISTORY</h3>
                      <div class="filter-controls">
-                        <input type="date" id="start-date">
-                        <input type="date" id="end-date">
-                        <button class="btn btn-blue btn-small" id="filter-btn">FILTER</button>
+                        <input type="date" id="start-date" title="Start Date">
+                        <input type="date" id="end-date" title="End Date">
+                        <button class="btn btn-primary" id="filter-btn">FILTER</button>
                      </div>
-                     <button class="btn btn-green" id="export-excel-btn">EXPORT TO EXCEL</button>
-                     <div class="table-container" style="margin-top: 15px;">
+                     <button class="btn btn-secondary" id="export-excel-btn">EXPORT TO EXCEL</button>
+                     <div class="table-container" style="margin-top: 1rem;">
                         <table class="styled-table" id="sales-history-table">
                              <thead><tr><th>DATE</th><th>ITEM</th><th>QTY</th><th>SALE</th><th>RETURN</th></tr></thead>
                              <tbody><tr><td colspan="5" style="text-align:center;">No records found.</td></tr></tbody>
@@ -442,32 +482,30 @@
                 </div>
             </div>
             
-            <!-- Analytics Tab -->
             <div id="analytics" class="tab-content">
-                 <div class="mobile-screen">
+                 <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>ANALYTICS</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
-                     <h3>ANALYTICS</h3>
                      <div class="analytics-grid">
-                        <div class="metric-card"><p id="filtered-sales-total">SALES: 0</p></div>
-                        <div class="metric-card"><p id="total-units">UNITS: 0</p></div>
-                        <div class="metric-card"><p id="filtered-profit-total">PROFIT: 0</p></div>
-                        <div class="metric-card"><p id="avg-margin">MARGIN: 0</p></div>
-                        <div class="metric-card" id="stock-value-card"><p id="total-inventory-cost">STOCK VALUE: 0</p></div>
+                        <div class="metric-card"><h4>SALES</h4><p id="filtered-sales-total">0</p></div>
+                        <div class="metric-card"><h4>UNITS</h4><p id="total-units">0</p></div>
+                        <div class="metric-card"><h4>PROFIT</h4><p id="filtered-profit-total">0</p></div>
+                        <div class="metric-card"><h4>MARGIN %</h4><p id="avg-margin">0</p></div>
+                        <div class="metric-card" id="stock-value-card"><h4>STOCK VALUE</h4><p id="total-inventory-cost">0</p></div>
                      </div>
-                     <div class="sales-profit-filter">
-                        <h4>Sales & Profit by Date Range</h4>
+                     <div class="form-section">
+                        <h3>FILTER BY DATE RANGE</h3>
                         <div class="filter-controls">
                             <input type="date" id="analytics-start-date">
                             <input type="date" id="analytics-end-date">
-                            <button class="btn btn-blue btn-small" id="analytics-filter-btn">FILTER</button>
+                            <button class="btn btn-primary" id="analytics-filter-btn">FILTER</button>
                         </div>
-                         <button class="btn btn-green" id="analytics-today-btn">TODAY</button>
+                         <button class="btn btn-secondary" id="analytics-today-btn">TODAY</button>
                      </div>
-                     <div class="top-products">
+                     <div class="form-section">
                          <h3>TOP PRODUCTS LIST</h3>
                          <div class="table-container">
                             <table class="styled-table" id="top-products-table">
@@ -479,22 +517,21 @@
                 </div>
             </div>
 
-            <!-- Profit Tab -->
             <div id="profit" class="tab-content">
-                <div class="mobile-screen">
+                <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>PROFIT</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
                     <h3>PROFIT DATA</h3>
                     <div class="filter-controls">
                         <input type="date" id="profit-start-date">
                         <input type="date" id="profit-end-date">
-                        <button id="profit-filter-btn" class="btn btn-blue btn-small">FILTER</button>
+                        <button id="profit-filter-btn" class="btn btn-primary">FILTER</button>
                     </div>
-                    <button class="btn btn-green" id="profit-export-btn">EXPORT TO EXCEL</button>
-                    <div class="table-container" style="margin-top: 15px;">
+                    <button class="btn btn-secondary" id="profit-export-btn">EXPORT TO EXCEL</button>
+                    <div class="table-container" style="margin-top: 1rem;">
                         <table class="styled-table" id="profit-details-table">
                             <thead><tr><th>DATE</th><th>ITEM</th><th>QTY</th><th>SALE</th><th>PROFIT</th></tr></thead>
                             <tbody><tr><td colspan="5" style="text-align:center;">No profit data.</td></tr></tbody>
@@ -503,61 +540,57 @@
                 </div>
             </div>
 
-            <!-- Credit Tab -->
             <div id="credit" class="tab-content">
-                <div class="mobile-screen">
+                <div class="page-card">
                     <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>CREDIT</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
                     <div class="form-section">
                         <h3>CREDIT SALES ENTRY</h3>
                         <form id="credit-inventory-sale-form">
-                            <div style="margin-bottom: 10px;">
-                                <input type="text" id="credit-inventory-party-name" placeholder="ABC PERSON" required>
+                            <div style="margin-bottom: 0.75rem;">
+                                <input type="text" id="credit-inventory-party-name" placeholder="Creditor's Name" required>
                             </div>
-                            <div class="form-grid">
+                            <div class="form-grid single-item-name">
                                 <input type="text" class="particulars" placeholder="ITEM NAME" list="inventory-datalist" required>
                                 <input type="number" class="quantity" placeholder="QTY" min="1" required>
                                 <input type="number" class="rate" placeholder="SALE RATE" min="0" step="0.01" required>
                             </div>
-                            <button type="button" class="btn btn-orange" id="add-credit-inventory-item-btn">ADD ITEMS</button>
-                            <button type="submit" class="btn btn-green">RECORD CREDIT SALES</button>
+                            <button type="submit" class="btn btn-primary">RECORD CREDIT SALE</button>
                         </form>
                     </div>
                      <div class="form-section">
                          <h3>CREDITORS LIST</h3>
                          <div id="creditor-list-container">
-                             <!-- Creditors will be dynamically inserted here -->
+                             <p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>
                          </div>
                      </div>
                 </div>
             </div>
             
-            <!-- Settings Tab -->
             <div id="settings" class="tab-content">
-                <div class="mobile-screen">
+                <div class="page-card">
                      <header class="screen-header">
-                        <span class="nav-arrow back-to-home">◀</span>
-                        <h2>TINNY FASHION</h2>
-                        <span class="nav-arrow" style="visibility: hidden;">▶</span>
+                        <button class="nav-arrow back-to-home">◀</button>
+                        <h2>SETTINGS</h2>
+                        <button class="nav-arrow" style="visibility: hidden;">▶</button>
                     </header>
-                    <h3>SETTING</h3>
-                    <div class="setting-section">
-                        <button class="btn btn-blue" id="load-data-btn-proxy">LOAD DATA (EXCEL)</button>
-                        <button class="btn btn-green" id="import-data-btn" style="margin-top: 5px;">IMPORT DATA</button>
+                    <div class="form-section">
+                        <h3>DATA MANAGEMENT</h3>
+                        <button class="btn btn-primary" id="import-data-btn">IMPORT FROM EXCEL</button>
                         <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
-                        <p>Load your existing inventory from an Excel file. The file must contain 'particulars', 'quantity', and 'rate' columns. This will overwrite your current inventory.</p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Load inventory from an Excel file. Columns must be: 'particulars', 'quantity', 'rate'. This overwrites current inventory.</p>
                     </div>
-                    <div class="setting-section">
+                    <div class="form-section">
                         <h3>HOLIDAY ENTRY</h3>
                         <div class="filter-controls">
                              <input type="date" id="holiday-date">
-                             <button id="add-holiday-btn" class="btn btn-blue btn-small">Add</button>
+                             <button id="add-holiday-btn" class="btn btn-primary">Add Holiday</button>
                         </div>
                         <ul id="holiday-list">
-                            <!-- Holidays will be dynamically inserted here -->
+                            <li>No holidays marked.</li>
                         </ul>
                     </div>
                 </div>
@@ -571,8 +604,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
-    // NOTE: This is a significantly modified script to adapt to the new UI structure.
-    // The core data logic from the original script is preserved.
     window.onload = () => {
         const { jsPDF } = window.jspdf;
 
@@ -681,7 +712,6 @@
                         const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
                         request = gapi.client.request({'path': `https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}`,'method': 'PATCH','params': { 'uploadType': 'multipart' },'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'},'body': multipartRequestBody});
                     } else {
-                        // Find or create folder first
                         let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
                         let folderId;
                         if (res.result.files && res.result.files.length > 0) {
@@ -717,21 +747,16 @@
                     homeButtons: document.querySelectorAll('.home-button'),
                     backToHomeButtons: document.querySelectorAll('.back-to-home'),
                     
-                    // Sales
                     salesForm: document.getElementById('sales-form'),
                     addSaleItemBtn: document.getElementById('add-sale-item-btn'),
                     recordSaleBtn: document.getElementById('record-sale-btn'),
                     cosmeticSaleForm: document.getElementById('cosmetic-sale-form'),
                     inventoryDatalist: document.getElementById('inventory-datalist'),
 
-                    // Purchase
                     purchaseForm: document.getElementById('purchase-form'),
-                    addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
                     
-                    // Stocks
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
 
-                    // Records
                     records: {
                         startDate: document.getElementById('start-date'),
                         endDate: document.getElementById('end-date'),
@@ -740,7 +765,6 @@
                         historyTableBody: document.querySelector('#sales-history-table tbody'),
                     },
                     
-                    // Analytics
                     analytics: {
                         filteredSales: document.getElementById('filtered-sales-total'),
                         totalUnits: document.getElementById('total-units'),
@@ -754,7 +778,6 @@
                         topProductsTableBody: document.querySelector('#top-products-table tbody'),
                     },
 
-                    // Profit
                     profit: {
                         startDate: document.getElementById('profit-start-date'),
                         endDate: document.getElementById('profit-end-date'),
@@ -763,16 +786,12 @@
                         detailsTableBody: document.querySelector('#profit-details-table tbody'),
                     },
 
-                    // Credit
                     credit: {
                         saleForm: document.getElementById('credit-inventory-sale-form'),
-                        addCreditItemBtn: document.getElementById('add-credit-inventory-item-btn'),
                         creditorListContainer: document.getElementById('creditor-list-container'),
                     },
 
-                    // Settings
                     settings: {
-                        loadDataBtnProxy: document.getElementById('load-data-btn-proxy'),
                         importDataBtn: document.getElementById('import-data-btn'),
                         holidayDateInput: document.getElementById('holiday-date'),
                         addHolidayBtn: document.getElementById('add-holiday-btn'),
@@ -783,12 +802,11 @@
 
             formatDateDDMMYYYY(date) { 
                 if (!(date instanceof Date) || isNaN(date)) return 'N/A';
-                return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'numeric', year: '2-digit' }).format(date);
+                return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
             },
             
             renderAll() {
                 const activeTabId = document.querySelector('.tab-content.active')?.id;
-
                 this.renderInventoryDatalist();
 
                 if (activeTabId === 'stocks') this.renderInventory();
@@ -807,10 +825,18 @@
                             <td>${item.particulars}</td>
                             <td>${item.quantity}</td>
                             <td>${item.rate.toFixed(2)}</td>
-                            <td><span class="action-icon edit" data-particulars="${item.particulars}">✓</span></td>
-                            <td><span class="action-icon delete" data-particulars="${item.particulars}">⊗</span></td>
+                            <td>
+                                <div class="inventory-actions">
+                                    <span class="action-icon edit" data-particulars="${item.particulars}" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path></svg>
+                                    </span>
+                                    <span class="action-icon delete" data-particulars="${item.particulars}" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.067-2.09 1.02-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"></path></svg>
+                                    </span>
+                                </div>
+                            </td>
                         </tr>`).join('')
-                    : `<tr><td colspan="5" style="text-align:center;">No inventory data.</td></tr>`;
+                    : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
             },
             
             renderInventoryDatalist() {
@@ -826,8 +852,8 @@
                     return acc;
                 }, { cost: 0, units: 0 });
 
-                this.ui.analytics.inventoryCost.textContent = `STOCK VALUE: ${cost.toFixed(0)}`;
-                this.ui.analytics.totalUnits.textContent = `UNITS: ${units}`;
+                this.ui.analytics.inventoryCost.textContent = `₹${cost.toFixed(0)}`;
+                this.ui.analytics.totalUnits.textContent = units;
                 
                 const startDateStr = this.ui.analytics.startDate.value, endDateStr = this.ui.analytics.endDate.value;
                 const startDate = startDateStr ? new Date(startDateStr) : null; if(startDate) startDate.setHours(0, 0, 0, 0);
@@ -839,11 +865,10 @@
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const avgMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
                 
-                this.ui.analytics.filteredSales.textContent = `SALES: ${totalSales.toFixed(0)}`;
-                this.ui.analytics.filteredProfit.textContent = `PROFIT: ${totalProfit.toFixed(0)}`;
-                this.ui.analytics.avgMargin.textContent = `MARGIN: ${avgMargin.toFixed(0)}`;
+                this.ui.analytics.filteredSales.textContent = `₹${totalSales.toFixed(0)}`;
+                this.ui.analytics.filteredProfit.textContent = `₹${totalProfit.toFixed(0)}`;
+                this.ui.analytics.avgMargin.textContent = avgMargin.toFixed(0);
 
-                // Top Products
                 const productSales = sales.flatMap(t => t.items).reduce((acc, item) => {
                     const cleanName = item.particulars.replace('(Cosmetic) ', '');
                     acc[cleanName] = (acc[cleanName] || 0) + item.quantity;
@@ -873,7 +898,9 @@
                         <td>${s.particulars.replace('(Cosmetic) ', '')}</td>
                         <td>${s.quantity}</td>
                         <td>${(s.sellingRate * s.quantity).toFixed(0)}</td>
-                        <td><span class="action-icon edit return-item-btn" data-transaction-id="${s.transactionId}" data-item-particulars="${s.particulars}">⤵</span></td>
+                        <td><span class="action-icon return return-item-btn" data-transaction-id="${s.transactionId}" data-item-particulars="${s.particulars}" title="Return Item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                        </span></td>
                     </tr>`).join('') 
                     : `<tr><td colspan="5" style="text-align:center;">No sales match criteria.</td></tr>`;
             },
@@ -907,26 +934,20 @@
                 const creditorsWithBalance = Object.entries(creditors).filter(([_, data]) => data.balance > 0.01);
                 
                 if (creditorsWithBalance.length === 0) {
-                     this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center;">No outstanding credit.</p>'; return;
+                     this.ui.credit.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>'; return;
                 }
                 
                 this.ui.credit.creditorListContainer.innerHTML = `
                     <div class="table-container">
                     <table class="styled-table">
-                        <thead><tr><th>DATE</th><th>ITEM</th><th>QTY</th><th>SALE</th><th>BALANCE</th><th></th></tr></thead>
+                        <thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead>
                         <tbody>
-                        ${creditorsWithBalance.map(([name, data]) => {
-                            const firstTx = data.transactions.find(tx => tx.total - (tx.paidAmount || 0) > 0.01);
-                            if(!firstTx) return '';
-                            return `<tr>
-                                <td>${this.formatDateDDMMYYYY(firstTx.date)}</td>
-                                <td>${firstTx.items[0].particulars.replace('(Cosmetic) ','')}</td>
-                                <td>${firstTx.items[0].quantity}</td>
-                                <td>${firstTx.items[0].sellingRate.toFixed(0)}</td>
-                                <td>${data.balance.toFixed(0)}</td>
-                                <td><button class="btn btn-blue btn-small pay-btn" data-creditor-name="${name}">PAY</button></td>
-                            </tr>`;
-                        }).join('')}
+                        ${creditorsWithBalance.map(([name, data]) => `
+                            <tr>
+                                <td>${name}</td>
+                                <td>₹${data.balance.toFixed(2)}</td>
+                                <td><button class="btn btn-primary pay-btn" style="width: auto; padding: 0.5rem 1rem; margin: 0;" data-creditor-name="${name}">PAY</button></td>
+                            </tr>`).join('')}
                         </tbody>
                     </table></div>`;
             },
@@ -938,11 +959,10 @@
                 [...this.state.holidays].sort().forEach(holidayDateStr => { 
                     const formattedDate = new Date(holidayDateStr + 'T00:00:00').toLocaleDateString('en-GB');
                     holidayListEl.insertAdjacentHTML('beforeend', 
-                        `<li><span>•${formattedDate}</span><span class="delete-holiday-icon" data-date="${holidayDateStr}">⊗</span></li>`); 
+                        `<li><span>${formattedDate}</span><span class="delete-holiday-icon" data-date="${holidayDateStr}">⊗</span></li>`); 
                 });
             },
 
-            // CORE LOGIC METHODS
             handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]); this.state.inventory = json.map(row => ({ particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0 })).filter(item => item.particulars !== "N/A"); this.renderAll(); this.triggerAutoSave(); this.showToast('Inventory loaded!', 'success'); } catch (error) { this.showToast('Error reading file. Check columns.', 'error'); } }; reader.readAsArrayBuffer(file); event.target.value = ''; },
             
             handleSalesReturn(transactionId, itemParticulars) {
@@ -972,9 +992,6 @@
                 const partyName = isCredit ? form.querySelector('#credit-inventory-party-name').value.trim() : null;
                 if (isCredit && !partyName) { this.showToast("Party Name is required.", "error"); return; }
                 
-                const saleItems = [], errors = [];
-                let total = 0;
-                
                 const p = form.querySelector('.particulars').value.trim();
                 const q = parseInt(form.querySelector('.quantity').value, 10);
                 const r = parseFloat(form.querySelector('.rate').value);
@@ -985,8 +1002,8 @@
                 if (!itemInStock) { this.showToast(`Item not found: ${p}`, "error"); return; }
                 if (itemInStock.quantity < q) { this.showToast(`Not enough stock for ${p}.`, "error"); return; }
 
-                saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate });
-                total += r * q;
+                const saleItems = [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }];
+                const total = r * q;
                 itemInStock.quantity -= q;
 
                 const newTransaction = { id: Date.now(), type: 'Sale', saleType: isCredit ? 'Credit' : 'Cash', partyName, date: new Date(), items: saleItems, total, paidAmount: 0 };
@@ -1005,8 +1022,6 @@
                 this.ui.homeButtons.forEach(button => {
                     button.addEventListener('click', () => {
                         const targetTabId = button.dataset.targetTab;
-                        this.ui.tabButtons.forEach(btn => btn.classList.remove('active'));
-                        document.querySelector(`.tab-button[data-tab="${targetTabId}"]`).classList.add('active');
                         this.ui.tabContents.forEach(content => content.classList.remove('active'));
                         document.getElementById(targetTabId).classList.add('active');
                         this.renderAll();
@@ -1014,7 +1029,8 @@
                 });
                 this.ui.backToHomeButtons.forEach(button => {
                     button.addEventListener('click', () => {
-                        document.querySelector('.home-button[data-target-tab="home"]').click();
+                        this.ui.tabContents.forEach(content => content.classList.remove('active'));
+                        document.getElementById('home').classList.add('active');
                     });
                 });
 
@@ -1045,34 +1061,50 @@
 
                 // Stocks Table Actions
                 this.ui.inventoryTableBody.addEventListener('click', (e) => {
-                    const particulars = e.target.dataset.particulars;
-                    if (e.target.classList.contains('delete')) {
+                    const icon = e.target.closest('.action-icon');
+                    if (!icon) return;
+
+                    const particulars = icon.dataset.particulars;
+                    if (icon.classList.contains('delete')) {
                         if (confirm(`Delete "${particulars}"?`)) {
                             this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars);
                             this.renderAll(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success');
                         }
-                    } else if (e.target.classList.contains('edit')) {
+                    } else if (icon.classList.contains('edit')) {
                         const item = this.state.inventory.find(i => i.particulars === particulars);
                         if(!item) return;
                         const newQty = prompt("Enter new quantity:", item.quantity);
                         const newCost = prompt("Enter new cost rate:", item.rate);
                         if (newQty !== null && newCost !== null) {
-                            item.quantity = parseInt(newQty, 10) || item.quantity;
-                            item.rate = parseFloat(newCost) || item.rate;
-                            this.renderAll(); this.triggerAutoSave(); this.showToast('Item updated.', 'success');
+                            const parsedQty = parseInt(newQty, 10);
+                            const parsedCost = parseFloat(newCost);
+                            if (!isNaN(parsedQty) && !isNaN(parsedCost)) {
+                                item.quantity = parsedQty;
+                                item.rate = parsedCost;
+                                this.renderAll(); this.triggerAutoSave(); this.showToast('Item updated.', 'success');
+                            } else {
+                                this.showToast('Invalid input.', 'error');
+                            }
                         }
                     }
                 });
 
-                // Records Actions
                 this.ui.records.filterBtn.addEventListener('click', () => this.renderRecords());
                 this.ui.records.historyTableBody.addEventListener('click', e => {
-                    if (e.target.classList.contains('return-item-btn')) {
-                        this.handleSalesReturn(parseInt(e.target.dataset.transactionId, 10), e.target.dataset.itemParticulars);
+                    const icon = e.target.closest('.return-item-btn');
+                    if (icon) {
+                        this.handleSalesReturn(parseInt(icon.dataset.transactionId, 10), icon.dataset.itemParticulars);
                     }
                 });
+                this.ui.records.exportBtn.addEventListener('click', () => {
+                    const salesData = this.state.transactions.filter(t=>t.type==='Sale').flatMap(t => t.items.map(i=>({Date: this.formatDateDDMMYYYY(t.date), Item: i.particulars, Qty: i.quantity, Rate: i.sellingRate, Total: i.quantity*i.sellingRate})));
+                    const ws = XLSX.utils.json_to_sheet(salesData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Sales Records");
+                    XLSX.writeFile(wb, "Sales_Records.xlsx");
+                });
 
-                // Analytics Actions
+
                 this.ui.analytics.filterBtn.addEventListener('click', () => this.renderAnalytics());
                 this.ui.analytics.todayBtn.addEventListener('click', () => {
                     const today = new Date().toISOString().slice(0, 10);
@@ -1081,11 +1113,16 @@
                     this.renderAnalytics();
                 });
                 
-                // Profit Actions
                 this.ui.profit.filterBtn.addEventListener('click', () => this.renderProfit());
+                this.ui.profit.exportBtn.addEventListener('click', () => {
+                    const profitData = this.state.transactions.filter(t=>t.type==='Sale').flatMap(t => t.items.map(i=>({Date: this.formatDateDDMMYYYY(t.date), Item: i.particulars, Qty: i.quantity, Sale: (i.quantity*i.sellingRate), Profit: (i.sellingRate-i.costRate)*i.quantity})));
+                    const ws = XLSX.utils.json_to_sheet(profitData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Profit Data");
+                    XLSX.writeFile(wb, "Profit_Data.xlsx");
+                });
 
-                // Settings
-                this.ui.settings.loadDataBtnProxy.addEventListener('click', () => this.ui.excelFile.click());
+
                 this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.excelFile.click());
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { 
                     const holidayDateStr = this.ui.settings.holidayDateInput.value; 
@@ -1101,7 +1138,6 @@
                     } 
                 });
 
-                 // Credit pay button
                 this.ui.credit.creditorListContainer.addEventListener('click', e => {
                     if (e.target.classList.contains('pay-btn')) {
                         const name = e.target.dataset.creditorName;
