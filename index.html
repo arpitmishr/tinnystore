@@ -231,12 +231,18 @@
         .priority-low { color: var(--text-secondary); }
 
         .toc-container {
+            position: sticky;
+            top: 70px; /* Adjust based on header height */
+            background-color: var(--background-body);
+            z-index: 90;
             display: flex;
             gap: 0.5rem;
             padding: 0.5rem 0 1.5rem 0;
             overflow-x: auto;
             -ms-overflow-style: none; /* IE and Edge */
             scrollbar-width: none; /* Firefox */
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
         }
         .toc-container::-webkit-scrollbar { display: none; }
         .toc-link {
@@ -254,6 +260,12 @@
             background-color: var(--background-body);
             color: var(--text-primary);
             border-color: var(--accent-primary);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
         }
 
         .fab-btn {
@@ -432,7 +444,7 @@
                 
                 <div class="toc-container">
                     <a href="#analytics-snapshot" class="toc-link">Snapshot</a>
-                    <a href="#analytics-trends" class="toc-link">Trends</a>
+                    <a href="#analytics-trends" class="toc-link">Trends & Charts</a>
                     <a href="#analytics-fsn-ved" class="toc-link">FSN & VED Analysis</a>
                     <a href="#analytics-abc" class="toc-link">ABC Analysis</a>
                     <a href="#analytics-top-products" class="toc-link">Top Products</a>
@@ -457,10 +469,27 @@
                     <h2>Monthly Sales vs Profit</h2>
                     <canvas id="monthlySalesProfitChart" style="max-height: 350px;"></canvas>
                 </div>
+                <div class="chart-grid">
+                    <div class="card"><h2>Inventory Value by ABC</h2><canvas id="abcAnalysisChart" style="max-height: 300px;"></canvas></div>
+                    <div class="card"><h2>Stock by FSN Category</h2><canvas id="fsnAnalysisChart" style="max-height: 300px;"></canvas></div>
+                </div>
+
                 <div class="card" id="analytics-fsn-ved">
-                    <h2>FSN & VED Inventory Control Matrix</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                        Classifies items by sales frequency (<b>F</b>ast, <b>S</b>low, <b>N</b>on-moving) and importance (<b>V</b>ital, <b>E</b>ssential, <b>D</b>esirable) to assign a control priority.
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <h2>FSN & VED Inventory Control Matrix</h2>
+                        <div style="max-width: 250px;">
+                            <label>Filter by Priority</label>
+                            <select id="fsn-ved-priority-filter" style="padding: 0.75rem;">
+                                <option value="all">All Priorities</option>
+                                <option value="priority-very-high">🚨 Very High Priority</option>
+                                <option value="priority-high">High Priority</option>
+                                <option value="priority-medium">Medium / Moderate</option>
+                                <option value="priority-low">Low Priority</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem; margin-top: 1rem;">
+                        Classifies items by sales frequency (<b>F</b>ast, <b>S</b>low, <b>N</b>on-moving) and importance (<b>V</b>ital, <b>E</b>ssential, <b>D</b>esirable).
                     </p>
                     <div class="table-container">
                         <table class="styled-table" id="fsn-ved-analysis-table">
@@ -588,8 +617,7 @@
             saveTimeout: null,
             state: { inventory: [], transactions: [], holidays: [] },
             ui: {},
-            salesChartInstance: null,
-            monthlyChartInstance: null,
+            charts: {},
 
             init() {
                 this.cacheDOMElements();
@@ -746,6 +774,9 @@
                         inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
                         abcAnalysisTableBody: document.querySelector('#abc-analysis-table tbody'),
                         fsnVedAnalysisTableBody: document.querySelector('#fsn-ved-analysis-table tbody'),
+                        fsnVedPriorityFilter: document.getElementById('fsn-ved-priority-filter'),
+                        abcChart: document.getElementById('abcAnalysisChart'),
+                        fsnChart: document.getElementById('fsnAnalysisChart'),
                     },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
                     settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
@@ -761,8 +792,8 @@
                 if (this.ui.settings && this.ui.settings.themeToggleBtn) { this.ui.settings.themeToggleBtn.textContent = buttonText; }
                 this.updateChartDefaults();
                 const activePage = document.querySelector('.page.active')?.id;
-                if (activePage === 'dashboard' && this.salesChartInstance) { this.renderSalesChart(new Date(this.ui.dashboard.startDate.value), new Date(this.ui.dashboard.endDate.value)); }
-                if (activePage === 'analytics' && this.monthlyChartInstance) { this.renderMonthlyChart(); }
+                if (activePage === 'analytics') { this.renderAnalyticsPage(); }
+                if (activePage === 'dashboard' && this.charts.sales) { this.renderSalesChart(new Date(this.ui.dashboard.startDate.value), new Date(this.ui.dashboard.endDate.value)); }
             },
 
             toggleTheme() { const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'; const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; this.applyTheme(newTheme); },
@@ -790,7 +821,6 @@
             },
             
             renderDashboard() {
-                // --- Today's Snapshot Calculations ---
                 const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
                 const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
                 const todaysSalesTransactions = this.state.transactions.filter(t => t.type === 'Sale' && t.date >= todayStart && t.date <= todayEnd);
@@ -798,14 +828,9 @@
                 const todayRevenue = todaysSalesTransactions.reduce((sum, t) => sum + t.total, 0);
                 const todayProfit = todaysSalesTransactions.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const todayMargin = todayRevenue > 0 ? (todayProfit / todayRevenue) * 100 : 0;
-                
                 const soldItemsToday = todaysSalesTransactions.flatMap(t => t.items);
                 const totalItemsSoldCount = soldItemsToday.reduce((sum, i) => sum + i.quantity, 0);
-                
-                const itemQtyMap = soldItemsToday.reduce((acc, item) => {
-                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
-                    return acc;
-                }, {});
+                const itemQtyMap = soldItemsToday.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
                 const topItem = Object.entries(itemQtyMap).sort((a, b) => b[1] - a[1])[0];
 
                 this.ui.dashboard.todaySales.textContent = `₹${this.formatIndianNumber(todayRevenue)}`;
@@ -814,11 +839,9 @@
                 this.ui.dashboard.todayItemsSold.textContent = totalItemsSoldCount;
                 this.ui.dashboard.todayTopItem.textContent = topItem ? `${topItem[0]} (${topItem[1]} sold)` : 'N/A';
 
-                // --- Overall KPI Calculations ---
                 const sales = this.state.transactions.filter(t => t.type === 'Sale'); const overallRevenue = sales.reduce((sum, t) => sum + t.total, 0); const overallProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); const { cost, lowStockCount } = this.state.inventory.reduce((acc, item) => { acc.cost += item.quantity * item.rate; if (item.quantity > 0 && item.quantity <= 5) acc.lowStockCount++; return acc; }, { cost: 0, lowStockCount: 0 });
                 this.ui.dashboard.revenue.textContent = `₹${this.formatIndianNumber(overallRevenue)}`; this.ui.dashboard.profit.textContent = `₹${this.formatIndianNumber(overallProfit)}`; this.ui.dashboard.lowStock.textContent = lowStockCount; this.ui.dashboard.invValue.textContent = `₹${this.formatIndianNumber(cost)}`;
                 
-                // --- Chart Rendering ---
                 const today = new Date(); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(today.getDate() - 6); this.ui.dashboard.startDate.valueAsDate = sevenDaysAgo; this.ui.dashboard.endDate.valueAsDate = today;
                 this.renderSalesChart(sevenDaysAgo, today);
             },
@@ -827,26 +850,9 @@
                 const ctx = this.ui.dashboard.salesChart.getContext('2d'); const labels = []; const dataPoints = {};
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) { const dateString = d.toISOString().split('T')[0]; labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); dataPoints[dateString] = 0; }
                 this.state.transactions.forEach(t => { const tDate = new Date(t.date); if (t.type === 'Sale' && tDate >= startDate && tDate <= endDate) { if (!this.isDateHoliday(tDate)) { const dateString = tDate.toISOString().split('T')[0]; if (dataPoints.hasOwnProperty(dateString)) { dataPoints[dateString] += t.total; } } } });
-                if (this.salesChartInstance) this.salesChartInstance.destroy();
-                this.salesChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), backgroundColor: 'rgba(221, 107, 32, 0.2)', borderColor: 'rgba(221, 107, 32, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { 
-                            y: { 
-                                beginAtZero: true,
-                                ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` }
-                            } 
-                        }, 
-                        plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: (context) => `Daily Sales: ₹${this.formatIndianNumber(context.parsed.y)}`
-                                }
-                            }
-                        } 
-                    } 
+                if (this.charts.sales) this.charts.sales.destroy();
+                this.charts.sales = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), backgroundColor: 'rgba(221, 107, 32, 0.2)', borderColor: 'rgba(221, 107, 32, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `Daily Sales: ₹${this.formatIndianNumber(context.parsed.y)}` } } } } 
                 });
             },
             
@@ -865,12 +871,11 @@
                 this.ui.analytics.filteredRevenue.textContent = `₹${this.formatIndianNumber(totalRevenue)}`;
                 this.ui.analytics.filteredProfit.textContent = `₹${this.formatIndianNumber(totalProfit)}`;
                 this.ui.analytics.filteredMargin.textContent = `${profitMargin.toFixed(1)}%`;
-                
                 const { unitsStock } = this.state.inventory.reduce((acc, item) => { acc.unitsStock += item.quantity; return acc; }, { unitsStock: 0 });
                 this.ui.analytics.unitsStock.textContent = unitsStock;
                 
                 if(!startDate && !endDate) { this.renderMonthlyChart(); }
-                
+                this.renderAnalysisCharts();
                 this.renderTopProductsTable(startDate, endDate);
                 this.renderInventoryStatusTable('all');
                 this.renderAbcAnalysis();
@@ -883,25 +888,9 @@
                 const sortedMonths = Object.keys(monthlyData).sort();
                 const labels = sortedMonths.map(m => new Date(m + '-02').toLocaleString('default', { month: 'short', year: 'numeric' }));
                 const salesData = sortedMonths.map(m => monthlyData[m].sales); const profitData = sortedMonths.map(m => monthlyData[m].profit);
-                if (this.monthlyChartInstance) this.monthlyChartInstance.destroy();
-                this.monthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [ { label: 'Sales', data: salesData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', }, { label: 'Profit', data: profitData, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', } ] }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { 
-                            y: { 
-                                beginAtZero: true,
-                                ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` }
-                            } 
-                        },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: (context) => `${context.dataset.label}: ₹${this.formatIndianNumber(context.parsed.y)}`
-                                }
-                            }
-                        }
-                    } 
+                if (this.charts.monthly) this.charts.monthly.destroy();
+                this.charts.monthly = new Chart(ctx, { type: 'bar', data: { labels, datasets: [ { label: 'Sales', data: salesData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', }, { label: 'Profit', data: profitData, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', } ] }, 
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` } } }, plugins: { tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ₹${this.formatIndianNumber(context.parsed.y)}` } } } } 
                 });
             },
             
@@ -914,10 +903,9 @@
                 let cumulativeValue = 0;
                 items.forEach(item => {
                     cumulativeValue += item.value;
-                    const cumulativePercent = (cumulativeValue / totalValue) * 100;
-                    item.cumulativePercent = cumulativePercent;
-                    if (cumulativePercent <= 70) item.category = "A";
-                    else if (cumulativePercent <= 90) item.category = "B";
+                    item.cumulativePercent = (cumulativeValue / totalValue) * 100;
+                    if (item.cumulativePercent <= 70) item.category = "A";
+                    else if (item.cumulativePercent <= 90) item.category = "B";
                     else item.category = "C";
                 });
                 return items;
@@ -926,24 +914,15 @@
             renderAbcAnalysis() {
                 const classifiedItems = this.performAbcAnalysis();
                 const tableBody = this.ui.analytics.abcAnalysisTableBody;
-                if (classifiedItems.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`;
-                    return;
-                }
+                if (classifiedItems.length === 0) { tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`; return; }
                 tableBody.innerHTML = classifiedItems.map(item => `
-                    <tr>
-                        <td>${item.particulars}</td>
-                        <td>₹${this.formatIndianNumber(item.value)}</td>
-                        <td>${item.cumulativePercent.toFixed(1)}%</td>
-                        <td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td>
-                    </tr>
+                    <tr><td>${item.particulars}</td><td>₹${this.formatIndianNumber(item.value)}</td><td>${item.cumulativePercent.toFixed(1)}%</td><td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td></tr>
                 `).join('');
             },
             
             getInventoryWithLastSaleDate() {
                 const inventoryMap = new Map(this.state.inventory.map(item => [item.particulars, { ...item, lastSaleDate: null }]));
                 const sortedTransactions = [...this.state.transactions].sort((a, b) => b.date - a.date);
-
                 for (const tx of sortedTransactions) {
                     if (tx.type === 'Sale') {
                         for (const item of tx.items) {
@@ -958,67 +937,58 @@
 
             performFsnVedAnalysis() {
                 const inventoryWithSales = this.getInventoryWithLastSaleDate();
-
                 const classifyFSN = (lastSaleDate) => {
-                    if (!lastSaleDate) return "N"; // Non-moving if never sold
-                    const today = new Date();
-                    const diffDays = Math.floor((today - new Date(lastSaleDate)) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 30) return "F"; // Fast
-                    if (diffDays <= 90) return "S"; // Slow
-                    return "N"; // Non-moving
+                    if (!lastSaleDate) return "N";
+                    const diffDays = Math.floor((new Date() - new Date(lastSaleDate)) / (1000 * 3600 * 24));
+                    if (diffDays <= 30) return "F"; if (diffDays <= 90) return "S"; return "N";
                 };
-
                 const classifyVED = (itemName) => {
-                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"];
-                    const essentialKeywords = ["kurti", "top", "nighty", "bra"];
-                    const desirableKeywords = ["frock", "suit", "sarara", "skirt"];
+                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"], essentialKeywords = ["kurti", "top", "nighty", "bra"], desirableKeywords = ["frock", "suit", "sarara", "skirt"];
                     const name = itemName.toLowerCase();
-
-                    if (vitalKeywords.some(word => name.includes(word))) return "V";
-                    if (essentialKeywords.some(word => name.includes(word))) return "E";
-                    if (desirableKeywords.some(word => name.includes(word))) return "D";
-                    return "E"; // Default to Essential
+                    if (vitalKeywords.some(w => name.includes(w))) return "V"; if (essentialKeywords.some(w => name.includes(w))) return "E"; if (desirableKeywords.some(w => name.includes(w))) return "D";
+                    return "E";
                 };
-
                 const getControlPriority = (fsn, ved) => {
-                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" };
-                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" };
-                    if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
-                    if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
-                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" };
-                    if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
-                    if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
-                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" };
+                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" }; if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
+                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" }; if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
+                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" }; if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
+                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" }; if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
                     if (fsn === "N" && ved === "D") return { text: "🔻 Scrap / Clearance", class: "priority-very-high" };
                     return { text: "Medium", class: "priority-medium" };
                 };
-                
-                return inventoryWithSales.map(item => {
-                    const fsn = classifyFSN(item.lastSaleDate);
-                    const ved = classifyVED(item.particulars);
-                    const priority = getControlPriority(fsn, ved);
-                    return { ...item, fsn, ved, priority };
-                });
+                return inventoryWithSales.map(item => ({ ...item, fsn: classifyFSN(item.lastSaleDate), ved: classifyVED(item.particulars), priority: getControlPriority(classifyFSN(item.lastSaleDate), classifyVED(item.particulars)) }));
             },
 
-            renderFsnVedAnalysis() {
-                const analysisResults = this.performFsnVedAnalysis();
-                const tableBody = this.ui.analytics.fsnVedAnalysisTableBody;
-
-                if (analysisResults.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No inventory data to analyze.</td></tr>`;
-                    return;
+            renderFsnVedAnalysis(priorityFilter = 'all') {
+                let analysisResults = this.performFsnVedAnalysis();
+                if (priorityFilter !== 'all') {
+                    analysisResults = analysisResults.filter(item => item.priority.class === priorityFilter);
                 }
-
+                const tableBody = this.ui.analytics.fsnVedAnalysisTableBody;
+                if (analysisResults.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No items match the selected priority.</td></tr>`; return; }
                 tableBody.innerHTML = analysisResults.map(item => `
-                    <tr>
-                        <td>${item.particulars}</td>
-                        <td>${item.quantity}</td>
-                        <td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td>
-                        <td><b>${item.ved}</b></td>
-                        <td class="${item.priority.class}">${item.priority.text}</td>
-                    </tr>
+                    <tr><td>${item.particulars}</td><td>${item.quantity}</td><td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td><td><b>${item.ved}</b></td><td class="${item.priority.class}">${item.priority.text}</td></tr>
                 `).join('');
+            },
+            
+            renderAnalysisCharts() {
+                // ABC Chart
+                const abcData = this.performAbcAnalysis();
+                const abcSummary = abcData.reduce((acc, item) => {
+                    acc[item.category] = (acc[item.category] || 0) + item.value;
+                    return acc;
+                }, { A: 0, B: 0, C: 0 });
+                if(this.charts.abc) this.charts.abc.destroy();
+                this.charts.abc = new Chart(this.ui.analytics.abcChart, { type: 'pie', data: { labels: ['A Items (Top 70%)', 'B Items (Next 20%)', 'C Items (Bottom 10%)'], datasets: [{ data: [abcSummary.A, abcSummary.B, abcSummary.C], backgroundColor: ['#38A169', '#3182CE', '#C53030'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+
+                // FSN Chart
+                const fsnData = this.performFsnVedAnalysis();
+                const fsnSummary = fsnData.reduce((acc, item) => {
+                    acc[item.fsn] = (acc[item.fsn] || 0) + item.quantity;
+                    return acc;
+                }, { F: 0, S: 0, N: 0 });
+                if(this.charts.fsn) this.charts.fsn.destroy();
+                this.charts.fsn = new Chart(this.ui.analytics.fsnChart, { type: 'doughnut', data: { labels: ['Fast-Moving', 'Slow-Moving', 'Non-Moving'], datasets: [{ data: [fsnSummary.F, fsnSummary.S, fsnSummary.N], backgroundColor: ['#38A169', '#D69E2E', '#C53030'] }] }, options: { responsive: true, maintainAspectRatio: false } });
             },
 
             renderTopProductsTable(startDate = null, endDate = null) {
@@ -1033,71 +1003,23 @@
             renderInventoryStatusTable(filter = 'all') {
                 if (!this.ui.analytics.inventoryStatusTableBody) return;
                 let inventoryToShow = this.state.inventory;
-
-                if (filter === 'low') {
-                    inventoryToShow = this.state.inventory.filter(item => item.quantity <= 3 && item.quantity > 0);
-                }
-                
+                if (filter === 'low') { inventoryToShow = this.state.inventory.filter(item => item.quantity <= 3 && item.quantity > 0); }
                 inventoryToShow.sort((a, b) => a.quantity - b.quantity);
-
                 const tableBody = this.ui.analytics.inventoryStatusTableBody;
-                if (inventoryToShow.length > 0) {
-                    tableBody.innerHTML = inventoryToShow.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td></tr>`).join('');
-                } else {
-                    tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter.</td></tr>`;
-                }
+                if (inventoryToShow.length > 0) { tableBody.innerHTML = inventoryToShow.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td></tr>`).join('');
+                } else { tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter.</td></tr>`; }
             },
 
             renderTransactions(startDate = null, endDate = null) {
                 let filteredTransactions = this.state.transactions;
-                if (startDate || endDate) {
-                    filteredTransactions = this.state.transactions.filter(t => {
-                        const tDate = new Date(t.date);
-                        if (startDate && tDate < startDate) return false;
-                        if (endDate && tDate > endDate) return false;
-                        return true;
-                    });
-                }
+                if (startDate || endDate) { filteredTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date); if (startDate && tDate < startDate) return false; if (endDate && tDate > endDate) return false; return true; }); }
                 const transactions = filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                const itemsHtml = (items, txId, type) => {
-                    return items.map(i => `
-                        <li>
-                            <div class="item-main-line">
-                                <span>${i.quantity} x ${i.particulars}</span>
-                                ${type === 'Sale' ? `<button class="btn-danger return-item-btn" style="padding: 2px 8px; font-size: 0.75rem;" data-tx-id="${txId}" data-item-p="${i.particulars}">Return</button>` : ''}
-                            </div>
-                        </li>
-                    `).join('');
-                };
-
+                const itemsHtml = (items, txId, type) => items.map(i => `<li><div class="item-main-line"><span>${i.quantity} x ${i.particulars}</span>${type === 'Sale' ? `<button class="btn-danger return-item-btn" style="padding: 2px 8px; font-size: 0.75rem;" data-tx-id="${txId}" data-item-p="${i.particulars}">Return</button>` : ''}</div></li>`).join('');
                 const tableRows = transactions.map(t => {
-                    const transactionProfit = t.type === 'Sale'
-                        ? t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0)
-                        : 0;
-
-                    return `<tr>
-                        <td>${new Date(t.date).toLocaleDateString('en-GB')}</td>
-                        <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td>
-                        <td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td>
-                        <td>₹${this.formatIndianNumber(t.total)}</td>
-                        <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td>
-                    </tr>`;
+                    const transactionProfit = t.type === 'Sale' ? t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0) : 0;
+                    return `<tr><td>${new Date(t.date).toLocaleDateString('en-GB')}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td><td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td><td>₹${this.formatIndianNumber(t.total)}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td></tr>`;
                 }).join('');
-
-                this.ui.transactions.table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Profit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${transactions.length > 0 ? tableRows : `<tr><td colspan="5" style="text-align:center;">No transactions found.</td></tr>`}
-                    </tbody>`;
+                this.ui.transactions.table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead><tbody>${transactions.length > 0 ? tableRows : `<tr><td colspan="5" style="text-align:center;">No transactions found.</td></tr>`}</tbody>`;
             },
             
             renderCreditorList() { 
@@ -1219,6 +1141,7 @@
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
                 this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all'));
                 this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
+                this.ui.analytics.fsnVedPriorityFilter.addEventListener('change', (e) => this.renderFsnVedAnalysis(e.target.value));
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(); const q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10); const c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value); const s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s)) { this.showToast("All fields are required.", "error"); return; } const newTx = { id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q, paidAmount: s * q }; this.state.transactions.push(newTx); this.triggerAutoSave(); e.target.reset(); this.showToast('Cosmetic sale recorded!', "success"); });
                 this.ui.creditSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value); if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; } const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;} itemInStock.quantity -= q; const newTx = { id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: new Date(), items: [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }], total: r * q, paidAmount: 0 }; this.state.transactions.push(newTx); this.renderCreditorList(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Credit sale to ${partyName} recorded!`, "success"); });
                 this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${this.formatIndianNumber(payment)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
