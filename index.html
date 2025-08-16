@@ -141,17 +141,15 @@
             margin-bottom: 0.5rem;
         }
         .kpi-card p { font-size: 2.25rem; font-weight: 700; line-height: 1; color: var(--text-primary); }
-        .main-chart-card { grid-column: 1 / -1; }
+        .kpi-card .sub-text { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-top: 0.25rem; }
 
+        .main-chart-card { grid-column: 1 / -1; }
+        
         .form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  position: fixed;   /* stays fixed on screen */
-  top: 0;            /* adjust as needed */
-  left: 0;
-  width: 100%;
-}
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
         input[type="text"], input[type="number"], input[type="date"], select {
             width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
@@ -206,6 +204,20 @@
             border-bottom: 1px dashed var(--border-color);
         }
         .multi-item-form-container .item-row:first-child { padding-top: 0; }
+        
+        .abc-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #fff;
+            display: inline-block;
+            text-align: center;
+            min-width: 24px;
+        }
+        .abc-badge-a { background-color: var(--success-green); }
+        .abc-badge-b { background-color: var(--info-blue); }
+        .abc-badge-c { background-color: var(--danger-red); }
 
         .fab-btn {
             position: fixed;
@@ -304,6 +316,19 @@
         <main id="main-content">
             <div id="dashboard" class="page active">
                 <div class="page-header"><h1>Dashboard</h1><p>A quick overview of your store's performance.</p></div>
+                <div class="card">
+                    <h2>Today's Snapshot</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card"><h3>Today's Sales</h3><p id="today-sales">₹0</p></div>
+                        <div class="kpi-card"><h3>Today's Profit</h3><p id="today-profit">₹0</p></div>
+                        <div class="kpi-card"><h3>Profit Margin</h3><p id="today-margin">0%</p></div>
+                        <div class="kpi-card"><h3>Items Sold</h3><p id="today-items-sold">0</p></div>
+                        <div class="kpi-card" style="grid-column: 1 / -1;">
+                            <h3>Top Trending Item Today</h3>
+                            <p id="today-top-item" style="font-size: 1.75rem;">N/A</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="kpi-grid">
                     <div class="card kpi-card"><h3>Overall Revenue</h3><p id="dashboard-revenue">₹0</p></div>
                     <div class="card kpi-card"><h3>Overall Profit</h3><p id="dashboard-profit">₹0</p></div>
@@ -384,6 +409,25 @@
                  <div class="card main-chart-card">
                     <h2>Monthly Sales vs Profit</h2>
                     <canvas id="monthlySalesProfitChart" style="max-height: 350px;"></canvas>
+                </div>
+                <div class="card">
+                    <h2>ABC Inventory Analysis</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Items are classified by value: <b>A</b> (Top 70%), <b>B</b> (Next 20%), <b>C</b> (Bottom 10%).
+                    </p>
+                    <div class="table-container">
+                        <table class="styled-table" id="abc-analysis-table">
+                            <thead>
+                                <tr>
+                                    <th>ITEM</th>
+                                    <th>INVENTORY VALUE</th>
+                                    <th>CUMULATIVE %</th>
+                                    <th>CATEGORY</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -621,7 +665,10 @@
             cacheDOMElements() {
                 this.ui = {
                     signinBtn: document.getElementById('signin-btn'), signoutBtn: document.getElementById('signout-btn'), navLinks: document.querySelectorAll('.nav-link'), pages: document.querySelectorAll('.page'), mobileMenuBtn: document.querySelector('.mobile-menu-btn'), topNav: document.getElementById('top-nav'),
-                    dashboard: { revenue: document.getElementById('dashboard-revenue'), profit: document.getElementById('dashboard-profit'), lowStock: document.getElementById('dashboard-low-stock'), invValue: document.getElementById('dashboard-inv-value'), salesChart: document.getElementById('salesTrendChart'), startDate: document.getElementById('dashboard-start-date'), endDate: document.getElementById('dashboard-end-date'), filterBtn: document.getElementById('dashboard-filter-btn'), },
+                    dashboard: { 
+                        revenue: document.getElementById('dashboard-revenue'), profit: document.getElementById('dashboard-profit'), lowStock: document.getElementById('dashboard-low-stock'), invValue: document.getElementById('dashboard-inv-value'), salesChart: document.getElementById('salesTrendChart'), startDate: document.getElementById('dashboard-start-date'), endDate: document.getElementById('dashboard-end-date'), filterBtn: document.getElementById('dashboard-filter-btn'),
+                        todaySales: document.getElementById('today-sales'), todayProfit: document.getElementById('today-profit'), todayMargin: document.getElementById('today-margin'), todayItemsSold: document.getElementById('today-items-sold'), todayTopItem: document.getElementById('today-top-item'),
+                    },
                     salesForm: document.getElementById('sales-form'), salesItemsContainer: document.getElementById('sales-items-container'), addSaleItemBtn: document.getElementById('add-sale-item-btn'), cosmeticSaleForm: document.getElementById('cosmetic-sale-form'), inventoryDatalist: document.getElementById('inventory-datalist'),
                     purchaseForm: document.getElementById('purchase-form'), purchaseItemsContainer: document.getElementById('purchase-items-container'), addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
@@ -629,6 +676,7 @@
                     analytics: { 
                         filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'),
                         inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
+                        abcAnalysisTableBody: document.querySelector('#abc-analysis-table tbody'),
                     },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
                     settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
@@ -673,8 +721,35 @@
             },
             
             renderDashboard() {
+                // --- Today's Snapshot Calculations ---
+                const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+                const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+                const todaysSalesTransactions = this.state.transactions.filter(t => t.type === 'Sale' && t.date >= todayStart && t.date <= todayEnd);
+                
+                const todayRevenue = todaysSalesTransactions.reduce((sum, t) => sum + t.total, 0);
+                const todayProfit = todaysSalesTransactions.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
+                const todayMargin = todayRevenue > 0 ? (todayProfit / todayRevenue) * 100 : 0;
+                
+                const soldItemsToday = todaysSalesTransactions.flatMap(t => t.items);
+                const totalItemsSoldCount = soldItemsToday.reduce((sum, i) => sum + i.quantity, 0);
+                
+                const itemQtyMap = soldItemsToday.reduce((acc, item) => {
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
+                    return acc;
+                }, {});
+                const topItem = Object.entries(itemQtyMap).sort((a, b) => b[1] - a[1])[0];
+
+                this.ui.dashboard.todaySales.textContent = `₹${this.formatIndianNumber(todayRevenue)}`;
+                this.ui.dashboard.todayProfit.textContent = `₹${this.formatIndianNumber(todayProfit)}`;
+                this.ui.dashboard.todayMargin.textContent = `${todayMargin.toFixed(1)}%`;
+                this.ui.dashboard.todayItemsSold.textContent = totalItemsSoldCount;
+                this.ui.dashboard.todayTopItem.textContent = topItem ? `${topItem[0]} (${topItem[1]} sold)` : 'N/A';
+
+                // --- Overall KPI Calculations ---
                 const sales = this.state.transactions.filter(t => t.type === 'Sale'); const overallRevenue = sales.reduce((sum, t) => sum + t.total, 0); const overallProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); const { cost, lowStockCount } = this.state.inventory.reduce((acc, item) => { acc.cost += item.quantity * item.rate; if (item.quantity > 0 && item.quantity <= 5) acc.lowStockCount++; return acc; }, { cost: 0, lowStockCount: 0 });
-                this.ui.dashboard.revenue.textContent = `₹${overallRevenue.toFixed(0)}`; this.ui.dashboard.profit.textContent = `₹${overallProfit.toFixed(0)}`; this.ui.dashboard.lowStock.textContent = lowStockCount; this.ui.dashboard.invValue.textContent = `₹${cost.toFixed(0)}`;
+                this.ui.dashboard.revenue.textContent = `₹${this.formatIndianNumber(overallRevenue)}`; this.ui.dashboard.profit.textContent = `₹${this.formatIndianNumber(overallProfit)}`; this.ui.dashboard.lowStock.textContent = lowStockCount; this.ui.dashboard.invValue.textContent = `₹${this.formatIndianNumber(cost)}`;
+                
+                // --- Chart Rendering ---
                 const today = new Date(); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(today.getDate() - 6); this.ui.dashboard.startDate.valueAsDate = sevenDaysAgo; this.ui.dashboard.endDate.valueAsDate = today;
                 this.renderSalesChart(sevenDaysAgo, today);
             },
@@ -684,12 +759,31 @@
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) { const dateString = d.toISOString().split('T')[0]; labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); dataPoints[dateString] = 0; }
                 this.state.transactions.forEach(t => { const tDate = new Date(t.date); if (t.type === 'Sale' && tDate >= startDate && tDate <= endDate) { if (!this.isDateHoliday(tDate)) { const dateString = tDate.toISOString().split('T')[0]; if (dataPoints.hasOwnProperty(dateString)) { dataPoints[dateString] += t.total; } } } });
                 if (this.salesChartInstance) this.salesChartInstance.destroy();
-                this.salesChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), backgroundColor: 'rgba(221, 107, 32, 0.2)', borderColor: 'rgba(221, 107, 32, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } } });
+                this.salesChartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), backgroundColor: 'rgba(221, 107, 32, 0.2)', borderColor: 'rgba(221, 107, 32, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: true,
+                                ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` }
+                            } 
+                        }, 
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `Daily Sales: ₹${this.formatIndianNumber(context.parsed.y)}`
+                                }
+                            }
+                        } 
+                    } 
+                });
             },
             
             renderInventory() { 
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
-                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>₹${item.rate.toFixed(2)}</td><td><div class="actions-cell"><span class="action-icon edit" data-particulars="${item.particulars}" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg></span><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></span></div></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
+                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>₹${this.formatIndianNumber(item.rate)}</td><td><div class="actions-cell"><span class="action-icon edit" data-particulars="${item.particulars}" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg></span><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></span></div></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
             },
             
             renderInventoryDatalist() { this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join(''); },
@@ -699,8 +793,8 @@
                 const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-                this.ui.analytics.filteredRevenue.textContent = `₹${totalRevenue.toFixed(0)}`;
-                this.ui.analytics.filteredProfit.textContent = `₹${totalProfit.toFixed(0)}`;
+                this.ui.analytics.filteredRevenue.textContent = `₹${this.formatIndianNumber(totalRevenue)}`;
+                this.ui.analytics.filteredProfit.textContent = `₹${this.formatIndianNumber(totalProfit)}`;
                 this.ui.analytics.filteredMargin.textContent = `${profitMargin.toFixed(1)}%`;
                 
                 const { unitsStock } = this.state.inventory.reduce((acc, item) => { acc.unitsStock += item.quantity; return acc; }, { unitsStock: 0 });
@@ -710,6 +804,7 @@
                 
                 this.renderTopProductsTable(startDate, endDate);
                 this.renderInventoryStatusTable('all');
+                this.renderAbcAnalysis();
             },
             
             renderMonthlyChart() {
@@ -719,9 +814,79 @@
                 const labels = sortedMonths.map(m => new Date(m + '-02').toLocaleString('default', { month: 'short', year: 'numeric' }));
                 const salesData = sortedMonths.map(m => monthlyData[m].sales); const profitData = sortedMonths.map(m => monthlyData[m].profit);
                 if (this.monthlyChartInstance) this.monthlyChartInstance.destroy();
-                this.monthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [ { label: 'Sales', data: salesData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', }, { label: 'Profit', data: profitData, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+                this.monthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [ { label: 'Sales', data: salesData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', }, { label: 'Profit', data: profitData, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', } ] }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: true,
+                                ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` }
+                            } 
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: ₹${this.formatIndianNumber(context.parsed.y)}`
+                                }
+                            }
+                        }
+                    } 
+                });
             },
             
+            performAbcAnalysis() {
+                // 1. Calculate value for each item
+                let items = this.state.inventory.map(item => ({
+                    ...item,
+                    value: item.quantity * item.rate
+                })).filter(item => item.value > 0); // Only include items with value
+
+                // 2. Sort by value (high to low)
+                items.sort((a, b) => b.value - a.value);
+
+                // 3. Calculate total inventory value
+                const totalValue = items.reduce((sum, item) => sum + item.value, 0);
+                if (totalValue === 0) return []; // Handle empty or valueless inventory
+
+                // 4. Assign A/B/C category
+                let cumulativeValue = 0;
+                items.forEach(item => {
+                    cumulativeValue += item.value;
+                    const cumulativePercent = (cumulativeValue / totalValue) * 100;
+                    item.cumulativePercent = cumulativePercent;
+
+                    if (cumulativePercent <= 70) {
+                        item.category = "A";
+                    } else if (cumulativePercent <= 90) {
+                        item.category = "B";
+                    } else {
+                        item.category = "C";
+                    }
+                });
+
+                return items;
+            },
+
+            renderAbcAnalysis() {
+                const classifiedItems = this.performAbcAnalysis();
+                const tableBody = this.ui.analytics.abcAnalysisTableBody;
+                
+                if (classifiedItems.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = classifiedItems.map(item => `
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>₹${this.formatIndianNumber(item.value)}</td>
+                        <td>${item.cumulativePercent.toFixed(1)}%</td>
+                        <td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td>
+                    </tr>
+                `).join('');
+            },
+
             renderTopProductsTable(startDate = null, endDate = null) {
                 const itemType = this.ui.analytics.itemTypeFilter.value;
                 const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; const transactionDate = new Date(t.date); if (startDate && transactionDate < startDate) return false; if (endDate && transactionDate > endDate) return false; return true; });
@@ -781,8 +946,8 @@
                         <td>${new Date(t.date).toLocaleDateString('en-GB')}</td>
                         <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td>
                         <td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td>
-                        <td>₹${t.total.toFixed(2)}</td>
-                        <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${transactionProfit.toFixed(2)}` : 'N/A'}</span></td>
+                        <td>₹${this.formatIndianNumber(t.total)}</td>
+                        <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td>
                     </tr>`;
                 }).join('');
 
@@ -805,7 +970,7 @@
                 const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => { if (!t.partyName) return acc; if (!acc[t.partyName]) acc[t.partyName] = 0; acc[t.partyName] += t.total - (t.paidAmount || 0); return acc; }, {});
                 const creditorsWithBalance = Object.entries(creditors).filter(([_, balance]) => balance > 0.01);
                 if (creditorsWithBalance.length === 0) { this.ui.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>'; return; }
-                this.ui.creditorListContainer.innerHTML = `<table class="styled-table"><thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead><tbody>${creditorsWithBalance.map(([name, balance]) => `<tr><td>${name}</td><td>₹${balance.toFixed(2)}</td><td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td></tr>`).join('')}</tbody></table>`;
+                this.ui.creditorListContainer.innerHTML = `<table class="styled-table"><thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead><tbody>${creditorsWithBalance.map(([name, balance]) => `<tr><td>${name}</td><td>₹${this.formatIndianNumber(balance)}</td><td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td></tr>`).join('')}</tbody></table>`;
             },
             
             isDateHoliday(dateObj) { if (dateObj.getDay() !== 1) return false; const dateString = dateObj.toISOString().split('T')[0]; return !this.state.holidays.includes(dateString); },
@@ -858,7 +1023,7 @@
                 if (errors.length > 0) { this.showToast(errors.join('\n'), "error"); return; } if (saleItems.length === 0) { this.showToast("No valid items to record.", "error"); return; }
                 saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; }); const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
                 this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: saleItems.map(({itemInStock, ...rest}) => rest), total, paidAmount: total });
-                this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); this.triggerAutoSave(); this.showToast(`Sale recorded! Total: ₹${total.toFixed(2)}`, "success");
+                this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); this.triggerAutoSave(); this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
             },
             
             handleItemReturn(txId, itemParticulars) {
@@ -922,7 +1087,7 @@
                 this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(); const q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10); const c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value); const s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s)) { this.showToast("All fields are required.", "error"); return; } const newTx = { id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q, paidAmount: s * q }; this.state.transactions.push(newTx); this.triggerAutoSave(); e.target.reset(); this.showToast('Cosmetic sale recorded!', "success"); });
                 this.ui.creditSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value); if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; } const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;} itemInStock.quantity -= q; const newTx = { id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: new Date(), items: [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }], total: r * q, paidAmount: 0 }; this.state.transactions.push(newTx); this.renderCreditorList(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Credit sale to ${partyName} recorded!`, "success"); });
-                this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${payment.toFixed(2)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
+                this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${this.formatIndianNumber(payment)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { const dateStr = this.ui.settings.holidayDateInput.value; if (!dateStr) { this.showToast("Select a date.", "error"); return; } const dateObj = new Date(dateStr); if (dateObj.getUTCDay() !== 1) { this.showToast("Please select a Monday to make an exception.", "error"); return; } if (this.state.holidays.includes(dateStr)) { this.showToast("This date is already an exception.", "info"); return; } this.state.holidays.push(dateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Working day exception added!", "success"); });
                 this.ui.settings.holidayList.addEventListener('click', (e) => { const icon = e.target.closest('.action-icon'); if(icon) { this.state.holidays = this.state.holidays.filter(d => d !== icon.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Exception removed.", "success"); } });
             },
@@ -932,6 +1097,11 @@
                 toast.textContent = msg;
                 toast.className = `show ${type}`;
                 setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+            },
+
+            formatIndianNumber(num) {
+                if (typeof num === 'undefined' || num === null || isNaN(num)) return '0';
+                return Number(num).toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 2});
             },
         };
 
