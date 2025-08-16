@@ -501,7 +501,7 @@
             },
             renderInventoryDatalist() { this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join(''); },
             renderAnalyticsPage(startDate = null, endDate = null) {
-                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; if (startDate && new Date(t.date) < startDate) return false; if (endDate && new Date(t.date) > endDate) return false; return true; });
+                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; const transactionDate = new Date(t.date); if (startDate && transactionDate < startDate) return false; if (endDate && transactionDate > endDate) return false; return true; });
                 const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
@@ -522,10 +522,10 @@
             },
             renderTopProductsTable(startDate = null, endDate = null) {
                 const itemType = this.ui.analytics.itemTypeFilter.value;
-                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; if (startDate && new Date(t.date) < startDate) return false; if (endDate && new Date(t.date) > endDate) return false; return true; });
+                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; const transactionDate = new Date(t.date); if (startDate && transactionDate < startDate) return false; if (endDate && transactionDate > endDate) return false; return true; });
                 const allSoldItems = sales.flatMap(t => t.items).filter(i => { const isCosmetic = i.particulars.includes('(Cosmetic)'); if (itemType === 'inventory') return !isCosmetic; if (itemType === 'cosmetic') return isCosmetic; return true; });
                 const productSales = allSoldItems.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
-                const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a).slice(0, 10);
+                const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a);
                 this.ui.analytics.topProductsTableBody.innerHTML = `<thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead><tbody>${topProducts.length > 0 ? topProducts.map(([name, qty]) => `<tr><td>${name}</td><td>${qty}</td></tr>`).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period.</td></tr>`}</tbody>`;
             },
             renderTransactions(startDate = null, endDate = null) {
@@ -593,7 +593,14 @@
                 });
                 this.ui.transactions.filterBtn.addEventListener('click', () => { const start = this.ui.transactions.startDate.value ? new Date(this.ui.transactions.startDate.value) : null; const end = this.ui.transactions.endDate.value ? new Date(this.ui.transactions.endDate.value) : null; this.renderTransactions(start, end); });
                 this.ui.transactions.table.addEventListener('click', (e) => { if(e.target.classList.contains('return-item-btn')) { this.handleItemReturn(parseInt(e.target.dataset.txId), e.target.dataset.itemP); } });
-                const analyticsFilterHandler = () => { const start = this.ui.analytics.startDate.value ? new Date(this.ui.analytics.startDate.value) : null; const end = this.ui.analytics.endDate.value ? new Date(this.ui.analytics.endDate.value) : null; this.renderAnalyticsPage(start, end); };
+                const analyticsFilterHandler = () => {
+                    const start = this.ui.analytics.startDate.value ? new Date(this.ui.analytics.startDate.value) : null;
+                    let end = this.ui.analytics.endDate.value ? new Date(this.ui.analytics.endDate.value) : null;
+                    if (end) {
+                        end.setHours(23, 59, 59, 999); // Set to the end of the day
+                    }
+                    this.renderAnalyticsPage(start, end);
+                };
                 this.ui.analytics.filterBtn.addEventListener('click', analyticsFilterHandler);
                 this.ui.analytics.itemTypeFilter.addEventListener('change', analyticsFilterHandler);
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
