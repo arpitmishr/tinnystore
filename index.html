@@ -393,7 +393,27 @@
                             </select>
                         </div>
                     </div>
-                    <div class="table-container" style="margin-top: 1.5rem;"><table class="styled-table" id="top-products-table"></table></div>
+                    <div class="table-container" style="margin-top: 1.5rem;"><table class="styled-table" id="top-products-table"><thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead><tbody></tbody></table></div>
+                </div>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <h2>Inventory Status</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" id="analytics-all-stock-btn">All Stock</button>
+                            <button class="btn btn-danger" id="analytics-low-stock-btn">Low Stock (&lt;= 3)</button>
+                        </div>
+                    </div>
+                    <div class="table-container" style="margin-top: 1.5rem;">
+                        <table class="styled-table" id="inventory-status-table">
+                            <thead>
+                                <tr>
+                                    <th>ITEM</th>
+                                    <th>AVAILABLE QTY</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -479,9 +499,6 @@
                     console.error("Error initializing GAPI client:", error);
                     this.showToast('Could not initialize Google APIs. Please refresh.', 'error');
                 } finally {
-                    // *** FIX: Enable the sign-in button regardless of initialization success.
-                    // If init fails, the auth flow itself will show an error to the user,
-                    // which is better than a permanently disabled button.
                     this.ui.signinBtn.disabled = false;
                 }
             },
@@ -605,7 +622,10 @@
                     purchaseForm: document.getElementById('purchase-form'), purchaseItemsContainer: document.getElementById('purchase-items-container'), addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
                     transactions: { table: document.getElementById('transactions-table'), startDate: document.getElementById('tx-start-date'), endDate: document.getElementById('tx-end-date'), filterBtn: document.getElementById('tx-filter-btn'), exportBtn: document.getElementById('export-tx-btn') },
-                    analytics: { filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'), },
+                    analytics: { 
+                        filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'),
+                        inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
+                    },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
                     settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
                 };
@@ -678,8 +698,14 @@
                 this.ui.analytics.filteredRevenue.textContent = `₹${totalRevenue.toFixed(0)}`;
                 this.ui.analytics.filteredProfit.textContent = `₹${totalProfit.toFixed(0)}`;
                 this.ui.analytics.filteredMargin.textContent = `${profitMargin.toFixed(1)}%`;
-                if(!startDate && !endDate) { const { unitsStock } = this.state.inventory.reduce((acc, item) => { acc.unitsStock += item.quantity; return acc; }, { unitsStock: 0 }); this.ui.analytics.unitsStock.textContent = unitsStock; this.renderMonthlyChart(); }
+                
+                const { unitsStock } = this.state.inventory.reduce((acc, item) => { acc.unitsStock += item.quantity; return acc; }, { unitsStock: 0 });
+                this.ui.analytics.unitsStock.textContent = unitsStock;
+                
+                if(!startDate && !endDate) { this.renderMonthlyChart(); }
+                
                 this.renderTopProductsTable(startDate, endDate);
+                this.renderInventoryStatusTable('all');
             },
             
             renderMonthlyChart() {
@@ -699,6 +725,24 @@
                 const productSales = allSoldItems.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
                 const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a);
                 this.ui.analytics.topProductsTableBody.innerHTML = topProducts.length > 0 ? topProducts.map(([name, qty]) => `<tr><td>${name}</td><td>${qty}</td></tr>`).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period.</td></tr>`;
+            },
+
+            renderInventoryStatusTable(filter = 'all') {
+                if (!this.ui.analytics.inventoryStatusTableBody) return;
+                let inventoryToShow = this.state.inventory;
+
+                if (filter === 'low') {
+                    inventoryToShow = this.state.inventory.filter(item => item.quantity <= 3 && item.quantity > 0);
+                }
+                
+                inventoryToShow.sort((a, b) => a.quantity - b.quantity);
+
+                const tableBody = this.ui.analytics.inventoryStatusTableBody;
+                if (inventoryToShow.length > 0) {
+                    tableBody.innerHTML = inventoryToShow.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td></tr>`).join('');
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter.</td></tr>`;
+                }
             },
 
             renderTransactions(startDate = null, endDate = null) {
@@ -870,6 +914,8 @@
                 this.ui.analytics.filterBtn.addEventListener('click', analyticsFilterHandler);
                 this.ui.analytics.itemTypeFilter.addEventListener('change', analyticsFilterHandler);
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
+                this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all'));
+                this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(); const q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10); const c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value); const s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s)) { this.showToast("All fields are required.", "error"); return; } const newTx = { id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q, paidAmount: s * q }; this.state.transactions.push(newTx); this.triggerAutoSave(); e.target.reset(); this.showToast('Cosmetic sale recorded!', "success"); });
                 this.ui.creditSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value); if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; } const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;} itemInStock.quantity -= q; const newTx = { id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: new Date(), items: [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }], total: r * q, paidAmount: 0 }; this.state.transactions.push(newTx); this.renderCreditorList(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Credit sale to ${partyName} recorded!`, "success"); });
                 this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${payment.toFixed(2)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
