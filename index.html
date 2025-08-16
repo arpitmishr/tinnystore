@@ -28,6 +28,7 @@
             --success-green: #38A169;
             --danger-red: #C53030;
             --info-blue: #3182CE;
+            --warning-yellow: #D69E2E;
 
             --border-radius-md: 12px;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -47,7 +48,7 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html { height: 100%; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--background-body);
@@ -146,13 +147,10 @@
         .main-chart-card { grid-column: 1 / -1; }
         
         .form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  top: 0;            /* adjust as needed */
-  left: 0;
-  width: 100%;
-}
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
         input[type="text"], input[type="number"], input[type="date"], select {
             width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
@@ -208,7 +206,7 @@
         }
         .multi-item-form-container .item-row:first-child { padding-top: 0; }
         
-        .abc-badge {
+        .abc-badge, .fsn-badge {
             padding: 0.2rem 0.6rem;
             border-radius: 12px;
             font-weight: 600;
@@ -221,6 +219,42 @@
         .abc-badge-a { background-color: var(--success-green); }
         .abc-badge-b { background-color: var(--info-blue); }
         .abc-badge-c { background-color: var(--danger-red); }
+        
+        .fsn-badge-f { background-color: var(--success-green); }
+        .fsn-badge-s { background-color: var(--warning-yellow); }
+        .fsn-badge-n { background-color: var(--danger-red); }
+
+        .priority-cell { font-weight: 600; }
+        .priority-very-high { color: var(--danger-red); }
+        .priority-high { color: var(--accent-primary); }
+        .priority-medium { color: var(--warning-yellow); }
+        .priority-low { color: var(--text-secondary); }
+
+        .toc-container {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0 1.5rem 0;
+            overflow-x: auto;
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .toc-container::-webkit-scrollbar { display: none; }
+        .toc-link {
+            white-space: nowrap;
+            padding: 0.5rem 1rem;
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .toc-link:hover {
+            background-color: var(--background-body);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+        }
 
         .fab-btn {
             position: fixed;
@@ -395,7 +429,17 @@
 
             <div id="analytics" class="page">
                 <div class="page-header"><h1>Analytics</h1><p>A complete overview of your business performance.</p></div>
-                <div class="card">
+                
+                <div class="toc-container">
+                    <a href="#analytics-snapshot" class="toc-link">Snapshot</a>
+                    <a href="#analytics-trends" class="toc-link">Trends</a>
+                    <a href="#analytics-fsn-ved" class="toc-link">FSN & VED Analysis</a>
+                    <a href="#analytics-abc" class="toc-link">ABC Analysis</a>
+                    <a href="#analytics-top-products" class="toc-link">Top Products</a>
+                    <a href="#analytics-inventory-status" class="toc-link">Inventory Status</a>
+                </div>
+
+                <div class="card" id="analytics-snapshot">
                     <h2>Performance Snapshot</h2>
                     <div class="form-grid" style="align-items: flex-end;">
                         <div><label>Start Date</label><input type="date" id="analytics-start-date"></div>
@@ -409,11 +453,31 @@
                     <div class="card kpi-card"><h3>Filtered Margin</h3><p id="analytics-filtered-margin">0%</p></div>
                     <div class="card kpi-card"><h3>Units in Stock</h3><p id="analytics-units-stock">0</p></div>
                 </div>
-                 <div class="card main-chart-card">
+                 <div class="card main-chart-card" id="analytics-trends">
                     <h2>Monthly Sales vs Profit</h2>
                     <canvas id="monthlySalesProfitChart" style="max-height: 350px;"></canvas>
                 </div>
-                <div class="card">
+                <div class="card" id="analytics-fsn-ved">
+                    <h2>FSN & VED Inventory Control Matrix</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Classifies items by sales frequency (<b>F</b>ast, <b>S</b>low, <b>N</b>on-moving) and importance (<b>V</b>ital, <b>E</b>ssential, <b>D</b>esirable) to assign a control priority.
+                    </p>
+                    <div class="table-container">
+                        <table class="styled-table" id="fsn-ved-analysis-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Stock</th>
+                                    <th>FSN</th>
+                                    <th>VED</th>
+                                    <th>Control Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" id="analytics-abc">
                     <h2>ABC Inventory Analysis</h2>
                     <p style="color: var(--text-secondary); margin-bottom: 1rem;">
                         Items are classified by value: <b>A</b> (Top 70%), <b>B</b> (Next 20%), <b>C</b> (Bottom 10%).
@@ -432,7 +496,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card" id="analytics-top-products">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                         <h2>Top Selling Products</h2>
                         <div style="max-width: 250px;">
@@ -446,7 +510,7 @@
                     </div>
                     <div class="table-container" style="margin-top: 1.5rem;"><table class="styled-table" id="top-products-table"><thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead><tbody></tbody></table></div>
                 </div>
-                <div class="card">
+                <div class="card" id="analytics-inventory-status">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                         <h2>Inventory Status</h2>
                         <div style="display: flex; gap: 0.5rem;">
@@ -677,9 +741,11 @@
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
                     transactions: { table: document.getElementById('transactions-table'), startDate: document.getElementById('tx-start-date'), endDate: document.getElementById('tx-end-date'), filterBtn: document.getElementById('tx-filter-btn'), exportBtn: document.getElementById('export-tx-btn') },
                     analytics: { 
+                        tocContainer: document.querySelector('.toc-container'),
                         filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'),
                         inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
                         abcAnalysisTableBody: document.querySelector('#abc-analysis-table tbody'),
+                        fsnVedAnalysisTableBody: document.querySelector('#fsn-ved-analysis-table tbody'),
                     },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
                     settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
@@ -808,6 +874,7 @@
                 this.renderTopProductsTable(startDate, endDate);
                 this.renderInventoryStatusTable('all');
                 this.renderAbcAnalysis();
+                this.renderFsnVedAnalysis();
             },
             
             renderMonthlyChart() {
@@ -839,53 +906,117 @@
             },
             
             performAbcAnalysis() {
-                // 1. Calculate value for each item
-                let items = this.state.inventory.map(item => ({
-                    ...item,
-                    value: item.quantity * item.rate
-                })).filter(item => item.value > 0); // Only include items with value
-
-                // 2. Sort by value (high to low)
+                let items = this.state.inventory.map(item => ({ ...item, value: item.quantity * item.rate })).filter(item => item.value > 0); 
                 items.sort((a, b) => b.value - a.value);
-
-                // 3. Calculate total inventory value
                 const totalValue = items.reduce((sum, item) => sum + item.value, 0);
-                if (totalValue === 0) return []; // Handle empty or valueless inventory
+                if (totalValue === 0) return [];
 
-                // 4. Assign A/B/C category
                 let cumulativeValue = 0;
                 items.forEach(item => {
                     cumulativeValue += item.value;
                     const cumulativePercent = (cumulativeValue / totalValue) * 100;
                     item.cumulativePercent = cumulativePercent;
-
-                    if (cumulativePercent <= 70) {
-                        item.category = "A";
-                    } else if (cumulativePercent <= 90) {
-                        item.category = "B";
-                    } else {
-                        item.category = "C";
-                    }
+                    if (cumulativePercent <= 70) item.category = "A";
+                    else if (cumulativePercent <= 90) item.category = "B";
+                    else item.category = "C";
                 });
-
                 return items;
             },
 
             renderAbcAnalysis() {
                 const classifiedItems = this.performAbcAnalysis();
                 const tableBody = this.ui.analytics.abcAnalysisTableBody;
-                
                 if (classifiedItems.length === 0) {
                     tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`;
                     return;
                 }
-
                 tableBody.innerHTML = classifiedItems.map(item => `
                     <tr>
                         <td>${item.particulars}</td>
                         <td>₹${this.formatIndianNumber(item.value)}</td>
                         <td>${item.cumulativePercent.toFixed(1)}%</td>
                         <td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td>
+                    </tr>
+                `).join('');
+            },
+            
+            getInventoryWithLastSaleDate() {
+                const inventoryMap = new Map(this.state.inventory.map(item => [item.particulars, { ...item, lastSaleDate: null }]));
+                const sortedTransactions = [...this.state.transactions].sort((a, b) => b.date - a.date);
+
+                for (const tx of sortedTransactions) {
+                    if (tx.type === 'Sale') {
+                        for (const item of tx.items) {
+                            if (inventoryMap.has(item.particulars) && !inventoryMap.get(item.particulars).lastSaleDate) {
+                                inventoryMap.get(item.particulars).lastSaleDate = tx.date;
+                            }
+                        }
+                    }
+                }
+                return Array.from(inventoryMap.values());
+            },
+
+            performFsnVedAnalysis() {
+                const inventoryWithSales = this.getInventoryWithLastSaleDate();
+
+                const classifyFSN = (lastSaleDate) => {
+                    if (!lastSaleDate) return "N"; // Non-moving if never sold
+                    const today = new Date();
+                    const diffDays = Math.floor((today - new Date(lastSaleDate)) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 30) return "F"; // Fast
+                    if (diffDays <= 90) return "S"; // Slow
+                    return "N"; // Non-moving
+                };
+
+                const classifyVED = (itemName) => {
+                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"];
+                    const essentialKeywords = ["kurti", "top", "nighty", "bra"];
+                    const desirableKeywords = ["frock", "suit", "sarara", "skirt"];
+                    const name = itemName.toLowerCase();
+
+                    if (vitalKeywords.some(word => name.includes(word))) return "V";
+                    if (essentialKeywords.some(word => name.includes(word))) return "E";
+                    if (desirableKeywords.some(word => name.includes(word))) return "D";
+                    return "E"; // Default to Essential
+                };
+
+                const getControlPriority = (fsn, ved) => {
+                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" };
+                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" };
+                    if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
+                    if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
+                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" };
+                    if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
+                    if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
+                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" };
+                    if (fsn === "N" && ved === "D") return { text: "🔻 Scrap / Clearance", class: "priority-very-high" };
+                    return { text: "Medium", class: "priority-medium" };
+                };
+                
+                return inventoryWithSales.map(item => {
+                    const fsn = classifyFSN(item.lastSaleDate);
+                    const ved = classifyVED(item.particulars);
+                    const priority = getControlPriority(fsn, ved);
+                    return { ...item, fsn, ved, priority };
+                });
+            },
+
+            renderFsnVedAnalysis() {
+                const analysisResults = this.performFsnVedAnalysis();
+                const tableBody = this.ui.analytics.fsnVedAnalysisTableBody;
+
+                if (analysisResults.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No inventory data to analyze.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = analysisResults.map(item => `
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td>
+                        <td><b>${item.ved}</b></td>
+                        <td class="${item.priority.class}">${item.priority.text}</td>
                     </tr>
                 `).join('');
             },
