@@ -131,9 +131,12 @@
         .main-chart-card { grid-column: 1 / -1; }
 
         .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.25rem;
+              display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  width: 100%;       /* fits parent */
+  max-width: 100%;   /* prevents overflow */
+  box-sizing: border-box;
         }
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
         input[type="text"], input[type="number"], input[type="date"], select {
