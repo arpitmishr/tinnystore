@@ -359,6 +359,7 @@
                 <a href="#" class="nav-link" data-page="settings">Settings</a>
             </nav>
             <div class="header-actions">
+                <select id="year-selector"></select> <!-- New: Year Selector -->
                 <button id="signout-btn">Sign Out</button>
                 <button class="mobile-menu-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
@@ -607,18 +608,22 @@
     window.onload = () => {
         const app = {
             // IMPORTANT: Replace with your own Google Cloud credentials
-            CLIENT_ID: '460969544827-ip0gvjsjv79m5sibkmgbngmqpl8n5u16.apps.googleusercontent.com',
-            API_KEY: 'AIzaSyDYfJX4cryYxGSgPe1319kHf_u6bb071lg',
+            CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Client ID
+            API_KEY: 'YOUR_GOOGLE_API_KEY',     // Replace with your actual API Key
             
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
-            DATA_FILE_NAME: 'fashion_store_data.json',
             
             tokenClient: null,
-            driveFileId: null,
+            driveFileId: null, // Stores the ID of the *current year's* data file in Google Drive
             isSaving: false,
             saveTimeout: null,
-            state: { inventory: [], transactions: [], holidays: [] },
+            state: { 
+                currentYear: new Date().getFullYear(), // Track the active year
+                inventory: [], 
+                transactions: [], 
+                holidays: [] 
+            },
             ui: {},
             charts: {},
 
@@ -626,13 +631,23 @@
                 this.cacheDOMElements();
                 this.loadTheme();
                 gapi.load('client', this.initializeGapiClient.bind(this));
+                
+                // Initialize OAuth2 token client for Google Drive access
                 this.tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: this.CLIENT_ID,
                     scope: this.SCOPES,
                     callback: this.handleAuthResponse.bind(this),
                 });
+
+                // Event listeners for sign-in and sign-out
                 this.ui.signinBtn.addEventListener('click', () => this.tokenClient.requestAccessToken({ prompt: 'consent' }));
                 this.ui.signoutBtn.addEventListener('click', this.signOut.bind(this));
+                
+                // Event listener for year selection
+                this.ui.yearSelector.addEventListener('change', this.handleYearChange.bind(this)); 
+                
+                // Populate the year selector dropdown on initialization
+                this.populateYearSelector(); 
             },
 
             async initializeGapiClient() {
@@ -645,6 +660,7 @@
                     console.error("Error initializing GAPI client:", error);
                     this.showToast('Could not initialize Google APIs. Please refresh.', 'error');
                 } finally {
+                    // Enable the sign-in button once GAPI is initialized
                     this.ui.signinBtn.disabled = false;
                 }
             },
@@ -654,92 +670,169 @@
                     this.showToast(`Authentication Error: ${response.error}`, 'error');
                     return;
                 }
+                // Hide login screen and show the app wrapper
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-wrapper').classList.add('visible');
-                await this.loadData();
+                
+                // Load data for the current year after successful authentication
+                await this.loadData(); 
+                
+                // Start the main application logic
                 this.startAppLogic();
             },
 
             signOut() {
                 const token = gapi.client.getToken();
                 if (token !== null) {
+                    // Revoke the access token to sign out
                     google.accounts.oauth2.revoke(token.access_token, () => {
-                        gapi.client.setToken('');
-                        this.driveFileId = null;
+                        gapi.client.setToken(''); // Clear the GAPI client token
+                        this.driveFileId = null; // Reset the Google Drive file ID
+                        this.state.currentYear = new Date().getFullYear(); // Reset to current system year
+                        
+                        // Show login screen and hide app wrapper
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-wrapper').classList.remove('visible');
+                        
+                        // Reset the year selector to the current year
+                        if (this.ui.yearSelector) {
+                           this.ui.yearSelector.value = this.state.currentYear;
+                        }
                     });
                 }
             },
 
             startAppLogic() {
+                // Apply default chart settings
                 this.updateChartDefaults();
+                // Add all necessary event listeners for UI interactions
                 this.addEventListeners();
-                this.renderPage('dashboard');
+                // Render the default page (Dashboard)
+                this.renderPage('dashboard'); 
             },
 
             async loadData() {
+                const year = this.state.currentYear;
+                const dataFileName = `fashion_store_data_${year}.json`; // Dynamic filename includes the year
+                
                 try {
+                    // List files in Google Drive to find the data file for the current year
                     const response = await gapi.client.drive.files.list({
-                        q: `name='${this.DATA_FILE_NAME}' and trashed=false`,
+                        q: `name='${dataFileName}' and trashed=false`,
                         spaces: 'drive',
                         fields: 'files(id)'
                     });
+
                     if (response.result.files && response.result.files.length > 0) {
-                        this.driveFileId = response.result.files[0].id;
+                        // If the file exists, store its ID
+                        this.driveFileId = response.result.files[0].id; 
+                        // Fetch the content of the file
                         const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
                         const loadedState = JSON.parse(fileContentResponse.body);
+                        
+                        // Ensure transaction dates are parsed as Date objects
                         if (loadedState.transactions) {
                             loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
                         }
+                        // Update the application state with loaded data
                         this.state = {
                             inventory: loadedState.inventory || [],
                             transactions: loadedState.transactions || [],
-                            holidays: loadedState.holidays || []
+                            holidays: loadedState.holidays || [],
+                            currentYear: year // Ensure current year is correctly set
                         };
                     } else {
-                        this.state = { inventory: [], transactions: [], holidays: [] };
+                        // If the file for the current year doesn't exist, initialize state with empty arrays
+                        this.state = { 
+                            inventory: [], 
+                            transactions: [], 
+                            holidays: [], 
+                            currentYear: year 
+                        };
+                        // The file will be created upon the first save operation for this year.
                     }
                 } catch (e) {
                     console.error("Error loading data from Google Drive:", e);
-                    this.showToast("Could not load data from Drive. Starting fresh.", "info");
-                    this.state = { inventory: [], transactions: [], holidays: [] };
+                    this.showToast(`Could not load data for ${year}. Starting fresh for this year.`, "info");
+                    // Initialize state even if loading fails to prevent errors
+                    this.state = { inventory: [], transactions: [], holidays: [], currentYear: year };
+                } finally {
+                    // Ensure the year selector in the UI reflects the current year's data being loaded
+                    if (this.ui.yearSelector && this.ui.yearSelector.value != this.state.currentYear) {
+                        this.ui.yearSelector.value = this.state.currentYear;
+                    }
+                    // After loading, render relevant UI components. Dashboard is a good default.
+                    // Depending on which page was active, you might want to re-render that page.
                 }
             },
 
+            // Triggers an auto-save after a delay if data changes
             triggerAutoSave() {
-                clearTimeout(this.saveTimeout);
-                this.saveTimeout = setTimeout(() => this.saveData(), 2000);
+                clearTimeout(this.saveTimeout); // Clear any pending save
+                this.saveTimeout = setTimeout(() => this.saveData(), 2000); // Schedule save after 2 seconds of inactivity
             },
 
+            // Saves the current state to Google Drive
             async saveData(isManual = false) {
-                if (this.isSaving) return;
+                if (this.isSaving) return; // Prevent concurrent saves
                 this.isSaving = true;
-                if (isManual) this.showToast("Syncing data to Drive...", "info");
+                if (isManual) this.showToast("Syncing data to Drive...", "info"); // User-initiated save
+                
+                const year = this.state.currentYear;
+                const dataFileName = `fashion_store_data_${year}.json`; // Filename includes the year
+
                 try {
-                    const dataToSave = JSON.stringify(this.state, null, 2);
-                    const boundary = '-------314159265358979323846';
+                    // Prepare the data to be saved
+                    const dataToSave = JSON.stringify({
+                        inventory: this.state.inventory,
+                        transactions: this.state.transactions,
+                        holidays: this.state.holidays,
+                        // Note: currentYear is not saved in the file itself, as it's managed by the filename
+                    }, null, 2); // Use 2-space indentation for readability
+                    
+                    const boundary = '-------314159265358979323846'; // Unique boundary for multipart upload
                     const delimiter = "\r\n--" + boundary + "\r\n";
                     const close_delim = "\r\n--" + boundary + "--";
-                    let request;
+                    let request; // Variable to hold the API request object
 
-                    if (this.driveFileId) {
+                    if (this.driveFileId) { 
+                        // If the file ID for the current year is known, update the existing file using PATCH
                         const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
                         request = gapi.client.request({
                             'path': `https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}`,
                             'method': 'PATCH',
-                            'params': { 'uploadType': 'multipart' },
+                            'params': { 'uploadType': 'multipart' }, // Use multipart upload type
                             'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
                             'body': multipartRequestBody
                         });
-                    } else {
-                        let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
-                        let folderId = res.result.files?.[0]?.id;
-                        if (!folderId) {
-                            res = await gapi.client.drive.files.create({ resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' }, fields: 'id' });
-                            folderId = res.result.id;
+                    } else { 
+                        // If it's a new year or the first save, create the file
+                        // First, ensure the app folder exists in Google Drive
+                        let folderId = null;
+                        try {
+                            const folderResponse = await gapi.client.drive.files.list({
+                                q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                                spaces: 'drive',
+                                fields: 'files(id)'
+                            });
+                            if (response.result.files && response.result.files.length > 0) {
+                                folderId = response.result.files[0].id; // Use existing folder ID
+                            } else {
+                                // Create the folder if it doesn't exist
+                                const createFolderResponse = await gapi.client.drive.files.create({
+                                    resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' },
+                                    fields: 'id'
+                                });
+                                folderId = createFolderResponse.result.id;
+                            }
+                        } catch (folderError) {
+                            console.error("Error managing app folder:", folderError);
+                            this.showToast("Failed to manage app folder in Drive.", "error");
+                            return; // Abort save if folder operations fail
                         }
-                        const metadata = { 'name': this.DATA_FILE_NAME, 'parents': [folderId], 'mimeType': 'application/json' };
+
+                        // Create the new data file within the app folder
+                        const metadata = { 'name': dataFileName, 'parents': [folderId], 'mimeType': 'application/json' };
                         const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
                         request = gapi.client.request({
                             'path': 'https://www.googleapis.com/upload/drive/v3/files',
@@ -749,164 +842,561 @@
                             'body': multipartRequestBody
                         });
                     }
-                    const response = await request;
-                    if (!this.driveFileId) { this.driveFileId = response.result.id; }
-                    if (isManual) this.showToast("Data synced successfully!", "success");
+
+                    const response = await request; // Execute the API request
+                    if (!this.driveFileId && response.result && response.result.id) {
+                        this.driveFileId = response.result.id; // Store the ID of the newly created/updated file
+                    }
+                    
+                    if (isManual) this.showToast("Data synced successfully!", "success"); // Show success for manual sync
+
                 } catch (e) {
                     console.error("Error saving data to Google Drive:", e);
-                    if (isManual) this.showToast("Failed to sync data.", "error");
+                    if (isManual) this.showToast("Failed to sync data.", "error"); // Show error for manual sync
                 } finally {
-                    this.isSaving = false;
+                    this.isSaving = false; // Reset saving flag
                 }
             },
 
+            // Handles the event when the user selects a different year from the dropdown
+            async handleYearChange(event) {
+                const selectedYear = parseInt(event.target.value);
+                // If the selected year is the same as the current year, do nothing
+                if (selectedYear === this.state.currentYear) {
+                    return; 
+                }
+
+                // Prompt user to save current year's data before switching
+                if (confirm(`Do you want to save changes for ${this.state.currentYear} before switching to ${selectedYear}?`)) {
+                    await this.saveData(); // Save the current year's data
+                }
+
+                // Reset state variables for the new year
+                this.state.inventory = [];
+                this.state.transactions = [];
+                this.state.holidays = [];
+                this.state.currentYear = selectedYear; // Update the current year
+                this.driveFileId = null; // Reset the file ID as it's year-specific
+
+                // Load data for the newly selected year
+                await this.loadData(); 
+                
+                // Re-render the UI to reflect the data for the new year
+                this.renderPage('dashboard'); // Render the dashboard page by default
+                // Consider re-rendering other pages or components if they are heavily year-dependent
+            },
+
+            // Populates the year selector dropdown with a range of years
+            populateYearSelector() {
+                const currentYear = new Date().getFullYear();
+                const startYear = currentYear - 50; // Show last 50 years (adjust as needed)
+                for (let year = currentYear; year >= startYear; year--) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    // Mark the current year as selected
+                    if (year === this.state.currentYear) {
+                        option.selected = true;
+                    }
+                    this.ui.yearSelector.appendChild(option);
+                }
+            },
+
+            // Caches references to all frequently used DOM elements
             cacheDOMElements() {
                 this.ui = {
-                    signinBtn: document.getElementById('signin-btn'), signoutBtn: document.getElementById('signout-btn'), navLinks: document.querySelectorAll('.nav-link'), pages: document.querySelectorAll('.page'), mobileMenuBtn: document.querySelector('.mobile-menu-btn'), topNav: document.getElementById('top-nav'),
+                    signinBtn: document.getElementById('signin-btn'), 
+                    signoutBtn: document.getElementById('signout-btn'), 
+                    navLinks: document.querySelectorAll('.nav-link'), 
+                    pages: document.querySelectorAll('.page'), 
+                    mobileMenuBtn: document.querySelector('.mobile-menu-btn'), 
+                    topNav: document.getElementById('top-nav'),
+                    yearSelector: document.getElementById('year-selector'), // Cache the year selector element
+                    
+                    // Dashboard specific elements
                     dashboard: { 
-                        revenue: document.getElementById('dashboard-revenue'), profit: document.getElementById('dashboard-profit'), lowStock: document.getElementById('dashboard-low-stock'), invValue: document.getElementById('dashboard-inv-value'), salesChart: document.getElementById('salesTrendChart'), startDate: document.getElementById('dashboard-start-date'), endDate: document.getElementById('dashboard-end-date'), filterBtn: document.getElementById('dashboard-filter-btn'),
-                        todaySales: document.getElementById('today-sales'), todayProfit: document.getElementById('today-profit'), todayMargin: document.getElementById('today-margin'), todayItemsSold: document.getElementById('today-items-sold'), todayTopItem: document.getElementById('today-top-item'),
+                        revenue: document.getElementById('dashboard-revenue'), 
+                        profit: document.getElementById('dashboard-profit'), 
+                        lowStock: document.getElementById('dashboard-low-stock'), 
+                        invValue: document.getElementById('dashboard-inv-value'), 
+                        salesChart: document.getElementById('salesTrendChart'), 
+                        startDate: document.getElementById('dashboard-start-date'), 
+                        endDate: document.getElementById('dashboard-end-date'), 
+                        filterBtn: document.getElementById('dashboard-filter-btn'),
+                        todaySales: document.getElementById('today-sales'), 
+                        todayProfit: document.getElementById('today-profit'), 
+                        todayMargin: document.getElementById('today-margin'), 
+                        todayItemsSold: document.getElementById('today-items-sold'), 
+                        todayTopItem: document.getElementById('today-top-item'),
                     },
-                    salesForm: document.getElementById('sales-form'), salesItemsContainer: document.getElementById('sales-items-container'), addSaleItemBtn: document.getElementById('add-sale-item-btn'), cosmeticSaleForm: document.getElementById('cosmetic-sale-form'), inventoryDatalist: document.getElementById('inventory-datalist'),
-                    purchaseForm: document.getElementById('purchase-form'), purchaseItemsContainer: document.getElementById('purchase-items-container'), addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
+                    // Sales page elements
+                    salesForm: document.getElementById('sales-form'), 
+                    salesItemsContainer: document.getElementById('sales-items-container'), 
+                    addSaleItemBtn: document.getElementById('add-sale-item-btn'), 
+                    cosmeticSaleForm: document.getElementById('cosmetic-sale-form'), 
+                    inventoryDatalist: document.getElementById('inventory-datalist'),
+                    // Purchase page elements
+                    purchaseForm: document.getElementById('purchase-form'), 
+                    purchaseItemsContainer: document.getElementById('purchase-items-container'), 
+                    addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
+                    // Inventory table elements
                     inventoryTableBody: document.querySelector('#inventory-table tbody'),
-                    transactions: { table: document.getElementById('transactions-table'), startDate: document.getElementById('tx-start-date'), endDate: document.getElementById('tx-end-date'), filterBtn: document.getElementById('tx-filter-btn'), exportBtn: document.getElementById('export-tx-btn') },
+                    // Transactions page elements
+                    transactions: { 
+                        table: document.getElementById('transactions-table'), 
+                        startDate: document.getElementById('tx-start-date'), 
+                        endDate: document.getElementById('tx-end-date'), 
+                        filterBtn: document.getElementById('tx-filter-btn'), 
+                        exportBtn: document.getElementById('export-tx-btn') 
+                    },
+                    // Analytics page elements
                     analytics: { 
                         tocContainer: document.querySelector('.toc-container'),
-                        filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'),
-                        inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
+                        filteredRevenue: document.getElementById('analytics-filtered-revenue'), 
+                        filteredProfit: document.getElementById('analytics-filtered-profit'), 
+                        filteredMargin: document.getElementById('analytics-filtered-margin'), 
+                        unitsStock: document.getElementById('analytics-units-stock'), 
+                        monthlyChart: document.getElementById('monthlySalesProfitChart'), 
+                        startDate: document.getElementById('analytics-start-date'), 
+                        endDate: document.getElementById('analytics-end-date'), 
+                        filterBtn: document.getElementById('analytics-filter-btn'), 
+                        todayBtn: document.getElementById('analytics-today-btn'), 
+                        itemTypeFilter: document.getElementById('analytics-item-type-filter'), 
+                        topProductsTableBody: document.querySelector('#top-products-table tbody'),
+                        inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), 
+                        allStockBtn: document.getElementById('analytics-all-stock-btn'), 
+                        lowStockBtn: document.getElementById('analytics-low-stock-btn'),
                         abcAnalysisTableBody: document.querySelector('#abc-analysis-table tbody'),
                         fsnVedAnalysisTableBody: document.querySelector('#fsn-ved-analysis-table tbody'),
                         fsnVedPriorityFilter: document.getElementById('fsn-ved-priority-filter'),
                         abcChart: document.getElementById('abcAnalysisChart'),
                         fsnChart: document.getElementById('fsnAnalysisChart'),
                     },
-                    creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
-                    settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
+                    // Credit page elements
+                    creditSaleForm: document.getElementById('credit-inventory-sale-form'), 
+                    creditorListContainer: document.querySelector('#creditor-list-container'),
+                    // Settings page elements
+                    settings: { 
+                        themeToggleBtn: document.getElementById('theme-toggle-btn'), 
+                        importDataBtn: document.getElementById('import-data-btn'), 
+                        excelFile: document.getElementById('excel-file'), 
+                        manualSyncBtn: document.getElementById('manual-sync-btn'), 
+                        holidayDateInput: document.getElementById('holiday-date'), 
+                        addHolidayBtn: document.getElementById('add-holiday-btn'), 
+                        holidayList: document.getElementById('holiday-list'), 
+                    }
                 };
             },
 
-            loadTheme() { const savedTheme = localStorage.getItem('theme') || 'dark'; this.applyTheme(savedTheme); },
-            
-            applyTheme(theme) {
-                document.documentElement.setAttribute('data-theme', theme);
-                localStorage.setItem('theme', theme);
-                const buttonText = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-                if (this.ui.settings && this.ui.settings.themeToggleBtn) { this.ui.settings.themeToggleBtn.textContent = buttonText; }
-                this.updateChartDefaults();
-                const activePage = document.querySelector('.page.active')?.id;
-                if (activePage === 'analytics') { this.renderAnalyticsPage(); }
-                if (activePage === 'dashboard' && this.charts.sales) { this.renderSalesChart(new Date(this.ui.dashboard.startDate.value), new Date(this.ui.dashboard.endDate.value)); }
+            // Loads the theme from local storage and applies it
+            loadTheme() { 
+                const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark theme
+                this.applyTheme(savedTheme); 
             },
-
-            toggleTheme() { const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'; const newTheme = currentTheme === 'dark' ? 'light' : 'dark'; this.applyTheme(newTheme); },
             
+            // Applies a given theme (light or dark) to the application
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme); // Set data-theme attribute on html
+                localStorage.setItem('theme', theme); // Save theme preference
+                
+                // Update theme toggle button text
+                const buttonText = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+                if (this.ui.settings && this.ui.settings.themeToggleBtn) { 
+                    this.ui.settings.themeToggleBtn.textContent = buttonText; 
+                }
+                
+                // Update chart styles based on the new theme
+                this.updateChartDefaults();
+                
+                // Re-render analytics page if it's currently active to reflect theme changes in charts/tables
+                const activePage = document.querySelector('.page.active')?.id;
+                if (activePage === 'analytics') { 
+                    this.renderAnalyticsPage(); 
+                }
+                // Re-render sales chart if active and theme change might affect its appearance
+                if (activePage === 'dashboard' && this.charts.sales) { 
+                    const start = new Date(this.ui.dashboard.startDate.value); 
+                    const end = new Date(this.ui.dashboard.endDate.value); 
+                    this.renderSalesChart(start, end); 
+                }
+            },
+            
+            // Toggles between light and dark themes
+            toggleTheme() { 
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.applyTheme(newTheme); 
+            },
+            
+            // Sets default styles for Chart.js based on the current theme
             updateChartDefaults() {
                 const style = getComputedStyle(document.documentElement);
                 const textColor = style.getPropertyValue('--text-primary').trim();
                 const gridColor = style.getPropertyValue('--border-color').trim();
-                Chart.defaults.color = textColor;
-                Chart.defaults.borderColor = gridColor;
+                Chart.defaults.color = textColor; // Set default text color for charts
+                Chart.defaults.borderColor = gridColor; // Set default grid color
             },
             
+            // Renders the specified page and updates navigation links
             renderPage(pageId) {
-                this.ui.pages.forEach(p => p.classList.remove('active')); document.getElementById(pageId)?.classList.add('active');
-                this.ui.navLinks.forEach(l => l.classList.remove('active')); document.querySelector(`.nav-link[data-page="${pageId}"]`)?.classList.add('active');
-                this.renderInventoryDatalist();
+                // Hide all pages
+                this.ui.pages.forEach(p => p.classList.remove('active')); 
+                // Show the requested page
+                document.getElementById(pageId)?.classList.add('active');
+                
+                // Update active navigation link
+                this.ui.navLinks.forEach(l => l.classList.remove('active')); 
+                document.querySelector(`.nav-link[data-page="${pageId}"]`)?.classList.add('active');
+                
+                // Refresh the inventory datalist (used in sales form)
+                this.renderInventoryDatalist(); 
+
+                // Call specific rendering functions based on the page
                 if (pageId === 'dashboard') this.renderDashboard();
                 if (pageId === 'stocks') this.renderInventory();
-                if (pageId === 'analytics') this.renderAnalyticsPage();
+                // Analytics page rendering might depend on selected date filters, so it's handled by its own filter button
+                if (pageId === 'analytics') this.renderAnalyticsPage(); 
                 if (pageId === 'transactions') this.renderTransactions();
                 if (pageId === 'credit') this.renderCreditorList();
                 if (pageId === 'settings') this.renderHolidays();
-                if (pageId === 'sales') { this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); }
-                if (pageId === 'purchase') { this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); }
+                
+                // Reset form elements for pages with forms (Sales and Purchase)
+                if (pageId === 'sales') { 
+                    this.ui.salesItemsContainer.innerHTML = ''; // Clear previous item rows
+                    this.addSaleItemRow(); // Add a single empty row to start
+                }
+                if (pageId === 'purchase') { 
+                    this.ui.purchaseItemsContainer.innerHTML = ''; // Clear previous item rows
+                    this.addPurchaseItemRow(); // Add a single empty row to start
+                }
             },
             
+            // Renders the dashboard statistics and chart
             renderDashboard() {
-                const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-                const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
-                const todaysSalesTransactions = this.state.transactions.filter(t => t.type === 'Sale' && t.date >= todayStart && t.date <= todayEnd);
+                // Calculate Today's Snapshot metrics
+                const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0); // Start of today
+                const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999); // End of today
                 
+                // Filter transactions for sales that occurred today
+                const todaysSalesTransactions = this.state.transactions.filter(t => 
+                    t.type === 'Sale' && 
+                    new Date(t.date) >= todayStart && 
+                    new Date(t.date) <= todayEnd
+                );
+                
+                // Calculate today's revenue, profit, margin, and items sold
                 const todayRevenue = todaysSalesTransactions.reduce((sum, t) => sum + t.total, 0);
                 const todayProfit = todaysSalesTransactions.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const todayMargin = todayRevenue > 0 ? (todayProfit / todayRevenue) * 100 : 0;
                 const soldItemsToday = todaysSalesTransactions.flatMap(t => t.items);
                 const totalItemsSoldCount = soldItemsToday.reduce((sum, i) => sum + i.quantity, 0);
-                const itemQtyMap = soldItemsToday.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
-                const topItem = Object.entries(itemQtyMap).sort((a, b) => b[1] - a[1])[0];
+                
+                // Determine top selling item for today
+                const itemQtyMap = soldItemsToday.reduce((acc, item) => { 
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; 
+                    return acc; 
+                }, {});
+                const topItem = Object.entries(itemQtyMap).sort((a, b) => b[1] - a[1])[0]; // Sort by quantity sold descending
 
+                // Update Today's Snapshot UI elements
                 this.ui.dashboard.todaySales.textContent = `₹${this.formatIndianNumber(todayRevenue)}`;
                 this.ui.dashboard.todayProfit.textContent = `₹${this.formatIndianNumber(todayProfit)}`;
                 this.ui.dashboard.todayMargin.textContent = `${todayMargin.toFixed(1)}%`;
                 this.ui.dashboard.todayItemsSold.textContent = totalItemsSoldCount;
                 this.ui.dashboard.todayTopItem.textContent = topItem ? `${topItem[0]} (${topItem[1]} sold)` : 'N/A';
 
-                const sales = this.state.transactions.filter(t => t.type === 'Sale'); const overallRevenue = sales.reduce((sum, t) => sum + t.total, 0); const overallProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); const { cost, lowStockCount } = this.state.inventory.reduce((acc, item) => { acc.cost += item.quantity * item.rate; if (item.quantity > 0 && item.quantity <= 5) acc.lowStockCount++; return acc; }, { cost: 0, lowStockCount: 0 });
-                this.ui.dashboard.revenue.textContent = `₹${this.formatIndianNumber(overallRevenue)}`; this.ui.dashboard.profit.textContent = `₹${this.formatIndianNumber(overallProfit)}`; this.ui.dashboard.lowStock.textContent = lowStockCount; this.ui.dashboard.invValue.textContent = `₹${this.formatIndianNumber(cost)}`;
+                // Calculate Overall metrics for the current year
+                // Filter transactions for sales within the current year (already loaded for the current year)
+                const salesForCurrentYear = this.state.transactions.filter(t => new Date(t.date).getFullYear() === this.state.currentYear);
+                const overallRevenue = salesForCurrentYear.reduce((sum, t) => sum + t.total, 0);
+                const overallProfit = salesForCurrentYear.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 
-                const today = new Date(); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(today.getDate() - 6); this.ui.dashboard.startDate.valueAsDate = sevenDaysAgo; this.ui.dashboard.endDate.valueAsDate = today;
-                this.renderSalesChart(sevenDaysAgo, today);
+                // Calculate inventory value and low stock count
+                const { cost, lowStockCount } = this.state.inventory.reduce((acc, item) => { 
+                    acc.cost += item.quantity * item.rate; 
+                    // Count items with stock between 1 and 5 (inclusive)
+                    if (item.quantity > 0 && item.quantity <= 5) acc.lowStockCount++; 
+                    return acc; 
+                }, { cost: 0, lowStockCount: 0 });
+
+                // Update Overall UI elements
+                this.ui.dashboard.revenue.textContent = `₹${this.formatIndianNumber(overallRevenue)}`; 
+                this.ui.dashboard.profit.textContent = `₹${this.formatIndianNumber(overallProfit)}`; 
+                this.ui.dashboard.lowStock.textContent = lowStockCount; 
+                this.ui.dashboard.invValue.textContent = `₹${this.formatIndianNumber(cost)}`;
+                
+                // Set default date range for the sales trend chart (last 7 days of the current year)
+                const today = new Date(); 
+                const sevenDaysAgo = new Date(); 
+                sevenDaysAgo.setDate(today.getDate() - 6); 
+                // Ensure dates are valid before setting
+                this.ui.dashboard.startDate.valueAsDate = sevenDaysAgo; 
+                this.ui.dashboard.endDate.valueAsDate = today;
+                
+                // Render the sales trend chart
+                this.renderSalesChart(sevenDaysAgo, today); 
             },
             
+            // Renders the sales trend chart using Chart.js
             renderSalesChart(startDate, endDate) {
-                const ctx = this.ui.dashboard.salesChart.getContext('2d'); const labels = []; const dataPoints = {};
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) { const dateString = d.toISOString().split('T')[0]; labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); dataPoints[dateString] = 0; }
-                this.state.transactions.forEach(t => { const tDate = new Date(t.date); if (t.type === 'Sale' && tDate >= startDate && tDate <= endDate) { if (!this.isDateHoliday(tDate)) { const dateString = tDate.toISOString().split('T')[0]; if (dataPoints.hasOwnProperty(dateString)) { dataPoints[dateString] += t.total; } } } });
+                const ctx = this.ui.dashboard.salesChart.getContext('2d'); 
+                const labels = []; // Stores date labels for the chart
+                const dataPoints = {}; // Stores sales data keyed by date string
+
+                // Populate labels and initialize dataPoints for the selected date range
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) { 
+                    const dateString = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+                    labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); // Format for display
+                    dataPoints[dateString] = 0; // Initialize sales for this date to 0
+                }
+
+                // Aggregate sales data from transactions within the specified date range and current year
+                this.state.transactions.forEach(t => { 
+                    const tDate = new Date(t.date); 
+                    // Check if transaction is a sale, within the date range, and from the current year
+                    if (t.type === 'Sale' && tDate >= startDate && tDate <= endDate && tDate.getFullYear() === this.state.currentYear) {
+                        // Uncomment and adapt if holiday logic needs to be integrated into chart display
+                        // if (!this.isDateHoliday(tDate)) { 
+                            const dateString = tDate.toISOString().split('T')[0];
+                            // Add sale total to the corresponding date if it exists in our dataPoints
+                            if (dataPoints.hasOwnProperty(dateString)) { 
+                                dataPoints[dateString] += t.total; 
+                            }
+                        // }
+                    } 
+                });
+                
+                // Destroy the previous chart instance if it exists
                 if (this.charts.sales) this.charts.sales.destroy();
-                this.charts.sales = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Daily Sales', data: Object.values(dataPoints), backgroundColor: 'rgba(221, 107, 32, 0.2)', borderColor: 'rgba(221, 107, 32, 1)', borderWidth: 2, tension: 0.4, fill: true }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `Daily Sales: ₹${this.formatIndianNumber(context.parsed.y)}` } } } } 
+                
+                // Create a new Chart.js instance
+                this.charts.sales = new Chart(ctx, { 
+                    type: 'line', // Line chart for trends
+                    data: { 
+                        labels, // X-axis labels (dates)
+                        datasets: [{ 
+                            label: 'Daily Sales', 
+                            data: Object.values(dataPoints), // Y-axis data (sales amounts)
+                            backgroundColor: 'rgba(221, 107, 32, 0.2)', // Fill color
+                            borderColor: 'rgba(221, 107, 32, 1)', // Line color
+                            borderWidth: 2, 
+                            tension: 0.4, // Makes the line slightly curved
+                            fill: true // Fill area under the line
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, // Allows chart to fit container dimensions
+                        scales: { 
+                            y: { 
+                                beginAtZero: true, // Start Y-axis at zero
+                                ticks: { 
+                                    // Format Y-axis labels as Indian Rupees
+                                    callback: (value) => `₹${this.formatIndianNumber(value)}` 
+                                } 
+                            } 
+                        }, 
+                        plugins: { 
+                            legend: { display: false }, // Hide legend as only one dataset
+                            tooltip: { 
+                                callbacks: { 
+                                    // Customize tooltip label format
+                                    label: (context) => `Daily Sales: ₹${this.formatIndianNumber(context.parsed.y)}` 
+                                } 
+                            } 
+                        } 
+                    } 
                 });
             },
             
+            // Renders the inventory table
             renderInventory() { 
+                // Sort inventory alphabetically by item name for consistency
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
-                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>₹${this.formatIndianNumber(item.rate)}</td><td><div class="actions-cell"><span class="action-icon edit" data-particulars="${item.particulars}" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg></span><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></span></div></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
+                
+                // Generate table rows from inventory data
+                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${this.formatIndianNumber(item.rate)}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <!-- Edit Action -->
+                                <span class="action-icon edit" data-particulars="${item.particulars}" title="Edit">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>
+                                </span>
+                                <!-- Delete Action -->
+                                <span class="action-icon delete" data-particulars="${item.particulars}" title="Delete">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data for ${this.state.currentYear}.</td></tr>`;
             },
             
-            renderInventoryDatalist() { this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join(''); },
+            // Populates the datalist with item names for the autocomplete feature in sales forms
+            renderInventoryDatalist() { 
+                this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join(''); 
+            },
             
+            // Renders the Analytics page, calculating and displaying various metrics and charts
             renderAnalyticsPage(startDate = null, endDate = null) {
-                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; const transactionDate = new Date(t.date); if (startDate && transactionDate < startDate) return false; if (endDate && transactionDate > endDate) return false; return true; });
+                const today = new Date();
+                const currentYear = this.state.currentYear;
+
+                // Determine the effective date range for analysis, ensuring it stays within the current year
+                let effectiveStartDate = startDate;
+                let effectiveEndDate = endDate;
+
+                if (!effectiveStartDate) { // If no start date provided, use the beginning of the current year
+                    effectiveStartDate = new Date(currentYear, 0, 1); 
+                } else {
+                    // Ensure the provided start date is not before the current year's start
+                    effectiveStartDate = new Date(Math.max(effectiveStartDate.getTime(), new Date(currentYear, 0, 1).getTime()));
+                }
+
+                if (!effectiveEndDate) { // If no end date provided, use the end of the current year
+                    effectiveEndDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); 
+                } else {
+                    // Ensure the provided end date is not after the current year's end
+                    effectiveEndDate = new Date(Math.min(effectiveEndDate.getTime(), new Date(currentYear, 11, 31, 23, 59, 59, 999).getTime()));
+                }
+
+                // Filter transactions to include only sales within the current year and the effective date range
+                const sales = this.state.transactions.filter(t => { 
+                    if (t.type !== 'Sale') return false; 
+                    const transactionDate = new Date(t.date); 
+                    return transactionDate.getFullYear() === currentYear && 
+                           transactionDate >= effectiveStartDate && 
+                           transactionDate <= effectiveEndDate;
+                });
+
+                // Calculate aggregated metrics
                 const totalRevenue = sales.reduce((sum, t) => sum + t.total, 0);
                 const totalProfit = sales.flatMap(t => t.items).reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0);
                 const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                
+                // Update UI elements for snapshot metrics
                 this.ui.analytics.filteredRevenue.textContent = `₹${this.formatIndianNumber(totalRevenue)}`;
                 this.ui.analytics.filteredProfit.textContent = `₹${this.formatIndianNumber(totalProfit)}`;
                 this.ui.analytics.filteredMargin.textContent = `${profitMargin.toFixed(1)}%`;
+                
+                // Calculate total units in stock (from current year's inventory)
                 const { unitsStock } = this.state.inventory.reduce((acc, item) => { acc.unitsStock += item.quantity; return acc; }, { unitsStock: 0 });
                 this.ui.analytics.unitsStock.textContent = unitsStock;
                 
-                if(!startDate && !endDate) { this.renderMonthlyChart(); }
-                this.renderAnalysisCharts();
-                this.renderTopProductsTable(startDate, endDate);
-                this.renderInventoryStatusTable('all');
-                this.renderAbcAnalysis();
-                this.renderFsnVedAnalysis();
+                // Render charts. Monthly chart is rendered for the whole current year by default,
+                // or for the specified date range if provided.
+                if(!startDate && !endDate) { 
+                    this.renderMonthlyChart(); 
+                } else {
+                    this.renderMonthlyChart(); // Re-render to ensure it reflects the current year's data, even if dates are passed.
+                }
+                this.renderAnalysisCharts(); // Render ABC and FSN charts
+                this.renderTopProductsTable(effectiveStartDate, effectiveEndDate); // Render top products table with date filtering
+                this.renderInventoryStatusTable('all'); // Render inventory status table
+                this.renderAbcAnalysis(); // Render ABC analysis table
+                this.renderFsnVedAnalysis(); // Render FSN/VED analysis table
             },
             
+            // Renders the monthly sales vs profit bar chart
             renderMonthlyChart() {
-                const ctx = this.ui.analytics.monthlyChart.getContext('2d'); const monthlyData = {};
-                this.state.transactions.forEach(t => { const monthKey = new Date(t.date).toISOString().slice(0, 7); if (!monthlyData[monthKey]) { monthlyData[monthKey] = { sales: 0, profit: 0 }; } if (t.type === 'Sale') { monthlyData[monthKey].sales += t.total; monthlyData[monthKey].profit += t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); } });
-                const sortedMonths = Object.keys(monthlyData).sort();
-                const labels = sortedMonths.map(m => new Date(m + '-02').toLocaleString('default', { month: 'short', year: 'numeric' }));
-                const salesData = sortedMonths.map(m => monthlyData[m].sales); const profitData = sortedMonths.map(m => monthlyData[m].profit);
+                const ctx = this.ui.analytics.monthlyChart.getContext('2d'); 
+                const monthlyData = {}; // To store aggregated sales and profit per month
+                
+                // Aggregate data from transactions for the current year
+                this.state.transactions.forEach(t => { 
+                    const transactionDate = new Date(t.date);
+                    // Process only sales transactions from the current year
+                    if (transactionDate.getFullYear() === this.state.currentYear && t.type === 'Sale') {
+                        const monthKey = transactionDate.toISOString().slice(0, 7); // Format: YYYY-MM
+                        if (!monthlyData[monthKey]) { // Initialize if month not yet seen
+                            monthlyData[monthKey] = { sales: 0, profit: 0 }; 
+                        }
+                        monthlyData[monthKey].sales += t.total; 
+                        monthlyData[monthKey].profit += t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0); 
+                    }
+                });
+
+                // Generate labels for all 12 months of the current year to ensure a complete chart
+                const allMonthsLabels = Array.from({ length: 12 }, (_, i) => {
+                    const monthIndex = i; // 0 for Jan, 11 for Dec
+                    const date = new Date(this.state.currentYear, monthIndex, 1); // Create date object for the month
+                    return date.toLocaleString('default', { month: 'short', year: 'numeric' }); // Format label (e.g., "Jan 2024")
+                });
+
+                // Prepare sales and profit data arrays, filling with 0 for months with no transactions
+                const salesData = allMonthsLabels.map((_, i) => {
+                    const monthKey = `${this.state.currentYear}-${String(i + 1).padStart(2, '0')}`; // YYYY-MM format
+                    return monthlyData[monthKey] ? monthlyData[monthKey].sales : 0;
+                });
+                const profitData = allMonthsLabels.map((_, i) => {
+                    const monthKey = `${this.state.currentYear}-${String(i + 1).padStart(2, '0')}`;
+                    return monthlyData[monthKey] ? monthlyData[monthKey].profit : 0;
+                });
+
+                // Destroy previous chart instance if it exists
                 if (this.charts.monthly) this.charts.monthly.destroy();
-                this.charts.monthly = new Chart(ctx, { type: 'bar', data: { labels, datasets: [ { label: 'Sales', data: salesData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', }, { label: 'Profit', data: profitData, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', } ] }, 
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: (value) => `₹${this.formatIndianNumber(value)}` } } }, plugins: { tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ₹${this.formatIndianNumber(context.parsed.y)}` } } } } 
+                
+                // Create a new Chart.js instance for the monthly comparison
+                this.charts.monthly = new Chart(ctx, { 
+                    type: 'bar', // Bar chart for monthly comparisons
+                    data: { 
+                        labels: allMonthsLabels, // Use all 12 months as labels
+                        datasets: [ 
+                            { 
+                                label: 'Sales', 
+                                data: salesData, 
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)', 
+                                borderColor: 'rgba(54, 162, 235, 1)', 
+                            }, 
+                            { 
+                                label: 'Profit', 
+                                data: profitData, 
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)', 
+                                borderColor: 'rgba(75, 192, 192, 1)', 
+                            } 
+                        ] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: true, 
+                                ticks: { 
+                                    callback: (value) => `₹${this.formatIndianNumber(value)}` 
+                                } 
+                            } 
+                        }, 
+                        plugins: { 
+                            tooltip: { 
+                                callbacks: { 
+                                    label: (context) => `${context.dataset.label}: ₹${this.formatIndianNumber(context.parsed.y)}` 
+                                } 
+                            } 
+                        } 
+                    } 
                 });
             },
             
+            // Performs ABC analysis on inventory based on value (quantity * rate)
             performAbcAnalysis() {
-                let items = this.state.inventory.map(item => ({ ...item, value: item.quantity * item.rate })).filter(item => item.value > 0); 
-                items.sort((a, b) => b.value - a.value);
+                // Analyze based on current inventory value
+                let items = this.state.inventory.map(item => ({ ...item, value: item.quantity * item.rate }))
+                                                .filter(item => item.value > 0); // Consider items with value > 0
+                items.sort((a, b) => b.value - a.value); // Sort by value descending
+                
                 const totalValue = items.reduce((sum, item) => sum + item.value, 0);
-                if (totalValue === 0) return [];
+                if (totalValue === 0) return []; // Return empty if no items with value
 
                 let cumulativeValue = 0;
                 items.forEach(item => {
                     cumulativeValue += item.value;
-                    item.cumulativePercent = (cumulativeValue / totalValue) * 100;
+                    item.cumulativePercent = (cumulativeValue / totalValue) * 100; // Calculate cumulative percentage
+                    // Assign ABC category based on cumulative percentage
                     if (item.cumulativePercent <= 70) item.category = "A";
                     else if (item.cumulativePercent <= 90) item.category = "B";
                     else item.category = "C";
@@ -914,257 +1404,1062 @@
                 return items;
             },
 
+            // Renders the ABC analysis table
             renderAbcAnalysis() {
                 const classifiedItems = this.performAbcAnalysis();
                 const tableBody = this.ui.analytics.abcAnalysisTableBody;
-                if (classifiedItems.length === 0) { tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`; return; }
+                if (classifiedItems.length === 0) { 
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No inventory data to analyze.</td></tr>`; 
+                    return; 
+                }
+                // Populate table rows with ABC analysis results
                 tableBody.innerHTML = classifiedItems.map(item => `
-                    <tr><td>${item.particulars}</td><td>₹${this.formatIndianNumber(item.value)}</td><td>${item.cumulativePercent.toFixed(1)}%</td><td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td></tr>
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>₹${this.formatIndianNumber(item.value)}</td>
+                        <td>${item.cumulativePercent.toFixed(1)}%</td>
+                        <td><span class="abc-badge abc-badge-${item.category.toLowerCase()}">${item.category}</span></td>
+                    </tr>
                 `).join('');
             },
             
+            // Gets inventory items along with their last sale date (considering current year's transactions)
             getInventoryWithLastSaleDate() {
-                const inventoryMap = new Map(this.state.inventory.map(item => [item.particulars, { ...item, lastSaleDate: null }]));
-                const sortedTransactions = [...this.state.transactions].sort((a, b) => b.date - a.date);
-                for (const tx of sortedTransactions) {
-                    if (tx.type === 'Sale') {
+                // Map inventory items to objects including lastSaleDate, initialized to null
+                const inventoryMap = new Map(this.state.inventory.map(item => ({ ...item, lastSaleDate: null })));
+                
+                // Filter transactions for the current year and sort by date (most recent first)
+                const currentYearTransactions = this.state.transactions
+                    .filter(tx => new Date(tx.date).getFullYear() === this.state.currentYear)
+                    .sort((a, b) => b.date - a.date); // Sort by date descending
+
+                // Iterate through transactions to find the last sale date for each item
+                for (const tx of currentYearTransactions) {
+                    if (tx.type === 'Sale') { // Only consider sales transactions
                         for (const item of tx.items) {
+                            // If the item is in our inventory map and its lastSaleDate hasn't been set yet
                             if (inventoryMap.has(item.particulars) && !inventoryMap.get(item.particulars).lastSaleDate) {
-                                inventoryMap.get(item.particulars).lastSaleDate = tx.date;
+                                inventoryMap.get(item.particulars).lastSaleDate = tx.date; // Set the last sale date
                             }
                         }
                     }
                 }
-                return Array.from(inventoryMap.values());
+                return Array.from(inventoryMap.values()); // Return array of inventory items with lastSaleDate
             },
 
+            // Performs FSN (Fast, Slow, Non-moving) and VED (Vital, Essential, Desirable) analysis
             performFsnVedAnalysis() {
-                const inventoryWithSales = this.getInventoryWithLastSaleDate();
+                const inventoryWithSales = this.getInventoryWithLastSaleDate(); // Get inventory with last sale dates for current year
+                
+                // Classifies items into FSN categories based on last sale date
                 const classifyFSN = (lastSaleDate) => {
-                    if (!lastSaleDate) return "N";
-                    const diffDays = Math.floor((new Date() - new Date(lastSaleDate)) / (1000 * 3600 * 24));
-                    if (diffDays <= 30) return "F"; if (diffDays <= 90) return "S"; return "N";
+                    if (!lastSaleDate) return "N"; // Non-moving if never sold in the current year
+                    const diffDays = Math.floor((new Date() - new Date(lastSaleDate)) / (1000 * 3600 * 24)); // Days since last sale
+                    if (diffDays <= 30) return "F"; // Fast-moving: sold within last 30 days
+                    if (diffDays <= 90) return "S"; // Slow-moving: sold between 31 and 90 days ago
+                    return "N"; // Non-moving: sold more than 90 days ago
                 };
+                
+                // Classifies items into VED categories based on keywords in item name
                 const classifyVED = (itemName) => {
-                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"], essentialKeywords = ["kurti", "top", "nighty", "bra"], desirableKeywords = ["frock", "suit", "sarara", "skirt"];
-                    const name = itemName.toLowerCase();
-                    if (vitalKeywords.some(w => name.includes(w))) return "V"; if (essentialKeywords.some(w => name.includes(w))) return "E"; if (desirableKeywords.some(w => name.includes(w))) return "D";
-                    return "E";
+                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"], 
+                          essentialKeywords = ["kurti", "top", "nighty", "bra"], 
+                          desirableKeywords = ["frock", "suit", "sarara", "skirt"];
+                    const name = itemName.toLowerCase(); // Convert name to lowercase for case-insensitive matching
+                    if (vitalKeywords.some(w => name.includes(w))) return "V"; // Vital items
+                    if (essentialKeywords.some(w => name.includes(w))) return "E"; // Essential items
+                    if (desirableKeywords.some(w => name.includes(w))) return "D"; // Desirable items
+                    return "E"; // Default to Essential if no keywords match
                 };
+                
+                // Determines control priority based on FSN and VED classifications
                 const getControlPriority = (fsn, ved) => {
-                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" }; if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
-                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" }; if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
-                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" }; if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
-                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" }; if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
+                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" }; 
+                    if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
+                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" }; 
+                    if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
+                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" }; 
+                    if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
+                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" }; 
+                    if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
                     if (fsn === "N" && ved === "D") return { text: "🔻 Scrap / Clearance", class: "priority-very-high" };
-                    return { text: "Medium", class: "priority-medium" };
+                    return { text: "Medium", class: "priority-medium" }; // Default priority
                 };
-                return inventoryWithSales.map(item => ({ ...item, fsn: classifyFSN(item.lastSaleDate), ved: classifyVED(item.particulars), priority: getControlPriority(classifyFSN(item.lastSaleDate), classifyVED(item.particulars)) }));
+                
+                // Map each inventory item to its FSN, VED, and priority classifications
+                return inventoryWithSales.map(item => ({ 
+                    ...item, 
+                    fsn: classifyFSN(item.lastSaleDate), 
+                    ved: classifyVED(item.particulars), 
+                    priority: getControlPriority(classifyFSN(item.lastSaleDate), classifyVED(item.particulars)) 
+                }));
             },
 
+            // Renders the FSN & VED analysis table, with optional priority filtering
             renderFsnVedAnalysis(priorityFilter = 'all') {
                 let analysisResults = this.performFsnVedAnalysis();
+                // Apply filter if a specific priority is selected
                 if (priorityFilter !== 'all') {
                     analysisResults = analysisResults.filter(item => item.priority.class === priorityFilter);
                 }
                 const tableBody = this.ui.analytics.fsnVedAnalysisTableBody;
-                if (analysisResults.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No items match the selected priority.</td></tr>`; return; }
+                if (analysisResults.length === 0) { 
+                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No items match the selected priority for ${this.state.currentYear}.</td></tr>`; 
+                    return; 
+                }
+                // Populate the table rows with analysis data
                 tableBody.innerHTML = analysisResults.map(item => `
-                    <tr><td>${item.particulars}</td><td>${item.quantity}</td><td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td><td><b>${item.ved}</b></td><td class="${item.priority.class}">${item.priority.text}</td></tr>
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td>
+                        <td><b>${item.ved}</b></td>
+                        <td class="${item.priority.class}">${item.priority.text}</td>
+                    </tr>
                 `).join('');
             },
             
+            // Renders the ABC and FSN category charts
             renderAnalysisCharts() {
-                // ABC Chart
-                const abcData = this.performAbcAnalysis();
+                // --- ABC Analysis Chart ---
+                const abcData = this.performAbcAnalysis(); // Get ABC classified data
+                // Summarize inventory value by ABC category
                 const abcSummary = abcData.reduce((acc, item) => {
                     acc[item.category] = (acc[item.category] || 0) + item.value;
                     return acc;
                 }, { A: 0, B: 0, C: 0 });
+                // Destroy previous chart if it exists
                 if(this.charts.abc) this.charts.abc.destroy();
-                this.charts.abc = new Chart(this.ui.analytics.abcChart, { type: 'pie', data: { labels: ['A Items (Top 70%)', 'B Items (Next 20%)', 'C Items (Bottom 10%)'], datasets: [{ data: [abcSummary.A, abcSummary.B, abcSummary.C], backgroundColor: ['#38A169', '#3182CE', '#C53030'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                // Create new pie chart for ABC analysis
+                this.charts.abc = new Chart(this.ui.analytics.abcChart, { 
+                    type: 'pie', 
+                    data: { 
+                        labels: ['A Items (Top 70%)', 'B Items (Next 20%)', 'C Items (Bottom 10%)'], 
+                        datasets: [{ 
+                            data: [abcSummary.A, abcSummary.B, abcSummary.C], 
+                            backgroundColor: ['#38A169', '#3182CE', '#C53030'] // Colors for categories
+                        }] 
+                    }, 
+                    options: { responsive: true, maintainAspectRatio: false } 
+                });
 
-                // FSN Chart
-                const fsnData = this.performFsnVedAnalysis();
+                // --- FSN Category Chart ---
+                const fsnData = this.performFsnVedAnalysis(); // Get FSN analysis data
+                // Summarize stock quantity by FSN category
                 const fsnSummary = fsnData.reduce((acc, item) => {
                     acc[item.fsn] = (acc[item.fsn] || 0) + item.quantity;
                     return acc;
                 }, { F: 0, S: 0, N: 0 });
+                // Destroy previous chart if it exists
                 if(this.charts.fsn) this.charts.fsn.destroy();
-                this.charts.fsn = new Chart(this.ui.analytics.fsnChart, { type: 'doughnut', data: { labels: ['Fast-Moving', 'Slow-Moving', 'Non-Moving'], datasets: [{ data: [fsnSummary.F, fsnSummary.S, fsnSummary.N], backgroundColor: ['#38A169', '#D69E2E', '#C53030'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                // Create new doughnut chart for FSN categories
+                this.charts.fsn = new Chart(this.ui.analytics.fsnChart, { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: ['Fast-Moving', 'Slow-Moving', 'Non-Moving'], 
+                        datasets: [{ 
+                            data: [fsnSummary.F, fsnSummary.S, fsnSummary.N], 
+                            backgroundColor: ['#38A169', '#D69E2E', '#C53030'] // Colors for FSN categories
+                        }] 
+                    }, 
+                    options: { responsive: true, maintainAspectRatio: false } 
+                });
             },
 
+            // Renders the top selling products table, with filtering by item type and date range
             renderTopProductsTable(startDate = null, endDate = null) {
-                const itemType = this.ui.analytics.itemTypeFilter.value;
-                const sales = this.state.transactions.filter(t => { if (t.type !== 'Sale') return false; const transactionDate = new Date(t.date); if (startDate && transactionDate < startDate) return false; if (endDate && transactionDate > endDate) return false; return true; });
-                const allSoldItems = sales.flatMap(t => t.items).filter(i => { const isCosmetic = i.particulars.includes('(Cosmetic)'); if (itemType === 'inventory') return !isCosmetic; if (itemType === 'cosmetic') return isCosmetic; return true; });
-                const productSales = allSoldItems.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
+                const itemType = this.ui.analytics.itemTypeFilter.value; // Get selected item type filter
+                
+                // Filter transactions by current year and provided date range
+                const sales = this.state.transactions.filter(t => { 
+                    const transactionDate = new Date(t.date);
+                    return transactionDate.getFullYear() === this.state.currentYear &&
+                           (!startDate || transactionDate >= startDate) &&
+                           (!endDate || transactionDate <= endDate);
+                });
+
+                // Flatten all sold items, applying item type filter
+                const allSoldItems = sales.flatMap(t => t.items).filter(i => { 
+                    const isCosmetic = i.particulars.startsWith('(Cosmetic)'); // Check if item is marked as cosmetic
+                    if (itemType === 'inventory') return !isCosmetic; // Show only non-cosmetic items
+                    if (itemType === 'cosmetic') return isCosmetic; // Show only cosmetic items
+                    return true; // Show all items if filter is 'all'
+                });
+
+                // Aggregate quantities sold per product
+                const productSales = allSoldItems.reduce((acc, item) => { 
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; 
+                    return acc; 
+                }, {});
+                // Sort products by quantity sold (descending)
                 const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a);
-                this.ui.analytics.topProductsTableBody.innerHTML = topProducts.length > 0 ? topProducts.map(([name, qty]) => `<tr><td>${name}</td><td>${qty}</td></tr>`).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period.</td></tr>`;
+                
+                // Populate the table rows
+                this.ui.analytics.topProductsTableBody.innerHTML = topProducts.length > 0 ? topProducts.map(([name, qty]) => `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${qty}</td>
+                    </tr>
+                `).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period in ${this.state.currentYear}.</td></tr>`;
             },
 
+            // Renders the inventory status table, with filtering for low stock items
             renderInventoryStatusTable(filter = 'all') {
-                if (!this.ui.analytics.inventoryStatusTableBody) return;
-                let inventoryToShow = this.state.inventory;
-                if (filter === 'low') { inventoryToShow = this.state.inventory.filter(item => item.quantity <= 3 && item.quantity > 0); }
-                inventoryToShow.sort((a, b) => a.quantity - b.quantity);
+                if (!this.ui.analytics.inventoryStatusTableBody) return; // Exit if element not found
+                let inventoryToShow = this.state.inventory; // Use inventory for the current year
+                
+                // Apply filter for low stock items if specified
+                if (filter === 'low') { 
+                    inventoryToShow = this.state.inventory.filter(item => item.quantity <= 3 && item.quantity > 0); 
+                }
+                inventoryToShow.sort((a, b) => a.quantity - b.quantity); // Sort by quantity ascending
+                
                 const tableBody = this.ui.analytics.inventoryStatusTableBody;
-                if (inventoryToShow.length > 0) { tableBody.innerHTML = inventoryToShow.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td></tr>`).join('');
-                } else { tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter.</td></tr>`; }
+                // Populate the table rows
+                if (inventoryToShow.length > 0) { 
+                    tableBody.innerHTML = inventoryToShow.map(item => `
+                        <tr>
+                            <td>${item.particulars}</td>
+                            <td>${item.quantity}</td>
+                        </tr>
+                    `).join('');
+                } else { 
+                    tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter for ${this.state.currentYear}.</td></tr>`; 
+                }
             },
 
+            // Renders the transactions table, with date range filtering
             renderTransactions(startDate = null, endDate = null) {
                 let filteredTransactions = this.state.transactions;
-                if (startDate || endDate) { filteredTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date); if (startDate && tDate < startDate) return false; if (endDate && tDate > endDate) return false; return true; }); }
+                
+                // Filter transactions by current year and the provided date range
+                if (startDate || endDate) { 
+                    filteredTransactions = this.state.transactions.filter(t => { 
+                        const tDate = new Date(t.date); 
+                        return tDate.getFullYear() === this.state.currentYear && 
+                               (!startDate || tDate >= startDate) && 
+                               (!endDate || tDate <= endDate);
+                    });
+                } else {
+                    // If no date filter is applied, show all transactions for the current year
+                    filteredTransactions = this.state.transactions.filter(t => new Date(t.date).getFullYear() === this.state.currentYear);
+                }
+
+                // Sort transactions by date (most recent first)
                 const transactions = filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-                const itemsHtml = (items, txId, type) => items.map(i => `<li><div class="item-main-line"><span>${i.quantity} x ${i.particulars}</span>${type === 'Sale' ? `<button class="btn-danger return-item-btn" style="padding: 2px 8px; font-size: 0.75rem;" data-tx-id="${txId}" data-item-p="${i.particulars}">Return</button>` : ''}</div></li>`).join('');
+                
+                // Helper function to generate HTML for items list within a transaction row
+                const itemsHtml = (items, txId, type) => items.map(i => `
+                    <li>
+                        <div class="item-main-line">
+                            <span>${i.quantity} x ${i.particulars}</span>
+                            ${type === 'Sale' ? `<button class="btn-danger return-item-btn" style="padding: 2px 8px; font-size: 0.75rem;" data-tx-id="${txId}" data-item-p="${i.particulars}">Return</button>` : ''}
+                        </div>
+                    </li>
+                `).join('');
+                
+                // Generate table rows for all transactions
                 const tableRows = transactions.map(t => {
+                    // Calculate profit for sale transactions
                     const transactionProfit = t.type === 'Sale' ? t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0) : 0;
-                    return `<tr><td>${new Date(t.date).toLocaleDateString('en-GB')}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td><td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td><td>₹${this.formatIndianNumber(t.total)}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td></tr>`;
+                    return `
+                        <tr>
+                            <td>${new Date(t.date).toLocaleDateString('en-GB')}</td> <!-- Date format DD/MM/YYYY -->
+                            <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td> <!-- Type with color coding -->
+                            <td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td> <!-- List of items -->
+                            <td>₹${this.formatIndianNumber(t.total)}</td> <!-- Total amount -->
+                            <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td> <!-- Profit for sales -->
+                        </tr>
+                    `;
                 }).join('');
-                this.ui.transactions.table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead><tbody>${transactions.length > 0 ? tableRows : `<tr><td colspan="5" style="text-align:center;">No transactions found.</td></tr>`}</tbody>`;
+                
+                // Populate the transactions table
+                this.ui.transactions.table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactions.length > 0 ? tableRows : `<tr><td colspan="5" style="text-align:center;">No transactions for ${this.state.currentYear} or within the selected date range.</td></tr>`}
+                    </tbody>
+                `;
             },
             
+            // Renders the list of creditors with outstanding balances
             renderCreditorList() { 
-                const creditors = this.state.transactions.filter(t => t.saleType === 'Credit').reduce((acc, t) => { if (!t.partyName) return acc; if (!acc[t.partyName]) acc[t.partyName] = 0; acc[t.partyName] += t.total - (t.paidAmount || 0); return acc; }, {});
-                const creditorsWithBalance = Object.entries(creditors).filter(([_, balance]) => balance > 0.01);
-                if (creditorsWithBalance.length === 0) { this.ui.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit.</p>'; return; }
-                this.ui.creditorListContainer.innerHTML = `<table class="styled-table"><thead><tr><th>CREDITOR</th><th>BALANCE</th><th>ACTION</th></tr></thead><tbody>${creditorsWithBalance.map(([name, balance]) => `<tr><td>${name}</td><td>₹${this.formatIndianNumber(balance)}</td><td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td></tr>`).join('')}</tbody></table>`;
+                // Filter credit transactions for the current year
+                const creditTxs = this.state.transactions.filter(t => t.saleType === 'Credit' && new Date(t.date).getFullYear() === this.state.currentYear);
+                
+                // Aggregate outstanding balances per creditor
+                const creditors = creditTxs.reduce((acc, t) => { 
+                    if (!t.partyName) return acc; // Skip if no party name
+                    if (!acc[t.partyName]) acc[t.partyName] = { balance: 0, txs: [] }; // Initialize creditor data
+                    const outstanding = t.total - (t.paidAmount || 0); // Calculate remaining balance for the transaction
+                    if (outstanding > 0.01) { // Only consider if balance is greater than a small threshold
+                        acc[t.partyName].balance += outstanding; // Add to total balance
+                        acc[t.partyName].txs.push({...t, outstanding: outstanding}); // Store transaction for payment distribution
+                    }
+                    return acc; 
+                }, {});
+
+                const creditorsWithBalance = Object.entries(creditors).filter(([_, data]) => data.balance > 0.01); // Filter out creditors with negligible balance
+                
+                // Populate the creditor list container
+                if (creditorsWithBalance.length === 0) { 
+                    this.ui.creditorListContainer.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No outstanding credit for the current year.</p>'; 
+                    return; 
+                }
+                
+                this.ui.creditorListContainer.innerHTML = `
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>CREDITOR</th>
+                                <th>BALANCE</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${creditorsWithBalance.map(([name, data]) => `
+                                <tr>
+                                    <td>${name}</td>
+                                    <td>₹${this.formatIndianNumber(data.balance)}</td>
+                                    <td><button class="btn btn-primary pay-btn" style="padding: 0.5rem 1rem;" data-creditor-name="${name}">PAY</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
             },
             
-            isDateHoliday(dateObj) { if (dateObj.getDay() !== 1) return false; const dateString = dateObj.toISOString().split('T')[0]; return !this.state.holidays.includes(dateString); },
+            // Checks if a given date is a holiday (Monday unless it's an exception)
+            isDateHoliday(dateObj) { 
+                if (dateObj.getDay() !== 1) return false; // Only check for Mondays
+                const dateString = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
+                // Holidays are currently stored globally. If they need to be year-specific, this logic would need to change.
+                return !this.state.holidays.includes(dateString); // Return true if it's a Monday and NOT in the exceptions list
+            },
             
+            // Renders the list of holiday exceptions (Mondays marked as working days)
             renderHolidays() {
-                const holidayListEl = this.ui.settings.holidayList; holidayListEl.innerHTML = ''; 
-                if (this.state.holidays.length === 0) { holidayListEl.innerHTML = '<li>No exceptions added. All Mondays are holidays.</li>'; return; }
-                [...this.state.holidays].sort().forEach(dateStr => { const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); holidayListEl.insertAdjacentHTML('beforeend', `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;"><span>${formattedDate}</span><span class="action-icon delete" data-date="${dateStr}" title="Remove Exception"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg></span></li>`); });
+                const holidayListEl = this.ui.settings.holidayList; 
+                holidayListEl.innerHTML = ''; // Clear current list
+                
+                // Display holidays relevant to the current year if they are year-specific
+                // For now, assuming holidays list is global or handled appropriately.
+                if (this.state.holidays.length === 0) { 
+                    holidayListEl.innerHTML = '<li>No exceptions added. All Mondays are holidays.</li>'; 
+                    return; 
+                }
+
+                let holidaysForCurrentYearFound = false;
+                [...this.state.holidays].sort().forEach(dateStr => { 
+                    // Check if the holiday exception falls within the current year
+                    const holidayYear = new Date(dateStr).getFullYear();
+                    if (holidayYear === this.state.currentYear) {
+                        holidaysForCurrentYearFound = true;
+                        const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); 
+                        holidayListEl.insertAdjacentHTML('beforeend', `
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                                <span>${formattedDate}</span>
+                                <!-- Remove exception icon -->
+                                <span class="action-icon delete" data-date="${dateStr}" title="Remove Exception">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+                                </span>
+                            </li>
+                        `);
+                    }
+                });
+                // If no holidays for the current year were found, display a message
+                if (!holidaysForCurrentYearFound) { 
+                    holidayListEl.innerHTML = '<li>No exceptions added for this year.</li>';
+                }
             },
             
+            // Handles file upload for inventory data (from Excel)
             handleFileUpload(event) {
-                 const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); 
-                 reader.onload = (e) => { try { const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]); this.state.inventory = json.map(row => ({ particulars: String(row.particulars || "N/A"), quantity: parseInt(row.quantity, 10) || 0, rate: parseFloat(row.rate) || 0.0 })).filter(item => item.particulars !== "N/A"); this.renderPage('stocks'); this.triggerAutoSave(); this.showToast('Inventory loaded!', 'success'); } catch (error) { this.showToast('Error reading file. Check columns.', 'error'); } }; reader.readAsArrayBuffer(file); event.target.value = ''; 
+                 const file = event.target.files[0]; // Get the selected file
+                 if (!file) return; // Do nothing if no file is selected
+                 
+                 const reader = new FileReader(); 
+                 reader.onload = (e) => { 
+                     try { 
+                         // Read the Excel file using XLSX library
+                         const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }); 
+                         const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]); // Convert sheet to JSON
+                         
+                         // Replace the current year's inventory with data from the file
+                         this.state.inventory = json.map(row => ({ 
+                             particulars: String(row.particulars || "N/A"), // Ensure particulars is a string, default to "N/A"
+                             quantity: parseInt(row.quantity, 10) || 0, // Ensure quantity is an integer, default to 0
+                             rate: parseFloat(row.rate) || 0.0 // Ensure rate is a float, default to 0.0
+                         })).filter(item => item.particulars !== "N/A"); // Filter out rows with invalid particulars
+
+                         this.renderPage('stocks'); // Refresh the stocks page to show the new inventory
+                         this.triggerAutoSave(); // Save the updated inventory to Google Drive
+                         this.showToast('Inventory loaded and saved for this year!', 'success'); 
+                     } catch (error) { 
+                         console.error("File upload error:", error);
+                         this.showToast('Error reading file. Ensure columns are "particulars", "quantity", "rate".', 'error'); 
+                     } 
+                 }; 
+                 reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
+                 event.target.value = ''; // Clear the file input to allow uploading the same file again
             },
             
+            // Exports transactions data to an Excel file
             exportTransactionsToExcel(startDate, endDate) {
                 this.showToast('Generating report...', 'info');
                 try {
-                    const filtered = this.state.transactions.filter(t => { const tDate = new Date(t.date); if (startDate && tDate < startDate) return false; if (endDate && tDate > endDate) return false; return true; });
+                    // Filter transactions by current year and the provided date range
+                    const filtered = this.state.transactions.filter(t => { 
+                        const tDate = new Date(t.date); 
+                        return tDate.getFullYear() === this.state.currentYear && 
+                               (!startDate || tDate >= startDate) && 
+                               (!endDate || tDate <= endDate);
+                    });
+                    
                     const dataForExport = [];
+                    // Prepare data for export, calculating profit and margin
                     filtered.forEach(tx => {
                         tx.items.forEach(item => {
                             const profit = tx.type === 'Sale' ? (item.sellingRate - item.costRate) * item.quantity : 0;
                             const saleValue = tx.type === 'Sale' ? item.sellingRate * item.quantity : 0;
                             const margin = saleValue > 0 ? (profit / saleValue) * 100 : 0;
                             dataForExport.push({
-                                "Date": new Date(tx.date).toLocaleDateString('en-GB'), "Type": tx.type, "Party Name": tx.partyName || 'N/A', "Item": item.particulars, "Quantity": item.quantity,
-                                "Cost Rate": tx.type === 'Sale' ? item.costRate.toFixed(2) : item.rate.toFixed(2), "Selling Rate": tx.type === 'Sale' ? item.sellingRate.toFixed(2) : 'N/A',
-                                "Total": (tx.type === 'Sale' ? saleValue : item.rate * item.quantity).toFixed(2), "Profit": profit.toFixed(2), "Margin (%)": margin.toFixed(1)
+                                "Year": new Date(tx.date).getFullYear(),
+                                "Date": new Date(tx.date).toLocaleDateString('en-GB'), // DD/MM/YYYY format
+                                "Type": tx.type, 
+                                "Party Name": tx.partyName || 'N/A', 
+                                "Item": item.particulars, 
+                                "Quantity": item.quantity,
+                                "Cost Rate": tx.type === 'Sale' ? item.costRate.toFixed(2) : item.rate.toFixed(2), 
+                                "Selling Rate": tx.type === 'Sale' ? item.sellingRate.toFixed(2) : 'N/A',
+                                "Total": (tx.type === 'Sale' ? saleValue : item.rate * item.quantity).toFixed(2), 
+                                "Profit": profit.toFixed(2), 
+                                "Margin (%)": margin.toFixed(1)
                             });
                         });
                     });
-                    if (dataForExport.length === 0) { this.showToast('No data to export for the selected range.', 'info'); return; }
+                    
+                    if (dataForExport.length === 0) { // If no data to export
+                        this.showToast('No data to export for the selected range.', 'info'); 
+                        return; 
+                    }
+                    
+                    // Create Excel worksheet and workbook
                     const worksheet = XLSX.utils.json_to_sheet(dataForExport);
                     const workbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-                    XLSX.writeFile(workbook, `TinnyFashion_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`);
-                } catch (error) { this.showToast('Failed to generate report.', 'error'); }
-            },
-            
-            addSaleItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" list="inventory-datalist" required></div><div><label>Cost Rate</label><input type="number" class="cost-rate" readonly></div><div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.salesItemsContainer.appendChild(div); },
-            
-            addPurchaseItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.purchaseItemsContainer.appendChild(div); },
-            
-            processMultiItemSale(form) {
-                const saleItems = [], errors = [];
-                for(const row of form.querySelectorAll('.item-row')) {
-                    const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(!p || !q || isNaN(r)) continue; const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { errors.push(`Not enough stock for ${p}.`); continue; } saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate, itemInStock });
+                    // Download the Excel file
+                    XLSX.writeFile(workbook, `TinnyFashion_Transactions_${this.state.currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                } catch (error) { 
+                    console.error("Export error:", error);
+                    this.showToast('Failed to generate report.', 'error'); 
                 }
-                if (errors.length > 0) { this.showToast(errors.join('\n'), "error"); return; } if (saleItems.length === 0) { this.showToast("No valid items to record.", "error"); return; }
-                saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; }); const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
-                this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: saleItems.map(({itemInStock, ...rest}) => rest), total, paidAmount: total });
-                this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); this.triggerAutoSave(); this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
             },
             
-            handleItemReturn(txId, itemParticulars) {
-                if (!confirm(`Return "${itemParticulars}" from this sale?`)) return;
-                const tx = this.state.transactions.find(t => t.id === txId); if (!tx) return;
-                const itemIndex = tx.items.findIndex(i => i.particulars === itemParticulars); if (itemIndex === -1) return;
-                const [returnedItem] = tx.items.splice(itemIndex, 1);
-                const invItem = this.state.inventory.find(i => i.particulars === returnedItem.particulars);
-                if (invItem) { invItem.quantity += returnedItem.quantity; } else { this.state.inventory.push({ particulars: returnedItem.particulars, quantity: returnedItem.quantity, rate: returnedItem.costRate }); }
-                tx.total -= returnedItem.sellingRate * returnedItem.quantity;
-                if (tx.items.length === 0) { this.state.transactions = this.state.transactions.filter(t => t.id !== txId); }
-                this.renderTransactions(new Date(this.ui.transactions.startDate.value), new Date(this.ui.transactions.endDate.value)); this.triggerAutoSave(); this.showToast('Item returned.', 'success');
+            // Adds a new row for adding items to a sale
+            addSaleItemRow() { 
+                const div = document.createElement('div'); 
+                div.className = 'item-row'; // Class for styling the row
+                div.innerHTML = `
+                    <div><label>Item Name</label><input type="text" class="particulars" list="inventory-datalist" required></div> <!-- Item name input with datalist -->
+                    <div><label>Cost Rate</label><input type="number" class="cost-rate" readonly></div> <!-- Cost rate (read-only, fetched from inventory) -->
+                    <div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div> <!-- Sale rate input -->
+                    <div><label>Quantity</label><input type="number" class="quantity" min="1" required></div> <!-- Quantity input -->
+                    <div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div> <!-- Remove button for the row -->
+                `; 
+                this.ui.salesItemsContainer.appendChild(div); // Append the new row to the container
             },
             
-            addEventListeners() {
-                this.ui.navLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); this.renderPage(e.currentTarget.dataset.page); this.ui.topNav.classList.remove('active'); }); });
-                this.ui.mobileMenuBtn.addEventListener('click', () => this.ui.topNav.classList.toggle('active'));
-                this.ui.dashboard.filterBtn.addEventListener('click', () => { const start = new Date(this.ui.dashboard.startDate.value); const end = new Date(this.ui.dashboard.endDate.value); this.renderSalesChart(start, end); });
-                this.ui.settings.themeToggleBtn.addEventListener('click', this.toggleTheme.bind(this));
-                this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.settings.excelFile.click());
-                this.ui.settings.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
-                this.ui.settings.manualSyncBtn.addEventListener('click', () => this.saveData(true));
-                this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow());
-                this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); });
-                this.ui.salesItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) { e.target.closest('.item-row').remove(); } });
-                this.ui.salesItemsContainer.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === e.target.value); const row = e.target.closest('.item-row'); if(item && row) { row.querySelector('.cost-rate').value = item.rate.toFixed(2); } } });
-                this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
-                this.ui.purchaseForm.addEventListener('submit', e => { e.preventDefault(); const purchasedItems = []; for(const row of e.target.querySelectorAll('.item-row')) { const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(p && q && !isNaN(r)) purchasedItems.push({particulars:p, quantity:q, rate:r}); } if(purchasedItems.length === 0) { this.showToast("No valid items.", "error"); return; } purchasedItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity; const totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: purchasedItems, total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) }); this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); this.triggerAutoSave(); this.showToast('Stock updated!', "success"); });
-                this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
-                this.ui.inventoryTableBody.addEventListener('click', (e) => {
-                    const icon = e.target.closest('.action-icon'); if (!icon) return; const particulars = icon.dataset.particulars;
-                    if (icon.classList.contains('delete')) { if (confirm(`Delete "${particulars}"?`)) { this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); this.renderInventory(); this.triggerAutoSave(); this.showToast('Item deleted.', 'success'); }
-                    } else if (icon.classList.contains('edit')) { const item = this.state.inventory.find(i => i.particulars === particulars); if(!item) return; const newQty = prompt("Enter new quantity:", item.quantity); const newCost = prompt("Enter new cost rate:", item.rate); if (newQty !== null && newCost !== null) { const parsedQty = parseInt(newQty, 10); const parsedCost = parseFloat(newCost); if (!isNaN(parsedQty) && !isNaN(parsedCost)) { item.quantity = parsedQty; item.rate = parsedCost; this.renderInventory(); this.triggerAutoSave(); this.showToast('Item updated.', 'success'); } else { this.showToast('Invalid input.', 'error'); } } }
+            // Adds a new row for adding items to a purchase
+            addPurchaseItemRow() { 
+                const div = document.createElement('div'); 
+                div.className = 'item-row'; // Class for styling the row
+                div.innerHTML = `
+                    <div><label>Item Name</label><input type="text" class="particulars" required></div> <!-- Item name input -->
+                    <div><label>Quantity</label><input type="number" class="quantity" min="1" required></div> <!-- Quantity input -->
+                    <div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div> <!-- Cost rate input -->
+                    <div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div> <!-- Remove button for the row -->
+                `; 
+                this.ui.purchaseItemsContainer.appendChild(div); // Append the new row to the container
+            },
+            
+            // Processes a sale transaction with multiple items
+            processMultiItemSale(form) {
+                const saleItems = []; // Array to hold valid items for the sale
+                const errors = []; // Array to hold validation errors
+                
+                // Iterate over each item row in the form
+                for(const row of form.querySelectorAll('.item-row')) {
+                    const particularsInput = row.querySelector('.particulars');
+                    const quantityInput = row.querySelector('.quantity');
+                    const rateInput = row.querySelector('.rate');
+                    
+                    const p = particularsInput.value.trim(); 
+                    const q = parseInt(quantityInput.value, 10); 
+                    const r = parseFloat(rateInput.value); 
+
+                    // Basic validation for item details
+                    if (!p || isNaN(q) || isNaN(r)) {
+                        errors.push(`Please fill all details for item "${p || 'Unnamed'}"`);
+                        continue; // Skip to next row if details are invalid
+                    }
+
+                    // Check if item exists in inventory and if there's enough stock
+                    const itemInStock = this.state.inventory.find(i => i.particulars === p); 
+                    
+                    if (!itemInStock) {
+                        errors.push(`Item "${p}" not found in inventory.`);
+                        continue;
+                    }
+                    if (itemInStock.quantity < q) { 
+                        errors.push(`Not enough stock for "${p}". Available: ${itemInStock.quantity}, Requested: ${q}`); 
+                        continue;
+                    }
+                    
+                    // If item is valid and in stock, add to saleItems
+                    saleItems.push({ 
+                        particulars: p, 
+                        quantity: q, 
+                        sellingRate: r, 
+                        costRate: itemInStock.rate, // Store cost rate from inventory
+                        itemInStock: itemInStock // Keep a reference to update inventory quantity
+                    });
+                }
+                
+                // If there were validation errors, show them and stop processing
+                if (errors.length > 0) { 
+                    this.showToast(errors.join('\n'), "error"); 
+                    return; 
+                } 
+                // If no valid items were selected, show an error
+                if (saleItems.length === 0) { 
+                    this.showToast("No valid items to record.", "error"); 
+                    return; 
+                }
+                
+                // Update inventory quantities by deducting sold items
+                saleItems.forEach(item => { 
+                    item.itemInStock.quantity -= item.quantity; 
                 });
+                
+                // Calculate total sale amount
+                const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
+                
+                // Add the sale transaction to the state (for the current year)
+                this.state.transactions.push({ 
+                    id: Date.now(), // Unique ID for the transaction
+                    type: 'Sale', 
+                    saleType: 'Cash', // Assume cash sale by default
+                    date: new Date(), // Transaction date (current date and time)
+                    items: saleItems.map(({itemInStock, ...rest}) => rest), // Store only necessary item data
+                    total: total, 
+                    paidAmount: total // For cash sales, paid amount equals total
+                });
+                
+                this.ui.salesItemsContainer.innerHTML = ''; // Clear the form items
+                this.addSaleItemRow(); // Add a new empty row for next sale
+                this.triggerAutoSave(); // Trigger auto-save
+                this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
+            },
+            
+            // Handles the return of an item from a past sale
+            handleItemReturn(txId, itemParticulars) {
+                // Confirm with the user before proceeding
+                if (!confirm(`Are you sure you want to return "${itemParticulars}" from this sale?`)) return;
+                
+                // Find the transaction index
+                const txIndex = this.state.transactions.findIndex(t => t.id === txId);
+                if (txIndex === -1) return; // Transaction not found
+
+                const tx = this.state.transactions[txIndex];
+                // Find the index of the item within the transaction
+                const itemIndex = tx.items.findIndex(i => i.particulars === itemParticulars); 
+                if (itemIndex === -1) return; // Item not found in transaction
+                
+                const [returnedItem] = tx.items.splice(itemIndex, 1); // Remove the item from the transaction's item list
+
+                // Update inventory: add returned item back or add it as a new item if it didn't exist
+                const invItemIndex = this.state.inventory.findIndex(i => i.particulars === returnedItem.particulars);
+                if (invItemIndex !== -1) { 
+                    this.state.inventory[invItemIndex].quantity += returnedItem.quantity; 
+                } else { 
+                    // Add item to inventory if it didn't exist or was previously deleted
+                    this.state.inventory.push({ 
+                        particulars: returnedItem.particulars, 
+                        quantity: returnedItem.quantity, 
+                        rate: returnedItem.costRate // Use cost rate from the sale item
+                    }); 
+                }
+                
+                // Adjust the total transaction amount
+                tx.total -= returnedItem.sellingRate * returnedItem.quantity;
+                
+                // If the transaction becomes empty after return, remove it
+                if (tx.items.length === 0) { 
+                    this.state.transactions.splice(txIndex, 1); 
+                }
+                
+                // Re-render the transactions table and trigger auto-save
+                this.renderTransactions(new Date(this.ui.transactions.startDate.value), new Date(this.ui.transactions.endDate.value)); 
+                this.triggerAutoSave(); 
+                this.showToast('Item returned successfully.', 'success');
+            },
+            
+            // Adds all interactive event listeners to the UI elements
+            addEventListeners() {
+                // Navigation links listener: renders the corresponding page
+                this.ui.navLinks.forEach(link => { 
+                    link.addEventListener('click', (e) => { 
+                        e.preventDefault(); 
+                        this.renderPage(e.currentTarget.dataset.page); // Render page based on data-page attribute
+                        this.ui.topNav.classList.remove('active'); // Close mobile menu if open
+                    }); 
+                });
+                // Mobile menu button listener: toggles the visibility of the navigation menu
+                this.ui.mobileMenuBtn.addEventListener('click', () => this.ui.topNav.classList.toggle('active'));
+                
+                // Dashboard date filter listener
+                const dashboardFilterHandler = () => {
+                    const start = new Date(this.ui.dashboard.startDate.value); 
+                    const end = new Date(this.ui.dashboard.endDate.value); 
+                    // Validate dates before rendering
+                    if (isNaN(start) || isNaN(end)) {
+                        this.showToast("Please select valid start and end dates.", "error");
+                        return;
+                    }
+                    this.renderSalesChart(start, end); 
+                };
+                this.ui.dashboard.filterBtn.addEventListener('click', dashboardFilterHandler);
+
+                // Settings page event listeners
+                this.ui.settings.themeToggleBtn.addEventListener('click', this.toggleTheme.bind(this)); // Toggle theme
+                this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.settings.excelFile.click()); // Trigger file input click
+                this.ui.settings.excelFile.addEventListener('change', (e) => this.handleFileUpload(e)); // Handle file upload
+                this.ui.settings.manualSyncBtn.addEventListener('click', () => this.saveData(true)); // Trigger manual save to Drive
+                
+                // Sales form event listeners
+                this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow()); // Add new item row for sale
+                this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); }); // Process multi-item sale on submit
+                this.ui.salesItemsContainer.addEventListener('click', e => { 
+                    if(e.target.classList.contains('remove-item-btn')) { // Handle removing an item row
+                        e.target.closest('.item-row').remove(); 
+                    } 
+                });
+                this.ui.salesItemsContainer.addEventListener('input', e => { // Auto-fill cost rate when item name is typed
+                    if (e.target.classList.contains('particulars')) { 
+                        const item = this.state.inventory.find(i => i.particulars === e.target.value); 
+                        const row = e.target.closest('.item-row'); 
+                        if(item && row) { 
+                            row.querySelector('.cost-rate').value = item.rate.toFixed(2); // Set cost rate from inventory
+                        } 
+                    } 
+                });
+
+                // Purchase form event listeners
+                this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow()); // Add new item row for purchase
+                this.ui.purchaseForm.addEventListener('submit', e => { // Process purchase on submit
+                    e.preventDefault(); 
+                    const purchasedItems = []; 
+                    // Iterate over purchase item rows
+                    for(const row of e.target.querySelectorAll('.item-row')) { 
+                        const particularsInput = row.querySelector('.particulars');
+                        const quantityInput = row.querySelector('.quantity');
+                        const rateInput = row.querySelector('.rate');
+
+                        const p = particularsInput.value.trim(); 
+                        const q = parseInt(quantityInput.value, 10); 
+                        const r = parseFloat(rateInput.value); 
+                        
+                        // Validate input for each item
+                        if(p && !isNaN(q) && !isNaN(r) && q > 0 && r >= 0) {
+                            purchasedItems.push({particulars:p, quantity:q, rate:r});
+                        } else {
+                            this.showToast(`Invalid input for item: ${p || 'Unnamed'}. Please check details.`, 'error');
+                            return; // Stop processing if any row has invalid data
+                        }
+                    } 
+                    
+                    if(purchasedItems.length === 0) { // If no items were added
+                        this.showToast("No valid items to add to stock.", "error"); 
+                        return; 
+                    }
+
+                    // Update inventory with purchased items
+                    purchasedItems.forEach(newItem => { 
+                        // Find if item already exists in inventory
+                        const existingIndex = this.state.inventory.findIndex(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+                        if (existingIndex !== -1) { 
+                            // Item exists: update quantity and recalculate average cost rate
+                            const existing = this.state.inventory[existingIndex];
+                            const totalValOld = existing.rate * existing.quantity; // Value of existing stock
+                            const totalValNew = newItem.rate * newItem.quantity; // Value of new stock
+                            const totalQty = existing.quantity + newItem.quantity; // Total quantity after purchase
+                            
+                            existing.quantity = totalQty;
+                            existing.rate = (totalValOld + totalValNew) / totalQty; // Weighted average cost
+                        } else { 
+                            // Item does not exist: add it to inventory
+                            this.state.inventory.push({particulars: newItem.particulars, quantity: newItem.quantity, rate: newItem.rate});
+                        }
+                    });
+                    
+                    // Add a purchase transaction for the current year
+                    this.state.transactions.push({ 
+                        id: Date.now(), // Unique transaction ID
+                        type: 'Purchase', 
+                        date: new Date(), // Transaction date
+                        items: purchasedItems, // List of purchased items
+                        total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) // Total purchase cost
+                    });
+
+                    this.ui.purchaseItemsContainer.innerHTML = ''; // Clear the form
+                    this.addPurchaseItemRow(); // Add a new empty row
+                    this.triggerAutoSave(); // Trigger auto-save
+                    this.showToast('Stock updated successfully!', "success"); 
+                });
+                // Handle removing a purchase item row
+                this.ui.purchaseItemsContainer.addEventListener('click', e => { 
+                    if(e.target.classList.contains('remove-item-btn')) { 
+                        e.target.closest('.item-row').remove(); 
+                    } 
+                });
+
+                // Inventory table action listeners (Edit/Delete)
+                this.ui.inventoryTableBody.addEventListener('click', (e) => {
+                    const icon = e.target.closest('.action-icon'); // Find the clicked action icon
+                    if (!icon) return; // If not an icon click, do nothing
+                    const particulars = icon.dataset.particulars; // Get item name from data attribute
+                    
+                    if (icon.classList.contains('delete')) { 
+                        // Handle item deletion
+                        if (confirm(`Delete item "${particulars}" from the inventory of ${this.state.currentYear}?`)) { 
+                            this.state.inventory = this.state.inventory.filter(item => item.particulars !== particulars); // Remove item from state
+                            this.renderInventory(); // Re-render the inventory table
+                            this.triggerAutoSave(); // Save changes
+                            this.showToast('Item deleted.', 'success'); 
+                        }
+                    } else if (icon.classList.contains('edit')) { 
+                        // Handle item editing
+                        const item = this.state.inventory.find(i => i.particulars === particulars); // Find the item to edit
+                        if(!item) return; // Item not found
+                        
+                        // Prompt for new quantity
+                        const newQty = prompt("Enter new quantity:", item.quantity); 
+                        if (newQty === null) return; // User cancelled
+
+                        // Prompt for new cost rate
+                        const newCost = prompt("Enter new cost rate:", item.rate.toFixed(2)); 
+                        if (newCost === null) return; // User cancelled
+
+                        const parsedQty = parseInt(newQty, 10); 
+                        const parsedCost = parseFloat(newCost); 
+
+                        // Validate inputs
+                        if (!isNaN(parsedQty) && !isNaN(parsedCost) && parsedQty >= 0 && parsedCost >= 0) { 
+                            item.quantity = parsedQty; // Update quantity
+                            item.rate = parsedCost; // Update cost rate
+                            this.renderInventory(); // Re-render inventory table
+                            this.triggerAutoSave(); // Save changes
+                            this.showToast('Item updated.', 'success'); 
+                        } else { 
+                            this.showToast('Invalid input. Quantity and cost rate must be non-negative numbers.', 'error'); 
+                        } 
+                    }
+                });
+
+                // Transactions date filter listeners
                 const txFilterHandler = () => {
+                    // Get start and end dates from input fields
                     const start = this.ui.transactions.startDate.value ? new Date(this.ui.transactions.startDate.value) : null;
                     let end = this.ui.transactions.endDate.value ? new Date(this.ui.transactions.endDate.value) : null;
-                    if(end) end.setHours(23, 59, 59, 999);
-                    this.renderTransactions(start, end);
+                    if(end) end.setHours(23, 59, 59, 999); // Set end of day for the end date
+                    
+                    // Validate dates before rendering
+                    const validStart = start && !isNaN(start) ? start : null;
+                    const validEnd = end && !isNaN(end) ? end : null;
+
+                    this.renderTransactions(validStart, validEnd); // Re-render transactions table with filters
                 };
-                this.ui.transactions.filterBtn.addEventListener('click', txFilterHandler);
-                this.ui.transactions.table.addEventListener('click', (e) => { if(e.target.classList.contains('return-item-btn')) { this.handleItemReturn(parseInt(e.target.dataset.txId), e.target.dataset.itemP); } });
-                this.ui.transactions.exportBtn.addEventListener('click', () => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const startDateStr = prompt("Enter start date (YYYY-MM-DD):", today); if (!startDateStr) return;
-                    const endDateStr = prompt("Enter end date (YYYY-MM-DD):", today); if (!endDateStr) return;
-                    const startDate = new Date(startDateStr); const endDate = new Date(endDateStr); endDate.setHours(23, 59, 59, 999);
-                    if (isNaN(startDate) || isNaN(endDate)) { this.showToast('Invalid date format.', 'error'); return; }
-                    this.exportTransactionsToExcel(startDate, endDate);
+                this.ui.transactions.filterBtn.addEventListener('click', txFilterHandler); // Filter button click
+                this.ui.transactions.startDate.addEventListener('change', txFilterHandler); // Filter on start date change
+                this.ui.transactions.endDate.addEventListener('change', txFilterHandler); // Filter on end date change
+
+                // Listener for item returns within the transactions table
+                this.ui.transactions.table.addEventListener('click', (e) => { 
+                    if(e.target.classList.contains('return-item-btn')) { 
+                        this.handleItemReturn(parseInt(e.target.dataset.txId), e.target.dataset.itemP); 
+                    } 
                 });
+                
+                // Export transactions button listener
+                this.ui.transactions.exportBtn.addEventListener('click', () => {
+                    const defaultStartDateStr = `${this.state.currentYear}-01-01`; // Default start date: beginning of current year
+                    const todayStr = new Date().toISOString().split('T')[0]; // Today's date string
+                    const defaultEndDateStr = `${this.state.currentYear}-12-31`; // Default end date: end of current year
+
+                    // Prompt user for start date, defaulting to beginning of current year
+                    const startDateStr = prompt(`Enter start date for export (YYYY-MM-DD) [default: ${defaultStartDateStr}]:`, defaultStartDateStr); 
+                    if (startDateStr === null) return; // User cancelled
+                    
+                    // Prompt user for end date, defaulting to end of current year
+                    const endDateStr = prompt(`Enter end date for export (YYYY-MM-DD) [default: ${defaultEndDateStr}]:`, defaultEndDateStr); 
+                    if (endDateStr === null) return; // User cancelled
+
+                    const startDate = startDateStr ? new Date(startDateStr) : new Date(defaultStartDateStr); // Parse start date or use default
+                    const endDate = endDateStr ? new Date(endDateStr) : new Date(defaultEndDateStr); // Parse end date or use default
+                    endDate.setHours(23, 59, 59, 999); // Set end of day for the end date
+
+                    // Validate date inputs
+                    if (isNaN(startDate) || isNaN(endDate)) { 
+                        this.showToast('Invalid date format entered.', 'error'); 
+                        return; 
+                    }
+                    
+                    // Ensure dates are within the current year's boundaries for export context
+                    const finalStartDate = new Date(Math.max(startDate.getTime(), new Date(`${this.state.currentYear}-01-01`).getTime()));
+                    const finalEndDate = new Date(Math.min(endDate.getTime(), new Date(`${this.state.currentYear}-12-31`).getTime()));
+
+                    this.exportTransactionsToExcel(finalStartDate, finalEndDate); // Export data
+                });
+
+                // Analytics page filter listener
                 const analyticsFilterHandler = () => {
+                    // Get start and end dates from analytics date inputs
                     const start = this.ui.analytics.startDate.value ? new Date(this.ui.analytics.startDate.value) : null;
                     let end = this.ui.analytics.endDate.value ? new Date(this.ui.analytics.endDate.value) : null;
-                    if (end) { end.setHours(23, 59, 59, 999); }
+                    if (end) { end.setHours(23, 59, 59, 999); } // Set end of day
+                    
+                    // Render analytics page with the selected date filters
                     this.renderAnalyticsPage(start, end);
                 };
-                this.ui.analytics.filterBtn.addEventListener('click', analyticsFilterHandler);
-                this.ui.analytics.itemTypeFilter.addEventListener('change', analyticsFilterHandler);
-                this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
-                this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all'));
-                this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
-                this.ui.analytics.fsnVedPriorityFilter.addEventListener('change', (e) => this.renderFsnVedAnalysis(e.target.value));
-                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(); const q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10); const c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value); const s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s)) { this.showToast("All fields are required.", "error"); return; } const newTx = { id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q, paidAmount: s * q }; this.state.transactions.push(newTx); this.triggerAutoSave(); e.target.reset(); this.showToast('Cosmetic sale recorded!', "success"); });
-                this.ui.creditSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value); if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; } const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;} itemInStock.quantity -= q; const newTx = { id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: new Date(), items: [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }], total: r * q, paidAmount: 0 }; this.state.transactions.push(newTx); this.renderCreditorList(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Credit sale to ${partyName} recorded!`, "success"); });
-                this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${this.formatIndianNumber(payment)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
-                this.ui.settings.addHolidayBtn.addEventListener('click', () => { const dateStr = this.ui.settings.holidayDateInput.value; if (!dateStr) { this.showToast("Select a date.", "error"); return; } const dateObj = new Date(dateStr); if (dateObj.getUTCDay() !== 1) { this.showToast("Please select a Monday to make an exception.", "error"); return; } if (this.state.holidays.includes(dateStr)) { this.showToast("This date is already an exception.", "info"); return; } this.state.holidays.push(dateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Working day exception added!", "success"); });
-                this.ui.settings.holidayList.addEventListener('click', (e) => { const icon = e.target.closest('.action-icon'); if(icon) { this.state.holidays = this.state.holidays.filter(d => d !== icon.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Exception removed.", "success"); } });
+                this.ui.analytics.filterBtn.addEventListener('click', analyticsFilterHandler); // Filter button click
+                this.ui.analytics.startDate.addEventListener('change', analyticsFilterHandler); // Filter on start date change
+                this.ui.analytics.endDate.addEventListener('change', analyticsFilterHandler); // Filter on end date change
+                
+                // "Today" button listener for analytics
+                this.ui.analytics.todayBtn.addEventListener('click', () => { 
+                    const today = new Date(); 
+                    // Set analytics date inputs to today's date
+                    this.ui.analytics.startDate.valueAsDate = today; 
+                    this.ui.analytics.endDate.valueAsDate = today; 
+                    analyticsFilterHandler(); // Trigger analytics render for today
+                });
+                
+                // Inventory status filter buttons
+                this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all')); // Show all stock
+                this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low')); // Show low stock items
+                
+                // FSN/VED priority filter listener
+                this.ui.analytics.fsnVedPriorityFilter.addEventListener('change', (e) => this.renderFsnVedAnalysis(e.target.value)); // Render FSN/VED with selected priority filter
+                
+                // Cosmetic Sale Form submit listener
+                this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    // Get form input values
+                    const particularsInput = e.target.querySelector('#cosmetic-particulars');
+                    const quantityInput = e.target.querySelector('#cosmetic-quantity');
+                    const costRateInput = e.target.querySelector('#cosmetic-cost-rate');
+                    const sellRateInput = e.target.querySelector('#cosmetic-sell-rate');
+
+                    const p = particularsInput.value.trim(); 
+                    const q = parseInt(quantityInput.value, 10); 
+                    const c = parseFloat(costRateInput.value); 
+                    const s = parseFloat(sellRateInput.value); 
+
+                    // Validate inputs
+                    if (!p || isNaN(q) || isNaN(c) || isNaN(s) || q <= 0 || c < 0 || s < 0) { 
+                        this.showToast("All fields are required and must be valid numbers.", "error"); 
+                        return; 
+                    }
+                    
+                    // Create a new sale transaction object
+                    const newTx = { 
+                        id: Date.now(), // Unique ID
+                        type: 'Sale', 
+                        saleType: 'Cash', 
+                        date: new Date(), // Transaction date
+                        items: [{ 
+                            particulars: `(Cosmetic) ${p}`, // Mark as cosmetic for identification
+                            quantity: q, 
+                            sellingRate: s, 
+                            costRate: c 
+                        }], 
+                        total: s * q, 
+                        paidAmount: s * q // Assume fully paid for cash sales
+                    }; 
+                    this.state.transactions.push(newTx); // Add transaction to state
+                    this.triggerAutoSave(); // Auto-save
+                    e.target.reset(); // Reset the form
+                    this.showToast('Cosmetic sale recorded!', "success"); 
+                });
+
+                // Credit Sale Form submit listener
+                this.ui.creditSaleForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    // Get form input values
+                    const partyNameInput = e.target.querySelector('#credit-inventory-party-name');
+                    const particularsInput = e.target.querySelector('.particulars');
+                    const quantityInput = e.target.querySelector('.quantity');
+                    const rateInput = e.target.querySelector('.rate');
+
+                    const partyName = partyNameInput.value.trim(); 
+                    const p = particularsInput.value.trim(); 
+                    const q = parseInt(quantityInput.value, 10); 
+                    const r = parseFloat(rateInput.value); 
+
+                    // Validate inputs
+                    if (!partyName || !p || !q || isNaN(r) || q <= 0 || r < 0) { 
+                        this.showToast("Creditor's Name, Item, Quantity, and Sale Rate are required and must be valid.", "error"); 
+                        return; 
+                    } 
+                    
+                    // Check item stock
+                    const itemInStock = this.state.inventory.find(i => i.particulars === p); 
+                    if (!itemInStock) { 
+                        this.showToast("Item not found in inventory.", "error"); 
+                        return;
+                    }
+                    if (itemInStock.quantity < q) { 
+                        this.showToast(`Not enough stock for "${p}". Available: ${itemInStock.quantity}, Requested: ${q}`, "error"); 
+                        return;
+                    }
+                    
+                    itemInStock.quantity -= q; // Deduct from inventory stock
+
+                    // Create a new credit sale transaction object
+                    const newTx = { 
+                        id: Date.now(), 
+                        type: 'Sale', 
+                        saleType: 'Credit', 
+                        partyName: partyName, 
+                        date: new Date(), // Transaction date
+                        items: [{ 
+                            particulars: p, 
+                            quantity: q, 
+                            sellingRate: r, 
+                            costRate: itemInStock.rate // Store cost rate from inventory
+                        }], 
+                        total: r * q, 
+                        paidAmount: 0 // Initially, no amount is paid
+                    }; 
+                    this.state.transactions.push(newTx); // Add transaction to state
+                    
+                    this.renderCreditorList(); // Refresh the creditor list UI
+                    this.triggerAutoSave(); // Auto-save
+                    e.target.reset(); // Reset the form
+                    this.showToast(`Credit sale to ${partyName} recorded!`, "success"); 
+                });
+
+                // Listener for payments made against credit sales
+                this.ui.creditorListContainer.addEventListener('click', e => { 
+                    if (e.target.classList.contains('pay-btn')) { // If the PAY button was clicked
+                        const name = e.target.dataset.creditorName; // Get creditor name from data attribute
+                        const paymentStr = prompt(`Enter payment amount for ${name}:`); // Prompt for payment amount
+                        if (paymentStr === null) return; // User cancelled
+
+                        const payment = parseFloat(paymentStr); 
+                        if (!isNaN(payment) && payment > 0) { // Validate payment amount
+                            let remainingPayment = payment;
+                            
+                            // Find all credit transactions for this creditor in the current year, sorted by date (oldest first)
+                            let outstandingTxs = this.state.transactions
+                                .filter(t => t.partyName === name && t.saleType === 'Credit' && new Date(t.date).getFullYear() === this.state.currentYear)
+                                .sort((a, b) => a.date - b.date); // Sort by date ascending
+
+                            // Apply the payment to outstanding transactions
+                            for (const tx of outstandingTxs) { 
+                                if (remainingPayment <= 0) break; // Stop if payment is fully applied
+                                
+                                const currentPaid = tx.paidAmount || 0; // Amount already paid for this transaction
+                                const dueAmount = tx.total - currentPaid; // Remaining due amount
+                                
+                                if (dueAmount > 0.01) { // Apply payment only if there's a significant due amount
+                                    const amountToApply = Math.min(remainingPayment, dueAmount); // Amount to apply to this transaction
+                                    tx.paidAmount = (tx.paidAmount || 0) + amountToApply; // Update paid amount
+                                    remainingPayment -= amountToApply; // Reduce the remaining payment
+                                }
+                            }
+                            
+                            this.showToast(`Payment of ₹${this.formatIndianNumber(payment)} recorded.`, "success"); 
+                            this.renderCreditorList(); // Refresh the creditor list
+                            this.triggerAutoSave(); // Save changes
+                        } else {
+                            this.showToast('Invalid payment amount.', 'error');
+                        } 
+                    } 
+                });
+
+                // Holiday exception listener: adds a Monday as a working day exception
+                this.ui.settings.addHolidayBtn.addEventListener('click', () => { 
+                    const dateStr = this.ui.settings.holidayDateInput.value; // Get date from input
+                    if (!dateStr) { 
+                        this.showToast("Please select a date first.", "error"); 
+                        return; 
+                    } 
+                    const dateObj = new Date(dateStr); // Convert string to Date object
+                    if (isNaN(dateObj.getTime())) { // Validate date
+                         this.showToast("Invalid date format.", "error");
+                         return;
+                    }
+                    // Ensure the selected date is a Monday
+                    if (dateObj.getDay() !== 1) { 
+                        this.showToast("Please select a Monday to mark as a working day exception.", "error"); 
+                        return; 
+                    } 
+                    
+                    const dateKey = dateObj.toISOString().split('T')[0]; // Use YYYY-MM-DD format for consistency
+                    
+                    // Check if this date is already in the holidays list for the current year
+                    if (this.state.holidays.includes(dateKey)) { 
+                        this.showToast("This date is already marked as an exception.", "info"); 
+                        return; 
+                    } 
+                    
+                    this.state.holidays.push(dateKey); // Add the date to the exceptions list
+                    this.renderHolidays(); // Re-render holidays list
+                    this.triggerAutoSave(); // Save changes
+                    this.showToast("Working day exception added!", "success"); 
+                });
+                
+                // Listener for removing a holiday exception
+                this.ui.settings.holidayList.addEventListener('click', (e) => { 
+                    const icon = e.target.closest('.action-icon'); // Find the clicked delete icon
+                    if(icon && icon.dataset.date) { // Check if it's a delete icon with a date attribute
+                        const dateToRemove = icon.dataset.date;
+                        this.state.holidays = this.state.holidays.filter(d => d !== dateToRemove); // Remove the date from the exceptions list
+                        this.renderHolidays(); // Re-render the holidays list
+                        this.triggerAutoSave(); // Save changes
+                        this.showToast("Exception removed.", "success"); 
+                    } 
+                });
             },
 
+            // Displays a toast notification message
             showToast(msg, type='success') {
                 const toast = document.getElementById('toast');
-                toast.textContent = msg;
-                toast.className = `show ${type}`;
+                toast.textContent = msg; // Set the message text
+                toast.className = `show ${type}`; // Add show class and type (success, error, info)
+                // Remove show class after 3 seconds to hide the toast
                 setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
             },
 
+            // Formats a number into Indian currency format (e.g., 1,23,456)
             formatIndianNumber(num) {
-                if (typeof num === 'undefined' || num === null || isNaN(num)) return '0';
+                if (typeof num === 'undefined' || num === null || isNaN(num)) return '0'; // Handle invalid inputs
+                // Use toLocaleString for Indian number formatting
                 return Number(num).toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 2});
             },
         };
 
+        // Initialize the application when the window loads
         app.init();
     };
     </script>
