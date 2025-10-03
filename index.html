@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark"> <!-- Set default theme here -->
 <head>
-    <meta charset="UTF--8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tinny Fashion - Business Manager</title>
     <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%23DD6B20'/%3e%3cpath fill='white' d='M20 30h60l-10 50H30zM50 20c-8 0-15 7-15 15v5h30v-5c0-8-7-15-15-15zM30 40c0 5 5 10 10 10h20c5 0 10-5 10-10'/%3e%3c/svg%3e">
@@ -147,13 +148,13 @@
         .main-chart-card { grid-column: 1 / -1; }
         
        .form-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 1.25rem;
-          top: 0;
-          left: 0;
-          width: 100%;
-        }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  top: 0;            /* adjust as needed */
+  left: 0;
+  width: 100%;
+}
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
         input[type="text"], input[type="number"], input[type="date"], select {
             width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
@@ -612,10 +613,10 @@
             
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
-            BASE_FILE_NAME: 'fashion_store_data',
+            DATA_FILE_NAME: 'fashion_store_data.json',
             
             tokenClient: null,
-            driveFileIds: { inventory: null, transactions: null },
+            driveFileId: null,
             isSaving: false,
             saveTimeout: null,
             state: { inventory: [], transactions: [], holidays: [] },
@@ -665,7 +666,7 @@
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token, () => {
                         gapi.client.setToken('');
-                        this.driveFileIds = { inventory: null, transactions: null };
+                        this.driveFileId = null;
                         document.getElementById('login-screen').style.display = 'flex';
                         document.getElementById('app-wrapper').classList.remove('visible');
                     });
@@ -679,52 +680,27 @@
             },
 
             async loadData() {
-                const currentYear = new Date().getFullYear();
-                const inventoryFileName = `${this.BASE_FILE_NAME}_inventory.json`;
-                const transactionsFileName = `${this.BASE_FILE_NAME}_transactions_${currentYear}.json`;
-
                 try {
-                    // Find both files in parallel
-                    const inventoryFilePromise = gapi.client.drive.files.list({
-                        q: `name='${inventoryFileName}' and trashed=false`,
+                    const response = await gapi.client.drive.files.list({
+                        q: `name='${this.DATA_FILE_NAME}' and trashed=false`,
                         spaces: 'drive',
                         fields: 'files(id)'
                     });
-                    const transactionsFilePromise = gapi.client.drive.files.list({
-                        q: `name='${transactionsFileName}' and trashed=false`,
-                        spaces: 'drive',
-                        fields: 'files(id)'
-                    });
-
-                    const [inventoryResponse, transactionsResponse] = await Promise.all([inventoryFilePromise, transactionsFilePromise]);
-
-                    let inventoryState = { inventory: [], holidays: [] };
-                    let transactionsState = { transactions: [] };
-
-                    // Load inventory file content if it exists
-                    if (inventoryResponse.result.files && inventoryResponse.result.files.length > 0) {
-                        this.driveFileIds.inventory = inventoryResponse.result.files[0].id;
-                        const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileIds.inventory, alt: 'media' });
-                        inventoryState = JSON.parse(fileContentResponse.body);
-                    }
-
-                    // Load transactions file content for the current year if it exists
-                    if (transactionsResponse.result.files && transactionsResponse.result.files.length > 0) {
-                        this.driveFileIds.transactions = transactionsResponse.result.files[0].id;
-                        const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileIds.transactions, alt: 'media' });
-                        transactionsState = JSON.parse(fileContentResponse.body);
-                        if (transactionsState.transactions) {
-                            transactionsState.transactions.forEach(t => { t.date = new Date(t.date); });
+                    if (response.result.files && response.result.files.length > 0) {
+                        this.driveFileId = response.result.files[0].id;
+                        const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
+                        const loadedState = JSON.parse(fileContentResponse.body);
+                        if (loadedState.transactions) {
+                            loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
                         }
+                        this.state = {
+                            inventory: loadedState.inventory || [],
+                            transactions: loadedState.transactions || [],
+                            holidays: loadedState.holidays || []
+                        };
+                    } else {
+                        this.state = { inventory: [], transactions: [], holidays: [] };
                     }
-
-                    // Combine the data from both files into the final app state
-                    this.state = {
-                        inventory: inventoryState.inventory || [],
-                        holidays: inventoryState.holidays || [],
-                        transactions: transactionsState.transactions || []
-                    };
-
                 } catch (e) {
                     console.error("Error loading data from Google Drive:", e);
                     this.showToast("Could not load data from Drive. Starting fresh.", "info");
@@ -741,35 +717,42 @@
                 if (this.isSaving) return;
                 this.isSaving = true;
                 if (isManual) this.showToast("Syncing data to Drive...", "info");
-
                 try {
-                    // Get parent folder ID, creating it if it doesn't exist
-                    let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
-                    let folderId = res.result.files?.[0]?.id;
-                    if (!folderId) {
-                        res = await gapi.client.drive.files.create({ resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' }, fields: 'id' });
-                        folderId = res.result.id;
+                    const dataToSave = JSON.stringify(this.state, null, 2);
+                    const boundary = '-------314159265358979323846';
+                    const delimiter = "\r\n--" + boundary + "\r\n";
+                    const close_delim = "\r\n--" + boundary + "--";
+                    let request;
+
+                    if (this.driveFileId) {
+                        const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                        request = gapi.client.request({
+                            'path': `https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}`,
+                            'method': 'PATCH',
+                            'params': { 'uploadType': 'multipart' },
+                            'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                            'body': multipartRequestBody
+                        });
+                    } else {
+                        let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
+                        let folderId = res.result.files?.[0]?.id;
+                        if (!folderId) {
+                            res = await gapi.client.drive.files.create({ resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' }, fields: 'id' });
+                            folderId = res.result.id;
+                        }
+                        const metadata = { 'name': this.DATA_FILE_NAME, 'parents': [folderId], 'mimeType': 'application/json' };
+                        const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                        request = gapi.client.request({
+                            'path': 'https://www.googleapis.com/upload/drive/v3/files',
+                            'method': 'POST',
+                            'params': { 'uploadType': 'multipart' },
+                            'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                            'body': multipartRequestBody
+                        });
                     }
-
-                    const currentYear = new Date().getFullYear();
-                    const inventoryFileName = `${this.BASE_FILE_NAME}_inventory.json`;
-                    const transactionsFileName = `${this.BASE_FILE_NAME}_transactions_${currentYear}.json`;
-
-                    const inventoryData = { inventory: this.state.inventory, holidays: this.state.holidays };
-                    const transactionsData = { transactions: this.state.transactions };
-
-                    // Save both files in parallel
-                    const inventorySavePromise = this._saveFile(this.driveFileIds.inventory, inventoryFileName, inventoryData, folderId);
-                    const transactionsSavePromise = this._saveFile(this.driveFileIds.transactions, transactionsFileName, transactionsData, folderId);
-
-                    const [inventoryFileId, transactionsFileId] = await Promise.all([inventorySavePromise, transactionsSavePromise]);
-                    
-                    // Update the file IDs if new files were created
-                    if (inventoryFileId) this.driveFileIds.inventory = inventoryFileId;
-                    if (transactionsFileId) this.driveFileIds.transactions = transactionsFileId;
-                    
+                    const response = await request;
+                    if (!this.driveFileId) { this.driveFileId = response.result.id; }
                     if (isManual) this.showToast("Data synced successfully!", "success");
-
                 } catch (e) {
                     console.error("Error saving data to Google Drive:", e);
                     if (isManual) this.showToast("Failed to sync data.", "error");
@@ -777,40 +760,6 @@
                     this.isSaving = false;
                 }
             },
-
-            async _saveFile(fileId, fileName, dataObject, parentFolderId) {
-                const dataToSave = JSON.stringify(dataObject, null, 2);
-                const boundary = '-------314159265358979323846';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
-                let request;
-
-                if (fileId) { // If file exists, update (patch) it
-                    const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
-                    request = gapi.client.request({
-                        'path': `https://www.googleapis.com/upload/drive/v3/files/${fileId}`,
-                        'method': 'PATCH',
-                        'params': { 'uploadType': 'multipart' },
-                        'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
-                        'body': multipartRequestBody
-                    });
-                } else { // If file doesn't exist, create it
-                    const metadata = { 'name': fileName, 'parents': [parentFolderId], 'mimeType': 'application/json' };
-                    const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
-                    request = gapi.client.request({
-                        'path': 'https://www.googleapis.com/upload/drive/v3/files',
-                        'method': 'POST',
-                        'params': { 'uploadType': 'multipart' },
-                        'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
-                        'body': multipartRequestBody
-                    });
-                }
-                
-                const response = await request;
-                // Return the new file ID if a file was created, otherwise null
-                return fileId ? null : response.result.id;
-            },
-
 
             cacheDOMElements() {
                 this.ui = {
