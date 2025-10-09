@@ -58,6 +58,33 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
+
+
+
+.recommendation-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .recommendation-item:hover {
+            background-color: var(--background-body);
+            color: var(--accent-primary);
+        }
+        .recommendation-title {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+        }
+
+
+
+        
+
         #login-screen {
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh; width: 100%; text-align: center; padding: 1rem;
@@ -422,24 +449,7 @@
 
             <div id="stocks" class="page"><div class="page-header"><h1>Inventory Stocks</h1><p>View and manage all items in your inventory.</p>
 
-                <div class="card">
-                    <!-- START: Add this new search section -->
-                    <div id="stock-search-container" style="position: relative; margin-bottom: 1.5rem;">
-                        <label for="stock-search-input" style="font-weight: 600;">Search Inventory</label>
-                        <input type="text" id="stock-search-input" placeholder="Type to search for an item...">
-                        <div id="search-recommendations" class="card" style="position: absolute; width: 100%; top: 100%; left: 0; z-index: 100; display: none; padding: 0.5rem; margin-top: 0.5rem;">
-                            <!-- Recommendations will be populated by JavaScript -->
-                        </div>
-                    </div>
-                    <!-- END: New search section -->
-
-                    <div class="table-container">
-                        <table class="styled-table" id="inventory-table">
-                            <!-- ... existing table ... -->
-                        </table>
-                    </div>
-                </div>
-            
+             
             </div>
                 <div class="card"><div class="table-container"><table class="styled-table" id="inventory-table"><thead><tr><th>ITEM</th><th>QTY</th><th>COST</th><th>ACTION</th></tr></thead><tbody></tbody></table></div></div>
             </div>
