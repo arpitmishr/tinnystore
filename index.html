@@ -1014,16 +1014,26 @@
                 } else { tableBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items match the filter.</td></tr>`; }
             },
 
-            renderTransactions(startDate = null, endDate = null) {
+           renderTransactions(startDate = null, endDate = null) {
                 let filteredTransactions = this.state.transactions;
                 if (startDate || endDate) { filteredTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date); if (startDate && tDate < startDate) return false; if (endDate && tDate > endDate) return false; return true; }); }
                 const transactions = filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
                 const itemsHtml = (items, txId, type) => items.map(i => `<li><div class="item-main-line"><span>${i.quantity} x ${i.particulars}</span>${type === 'Sale' ? `<button class="btn-danger return-item-btn" style="padding: 2px 8px; font-size: 0.75rem;" data-tx-id="${txId}" data-item-p="${i.particulars}">Return</button>` : ''}</div></li>`).join('');
                 const tableRows = transactions.map(t => {
                     const transactionProfit = t.type === 'Sale' ? t.items.reduce((sum, i) => sum + (i.sellingRate - i.costRate) * i.quantity, 0) : 0;
-                    return `<tr><td>${new Date(t.date).toLocaleDateString('en-GB')}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td><td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td><td>₹${this.formatIndianNumber(t.total)}</td><td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td></tr>`;
+                    const transactionCost = t.type === 'Sale' ? t.items.reduce((sum, i) => sum + (i.costRate * i.quantity), 0) : t.total;
+                    const transactionSales = t.type === 'Sale' ? t.total : 0;
+                    
+                    return `<tr>
+                                <td>${new Date(t.date).toLocaleDateString('en-GB')}</td>
+                                <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--danger-red)'};">${t.type}</span></td>
+                                <td><ul class="transaction-items-list">${itemsHtml(t.items, t.id, t.type)}</ul></td>
+                                <td>₹${this.formatIndianNumber(transactionCost)}</td>
+                                <td>${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionSales)}` : 'N/A'}</td>
+                                <td><span style="font-weight: 600; color: ${t.type === 'Sale' ? 'var(--success-green)' : 'var(--text-secondary)'};">${t.type === 'Sale' ? `₹${this.formatIndianNumber(transactionProfit)}` : 'N/A'}</span></td>
+                            </tr>`;
                 }).join('');
-                this.ui.transactions.table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead><tbody>${transactions.length > 0 ? tableRows : `<tr><td colspan="5" style="text-align:center;">No transactions found.</td></tr>`}</tbody>`;
+                this.ui.transactions.table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Items</th><th>Cost</th><th>Sales</th><th>Profit</th></tr></thead><tbody>${transactions.length > 0 ? tableRows : `<tr><td colspan="6" style="text-align:center;">No transactions found.</td></tr>`}</tbody>`;
             },
             
             renderCreditorList() { 
