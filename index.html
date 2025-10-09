@@ -420,7 +420,27 @@
                  <div class="card"><h2>Add New Stock</h2><form id="purchase-form"><div id="purchase-items-container" class="multi-item-form-container"></div><div style="display: flex; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;"><button type="button" id="add-purchase-item-btn" class="btn btn-neutral">+ Add Item</button><button type="submit" class="btn btn-primary" style="margin-left: auto;">Add to Stock</button></div></form></div>
             </div>
 
-            <div id="stocks" class="page"><div class="page-header"><h1>Inventory Stocks</h1><p>View and manage all items in your inventory.</p></div>
+            <div id="stocks" class="page"><div class="page-header"><h1>Inventory Stocks</h1><p>View and manage all items in your inventory.</p>
+
+                <div class="card">
+                    <!-- START: Add this new search section -->
+                    <div id="stock-search-container" style="position: relative; margin-bottom: 1.5rem;">
+                        <label for="stock-search-input" style="font-weight: 600;">Search Inventory</label>
+                        <input type="text" id="stock-search-input" placeholder="Type to search for an item...">
+                        <div id="search-recommendations" class="card" style="position: absolute; width: 100%; top: 100%; left: 0; z-index: 100; display: none; padding: 0.5rem; margin-top: 0.5rem;">
+                            <!-- Recommendations will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    <!-- END: New search section -->
+
+                    <div class="table-container">
+                        <table class="styled-table" id="inventory-table">
+                            <!-- ... existing table ... -->
+                        </table>
+                    </div>
+                </div>
+            
+            </div>
                 <div class="card"><div class="table-container"><table class="styled-table" id="inventory-table"><thead><tr><th>ITEM</th><th>QTY</th><th>COST</th><th>ACTION</th></tr></thead><tbody></tbody></table></div></div>
             </div>
 
