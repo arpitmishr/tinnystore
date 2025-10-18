@@ -1149,7 +1149,35 @@
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow());
                 this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); });
                 this.ui.salesItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) { e.target.closest('.item-row').remove(); } });
-                this.ui.salesItemsContainer.addEventListener('input', e => { if (e.target.classList.contains('particulars')) { const item = this.state.inventory.find(i => i.particulars === e.target.value); const row = e.target.closest('.item-row'); if(item && row) { row.querySelector('.cost-rate').value = item.rate.toFixed(2); } } });
+                this.ui.salesItemsContainer.addEventListener('input', e => { 
+                    if (e.target.classList.contains('particulars')) { 
+                        const particularsInput = e.target;
+                        const item = this.state.inventory.find(i => i.particulars === particularsInput.value); 
+                        const row = e.target.closest('.item-row'); 
+                        
+                        if(item && row) { 
+                            row.querySelector('.cost-rate').value = item.rate.toFixed(2);
+                            
+                            // --- NEW: Set background color based on stock quantity ---
+                            if (item.quantity === 0) {
+                                particularsInput.style.backgroundColor = 'rgba(197, 48, 48, 0.5)'; // Dark Red
+                                particularsInput.style.color = '#fff'; // White text for readability
+                            } else if (item.quantity <= 2) {
+                                particularsInput.style.backgroundColor = 'rgba(214, 158, 46, 0.4)'; // Yellow
+                                particularsInput.style.color = ''; // Default text color
+                            } else {
+                                particularsInput.style.backgroundColor = 'rgba(56, 161, 105, 0.4)'; // Dark Green
+                                particularsInput.style.color = ''; // Default text color
+                            }
+                            // --- END NEW ---
+                        } else {
+                            // --- NEW: Reset styles if no item is matched ---
+                            particularsInput.style.backgroundColor = '';
+                            particularsInput.style.color = '';
+                            // --- END NEW ---
+                        }
+                    } 
+                });
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
                 this.ui.purchaseForm.addEventListener('submit', e => { e.preventDefault(); const purchasedItems = []; for(const row of e.target.querySelectorAll('.item-row')) { const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(p && q && !isNaN(r)) purchasedItems.push({particulars:p, quantity:q, rate:r}); } if(purchasedItems.length === 0) { this.showToast("No valid items.", "error"); return; } purchasedItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity; const totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: purchasedItems, total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) }); this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); this.triggerAutoSave(); this.showToast('Stock updated!', "success"); });
                 this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
