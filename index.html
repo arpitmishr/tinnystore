@@ -1240,7 +1240,37 @@ this.ui.salesItemsContainer.addEventListener('input', e => {
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { const dateStr = this.ui.settings.holidayDateInput.value; if (!dateStr) { this.showToast("Select a date.", "error"); return; } const dateObj = new Date(dateStr); if (dateObj.getUTCDay() !== 1) { this.showToast("Please select a Monday to make an exception.", "error"); return; } if (this.state.holidays.includes(dateStr)) { this.showToast("This date is already an exception.", "info"); return; } this.state.holidays.push(dateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Working day exception added!", "success"); });
                 this.ui.settings.holidayList.addEventListener('click', (e) => { const icon = e.target.closest('.action-icon'); if(icon) { this.state.holidays = this.state.holidays.filter(d => d !== icon.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Exception removed.", "success"); } });
             },
+// START: Add this new function here
+            calculateRecentAverageSellPrice(particulars, count = 3) {
+                const recentRates = [];
+                // Create a copy and sort transactions from newest to oldest
+                const sortedTransactions = [...this.state.transactions]
+                    .filter(tx => tx.type === 'Sale')
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+                for (const tx of sortedTransactions) {
+                    // Find the item in the current transaction
+                    const soldItem = tx.items.find(item => item.particulars === particulars);
+                    
+                    if (soldItem) {
+                        recentRates.push(soldItem.sellingRate);
+                    }
+                    
+                    // Stop once we have enough rates (default is 3)
+                    if (recentRates.length >= count) {
+                        break;
+                    }
+                }
+
+                if (recentRates.length === 0) {
+                    return null; // The item has never been sold
+                }
+
+                // Calculate the average of the collected rates
+                const sumOfRates = recentRates.reduce((sum, rate) => sum + rate, 0);
+                return sumOfRates / recentRates.length;
+            },
+            // END: New function
             showToast(msg, type='success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = msg;
