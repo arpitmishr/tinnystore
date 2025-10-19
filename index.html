@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark"> <!-- Set default theme here -->
 <head>
@@ -237,7 +236,7 @@
         }
         .multi-item-form-container .item-row:first-child { padding-top: 0; }
         
-        .abc-badge, .fsn-badge {
+        .abc-badge, .fsn-badge, .hmv-badge {
             padding: 0.2rem 0.6rem;
             border-radius: 12px;
             font-weight: 600;
@@ -254,6 +253,10 @@
         .fsn-badge-f { background-color: var(--success-green); }
         .fsn-badge-s { background-color: var(--warning-yellow); }
         .fsn-badge-n { background-color: var(--danger-red); }
+        
+        .hmv-badge-h { background-color: var(--success-green); }
+        .hmv-badge-m { background-color: var(--info-blue); }
+        .hmv-badge-l { background-color: var(--danger-red); }
 
         .priority-cell { font-weight: 600; }
         .priority-very-high { color: var(--danger-red); }
@@ -479,7 +482,7 @@
                 <div class="toc-container">
                     <a href="#analytics-snapshot" class="toc-link">Snapshot</a>
                     <a href="#analytics-trends" class="toc-link">Trends & Charts</a>
-                    <a href="#analytics-fsn-ved" class="toc-link">FSN & VED Analysis</a>
+                    <a href="#analytics-fsn-hmv" class="toc-link">FSN x HMV Analysis</a>
                     <a href="#analytics-abc" class="toc-link">ABC Analysis</a>
                     <a href="#analytics-top-products" class="toc-link">Top Products</a>
                     <a href="#analytics-inventory-status" class="toc-link">Inventory Status</a>
@@ -508,32 +511,34 @@
                     <div class="card"><h2>Stock by FSN Category</h2><canvas id="fsnAnalysisChart" style="max-height: 300px;"></canvas></div>
                 </div>
 
-                <div class="card" id="analytics-fsn-ved">
+                <div class="card" id="analytics-fsn-hmv">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <h2>FSN & VED Inventory Control Matrix</h2>
+                        <h2>FSN x HMV Inventory Matrix</h2>
                         <div style="max-width: 250px;">
-                            <label>Filter by Priority</label>
-                            <select id="fsn-ved-priority-filter" style="padding: 0.75rem;">
-                                <option value="all">All Priorities</option>
-                                <option value="priority-very-high">🚨 Very High Priority</option>
+                            <label>Filter by Actionable Class</label>
+                            <select id="fsn-hmv-priority-filter" style="padding: 0.75rem;">
+                                <option value="all">All Classes</option>
+                                <option value="priority-very-high">🚨 Urgent Attention</option>
                                 <option value="priority-high">High Priority</option>
-                                <option value="priority-medium">Medium / Moderate</option>
+                                <option value="priority-medium">Medium Priority</option>
                                 <option value="priority-low">Low Priority</option>
                             </select>
                         </div>
                     </div>
                     <p style="color: var(--text-secondary); margin-bottom: 1.5rem; margin-top: 1rem;">
-                        Classifies items by sales frequency (<b>F</b>ast, <b>S</b>low, <b>N</b>on-moving) and importance (<b>V</b>ital, <b>E</b>ssential, <b>D</b>esirable).
+                        Classifies items by sales frequency (<b>F</b>ast, <b>S</b>low, <b>N</b>on-moving) and their contribution to revenue (<b>H</b>igh, <b>M</b>edium, <b>L</b>ow Value).
                     </p>
                     <div class="table-container">
-                        <table class="styled-table" id="fsn-ved-analysis-table">
+                        <table class="styled-table" id="fsn-hmv-analysis-table">
                             <thead>
                                 <tr>
                                     <th>Item</th>
                                     <th>Stock</th>
+                                    <th>Inv. Value</th>
+                                    <th>Total Revenue</th>
                                     <th>FSN</th>
-                                    <th>VED</th>
-                                    <th>Control Priority</th>
+                                    <th>HMV</th>
+                                    <th>Actionable Class</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -807,8 +812,8 @@
                         filteredRevenue: document.getElementById('analytics-filtered-revenue'), filteredProfit: document.getElementById('analytics-filtered-profit'), filteredMargin: document.getElementById('analytics-filtered-margin'), unitsStock: document.getElementById('analytics-units-stock'), monthlyChart: document.getElementById('monthlySalesProfitChart'), startDate: document.getElementById('analytics-start-date'), endDate: document.getElementById('analytics-end-date'), filterBtn: document.getElementById('analytics-filter-btn'), todayBtn: document.getElementById('analytics-today-btn'), itemTypeFilter: document.getElementById('analytics-item-type-filter'), topProductsTableBody: document.querySelector('#top-products-table tbody'),
                         inventoryStatusTableBody: document.querySelector('#inventory-status-table tbody'), allStockBtn: document.getElementById('analytics-all-stock-btn'), lowStockBtn: document.getElementById('analytics-low-stock-btn'),
                         abcAnalysisTableBody: document.querySelector('#abc-analysis-table tbody'),
-                        fsnVedAnalysisTableBody: document.querySelector('#fsn-ved-analysis-table tbody'),
-                        fsnVedPriorityFilter: document.getElementById('fsn-ved-priority-filter'),
+                        fsnHmvAnalysisTableBody: document.querySelector('#fsn-hmv-analysis-table tbody'),
+                        fsnHmvPriorityFilter: document.getElementById('fsn-hmv-priority-filter'),
                         abcChart: document.getElementById('abcAnalysisChart'),
                         fsnChart: document.getElementById('fsnAnalysisChart'),
                     },
@@ -892,7 +897,7 @@
             
             renderInventory() { 
                 this.state.inventory.sort((a, b) => a.particulars.localeCompare(b.particulars));
-                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>₹${this.formatIndianNumber(item.rate)}</td><td><div class="actions-cell"><span class="action-icon edit" data-particulars="${item.particulars}" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg></span><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></span></div></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
+                this.ui.inventoryTableBody.innerHTML = this.state.inventory.length ? this.state.inventory.map(item => `<tr><td>${item.particulars}</td><td>${item.quantity}</td><td>₹${this.formatIndianNumber(item.rate)}</td><td><div class="actions-cell"><span class="action-icon edit" data-particulars="${item.particulars}" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25-1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg></span><span class="action-icon delete" data-particulars="${item.particulars}" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.046a12.705 12.705 0 011.724 6.364A3.003 3.003 0 004.5 15.5v.75A.75.75 0 005.25 17h9.5a.75.75 0 00.75-.75v-.75a3.003 3.003 0 00-1.74-2.732 12.705 12.705 0 011.724-6.364l.149.046a.75.75 0 10.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25-.56-1.25 1.25V4.075C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></span></div></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;">No inventory data.</td></tr>`;
             },
             
             renderInventoryDatalist() { this.ui.inventoryDatalist.innerHTML = this.state.inventory.map(item => `<option value="${item.particulars}"></option>`).join(''); },
@@ -913,7 +918,7 @@
                 this.renderTopProductsTable(startDate, endDate);
                 this.renderInventoryStatusTable('all');
                 this.renderAbcAnalysis();
-                this.renderFsnVedAnalysis();
+                this.renderFsnHmvAnalysis();
             },
             
             renderMonthlyChart() {
@@ -954,57 +959,110 @@
                 `).join('');
             },
             
-            getInventoryWithLastSaleDate() {
-                const inventoryMap = new Map(this.state.inventory.map(item => [item.particulars, { ...item, lastSaleDate: null }]));
-                const sortedTransactions = [...this.state.transactions].sort((a, b) => b.date - a.date);
-                for (const tx of sortedTransactions) {
+            getInventoryWithSaleDetails() {
+                const inventoryMap = new Map(this.state.inventory.map(item => [item.particulars, { 
+                    ...item, 
+                    lastSaleDate: null,
+                    totalRevenue: 0,
+                    totalQuantitySold: 0
+                }]));
+
+                this.state.transactions.forEach(tx => {
                     if (tx.type === 'Sale') {
-                        for (const item of tx.items) {
-                            if (inventoryMap.has(item.particulars) && !inventoryMap.get(item.particulars).lastSaleDate) {
-                                inventoryMap.get(item.particulars).lastSaleDate = tx.date;
+                        tx.items.forEach(item => {
+                            if (inventoryMap.has(item.particulars)) {
+                                const invItem = inventoryMap.get(item.particulars);
+                                invItem.totalRevenue += item.sellingRate * item.quantity;
+                                invItem.totalQuantitySold += item.quantity;
+                                if (!invItem.lastSaleDate || tx.date > invItem.lastSaleDate) {
+                                    invItem.lastSaleDate = tx.date;
+                                }
                             }
-                        }
+                        });
                     }
-                }
+                });
                 return Array.from(inventoryMap.values());
             },
 
-            performFsnVedAnalysis() {
-                const inventoryWithSales = this.getInventoryWithLastSaleDate();
+            performFsnHmvAnalysis() {
+                const inventoryWithSales = this.getInventoryWithSaleDetails();
+                
+                // Classify FSN
                 const classifyFSN = (lastSaleDate) => {
                     if (!lastSaleDate) return "N";
                     const diffDays = Math.floor((new Date() - new Date(lastSaleDate)) / (1000 * 3600 * 24));
-                    if (diffDays <= 30) return "F"; if (diffDays <= 90) return "S"; return "N";
+                    if (diffDays <= 30) return "F";
+                    if (diffDays <= 90) return "S";
+                    return "N";
                 };
-                const classifyVED = (itemName) => {
-                    const vitalKeywords = ["legging", "dupatta", "panty", "vest", "socks"], essentialKeywords = ["kurti", "top", "nighty", "bra"], desirableKeywords = ["frock", "suit", "sarara", "skirt"];
-                    const name = itemName.toLowerCase();
-                    if (vitalKeywords.some(w => name.includes(w))) return "V"; if (essentialKeywords.some(w => name.includes(w))) return "E"; if (desirableKeywords.some(w => name.includes(w))) return "D";
-                    return "E";
+
+                // Classify HMV based on revenue contribution
+                let itemsWithRevenue = inventoryWithSales.filter(item => item.totalRevenue > 0);
+                itemsWithRevenue.sort((a, b) => b.totalRevenue - a.totalRevenue);
+                const totalSystemRevenue = itemsWithRevenue.reduce((sum, item) => sum + item.totalRevenue, 0);
+
+                let cumulativeRevenue = 0;
+                const hmvMap = new Map();
+                if (totalSystemRevenue > 0) {
+                    itemsWithRevenue.forEach(item => {
+                        cumulativeRevenue += item.totalRevenue;
+                        const cumulativePercent = (cumulativeRevenue / totalSystemRevenue) * 100;
+                        if (cumulativePercent <= 70) hmvMap.set(item.particulars, "H");
+                        else if (cumulativePercent <= 90) hmvMap.set(item.particulars, "M");
+                        else hmvMap.set(item.particulars, "L");
+                    });
+                }
+
+                const getActionableClass = (fsn, hmv) => {
+                    const matrix = {
+                        FH: { text: "⭐ Stars (Prime Stock)", class: "priority-high" },
+                        FM: { text: "👍 Workhorses", class: "priority-medium" },
+                        FL: { text: "🍞 Bread & Butter", class: "priority-medium" },
+                        SH: { text: "🤔 Problem Children", class: "priority-high" },
+                        SM: { text: "😐 Average Items", class: "priority-medium" },
+                        SL: { text: "🗑️ Nuisance Stock", class: "priority-low" },
+                        NH: { text: "🚨 High-Value Dead Stock", class: "priority-very-high" },
+                        NM: { text: "📉 Medium-Value Dead Stock", class: "priority-high" },
+                        NL: { text: "❌ Scrap", class: "priority-very-high" },
+                    };
+                    return matrix[fsn + hmv] || { text: 'N/A', class: 'priority-low' };
                 };
-                const getControlPriority = (fsn, ved) => {
-                    if (fsn === "F" && ved === "V") return { text: "🚨 Very High Priority", class: "priority-very-high" }; if (fsn === "S" && ved === "V") return { text: "High Priority", class: "priority-high" };
-                    if (fsn === "F" && ved === "E") return { text: "High Priority", class: "priority-high" }; if (fsn === "N" && ved === "V") return { text: "Moderate (Check demand)", class: "priority-medium" };
-                    if (fsn === "S" && ved === "E") return { text: "Medium Priority", class: "priority-medium" }; if (fsn === "F" && ved === "D") return { text: "Medium Priority", class: "priority-medium" };
-                    if (fsn === "N" && ved === "E") return { text: "Low (Clear slowly)", class: "priority-low" }; if (fsn === "S" && ved === "D") return { text: "Low Priority", class: "priority-low" };
-                    if (fsn === "N" && ved === "D") return { text: "🔻 Scrap / Clearance", class: "priority-very-high" };
-                    return { text: "Medium", class: "priority-medium" };
-                };
-                return inventoryWithSales.map(item => ({ ...item, fsn: classifyFSN(item.lastSaleDate), ved: classifyVED(item.particulars), priority: getControlPriority(classifyFSN(item.lastSaleDate), classifyVED(item.particulars)) }));
+
+                return inventoryWithSales.map(item => {
+                    const fsn = classifyFSN(item.lastSaleDate);
+                    const hmv = hmvMap.get(item.particulars) || "L";
+                    return {
+                        ...item,
+                        inventoryValue: item.quantity * item.rate,
+                        fsn,
+                        hmv,
+                        priority: getActionableClass(fsn, hmv)
+                    };
+                }).sort((a, b) => b.inventoryValue - a.inventoryValue);
             },
 
-            renderFsnVedAnalysis(priorityFilter = 'all') {
-                let analysisResults = this.performFsnVedAnalysis();
+
+            renderFsnHmvAnalysis(priorityFilter = 'all') {
+                let analysisResults = this.performFsnHmvAnalysis();
                 if (priorityFilter !== 'all') {
                     analysisResults = analysisResults.filter(item => item.priority.class === priorityFilter);
                 }
-                const tableBody = this.ui.analytics.fsnVedAnalysisTableBody;
-                if (analysisResults.length === 0) { tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No items match the selected priority.</td></tr>`; return; }
+                const tableBody = this.ui.analytics.fsnHmvAnalysisTableBody;
+                if (analysisResults.length === 0) { tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No items match the selected filter.</td></tr>`; return; }
+                
                 tableBody.innerHTML = analysisResults.map(item => `
-                    <tr><td>${item.particulars}</td><td>${item.quantity}</td><td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td><td><b>${item.ved}</b></td><td class="${item.priority.class}">${item.priority.text}</td></tr>
+                    <tr>
+                        <td>${item.particulars}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${this.formatIndianNumber(item.inventoryValue)}</td>
+                        <td>₹${this.formatIndianNumber(item.totalRevenue)}</td>
+                        <td><span class="fsn-badge fsn-badge-${item.fsn.toLowerCase()}">${item.fsn}</span></td>
+                        <td><span class="hmv-badge hmv-badge-${item.hmv.toLowerCase()}">${item.hmv}</span></td>
+                        <td class="${item.priority.class}">${item.priority.text}</td>
+                    </tr>
                 `).join('');
             },
-            
+
             renderAnalysisCharts() {
                 // ABC Chart
                 const abcData = this.performAbcAnalysis();
@@ -1016,7 +1074,7 @@
                 this.charts.abc = new Chart(this.ui.analytics.abcChart, { type: 'pie', data: { labels: ['A Items (Top 70%)', 'B Items (Next 20%)', 'C Items (Bottom 10%)'], datasets: [{ data: [abcSummary.A, abcSummary.B, abcSummary.C], backgroundColor: ['#38A169', '#3182CE', '#C53030'] }] }, options: { responsive: true, maintainAspectRatio: false } });
 
                 // FSN Chart
-                const fsnData = this.performFsnVedAnalysis();
+                const fsnData = this.performFsnHmvAnalysis();
                 const fsnSummary = fsnData.reduce((acc, item) => {
                     acc[item.fsn] = (acc[item.fsn] || 0) + item.quantity;
                     return acc;
@@ -1149,55 +1207,50 @@
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow());
                 this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); });
                 this.ui.salesItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) { e.target.closest('.item-row').remove(); } });
-                // START: Replace the existing 'salesItemsContainer' input listener with this one
-this.ui.salesItemsContainer.addEventListener('input', e => { 
-    if (e.target.classList.contains('particulars')) { 
-        const particularsInput = e.target;
-        const itemName = particularsInput.value;
-        const item = this.state.inventory.find(i => i.particulars === itemName); 
-        const row = e.target.closest('.item-row'); 
-        
-        if (!row) return; // Exit if the row is not found
-        
-        const quantityInput = row.querySelector('.quantity');
-        const rateInput = row.querySelector('.rate');
+                
+                this.ui.salesItemsContainer.addEventListener('input', e => { 
+                    if (e.target.classList.contains('particulars')) { 
+                        const particularsInput = e.target;
+                        const itemName = particularsInput.value;
+                        const item = this.state.inventory.find(i => i.particulars === itemName); 
+                        const row = e.target.closest('.item-row'); 
+                        
+                        if (!row) return;
+                        
+                        const quantityInput = row.querySelector('.quantity');
+                        const rateInput = row.querySelector('.rate');
 
-        if(item) { 
-            row.querySelector('.cost-rate').value = item.rate.toFixed(2);
-
-            // --- Set quantity placeholder with available stock ---
-            quantityInput.placeholder = `Available: ${item.quantity}`;
-            
-            // --- NEW: Calculate and set RECENT average sell price placeholder ---
-            const avgSellPrice = this.calculateRecentAverageSellPrice(itemName); // Calling the new function
-            if (avgSellPrice !== null) {
-                rateInput.placeholder = `Recent Avg: ₹${this.formatIndianNumber(avgSellPrice)}`;
-            } else {
-                rateInput.placeholder = 'Sell Rate'; // Default placeholder
-            }
-            
-            // --- Set background color based on stock quantity ---
-            if (item.quantity === 0) {
-                particularsInput.style.backgroundColor = 'rgba(197, 48, 48, 0.5)'; // Dark Red
-                particularsInput.style.color = '#fff'; // White text for readability
-            } else if (item.quantity <= 2) {
-                particularsInput.style.backgroundColor = 'rgba(214, 158, 46, 0.4)'; // Yellow
-                particularsInput.style.color = ''; // Default text color
-            } else {
-                particularsInput.style.backgroundColor = 'rgba(56, 161, 105, 0.4)'; // Dark Green
-                particularsInput.style.color = ''; // Default text color
-            }
-        } else {
-            // --- Reset styles and placeholders if no item is matched ---
-            particularsInput.style.backgroundColor = '';
-            particularsInput.style.color = '';
-            row.querySelector('.cost-rate').value = '';
-            quantityInput.placeholder = 'Quantity';
-            rateInput.placeholder = 'Sell Rate';
-        }
-    } 
-});
-// END: Replacement code
+                        if(item) { 
+                            row.querySelector('.cost-rate').value = item.rate.toFixed(2);
+                            quantityInput.placeholder = `Available: ${item.quantity}`;
+                            
+                            const avgSellPrice = this.calculateRecentAverageSellPrice(itemName);
+                            if (avgSellPrice !== null) {
+                                rateInput.placeholder = `Recent Avg: ₹${this.formatIndianNumber(avgSellPrice)}`;
+                            } else {
+                                rateInput.placeholder = 'Sell Rate';
+                            }
+                            
+                            if (item.quantity === 0) {
+                                particularsInput.style.backgroundColor = 'rgba(197, 48, 48, 0.5)';
+                                particularsInput.style.color = '#fff';
+                            } else if (item.quantity <= 2) {
+                                particularsInput.style.backgroundColor = 'rgba(214, 158, 46, 0.4)';
+                                particularsInput.style.color = '';
+                            } else {
+                                particularsInput.style.backgroundColor = 'rgba(56, 161, 105, 0.4)';
+                                particularsInput.style.color = '';
+                            }
+                        } else {
+                            particularsInput.style.backgroundColor = '';
+                            particularsInput.style.color = '';
+                            row.querySelector('.cost-rate').value = '';
+                            quantityInput.placeholder = 'Quantity';
+                            rateInput.placeholder = 'Sell Rate';
+                        }
+                    } 
+                });
+                
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
                 this.ui.purchaseForm.addEventListener('submit', e => { e.preventDefault(); const purchasedItems = []; for(const row of e.target.querySelectorAll('.item-row')) { const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(p && q && !isNaN(r)) purchasedItems.push({particulars:p, quantity:q, rate:r}); } if(purchasedItems.length === 0) { this.showToast("No valid items.", "error"); return; } purchasedItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity; const totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: purchasedItems, total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) }); this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); this.triggerAutoSave(); this.showToast('Stock updated!', "success"); });
                 this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
@@ -1233,44 +1286,40 @@ this.ui.salesItemsContainer.addEventListener('input', e => {
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
                 this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all'));
                 this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
-                this.ui.analytics.fsnVedPriorityFilter.addEventListener('change', (e) => this.renderFsnVedAnalysis(e.target.value));
+                this.ui.analytics.fsnHmvPriorityFilter.addEventListener('change', (e) => this.renderFsnHmvAnalysis(e.target.value));
                 this.ui.cosmeticSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const p = e.target.querySelector('#cosmetic-particulars').value.trim(); const q = parseInt(e.target.querySelector('#cosmetic-quantity').value, 10); const c = parseFloat(e.target.querySelector('#cosmetic-cost-rate').value); const s = parseFloat(e.target.querySelector('#cosmetic-sell-rate').value); if (!p || isNaN(q) || isNaN(c) || isNaN(s)) { this.showToast("All fields are required.", "error"); return; } const newTx = { id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: [{ particulars: `(Cosmetic) ${p}`, quantity: q, sellingRate: s, costRate: c }], total: s * q, paidAmount: s * q }; this.state.transactions.push(newTx); this.triggerAutoSave(); e.target.reset(); this.showToast('Cosmetic sale recorded!', "success"); });
                 this.ui.creditSaleForm.addEventListener('submit', (e) => { e.preventDefault(); const partyName = e.target.querySelector('#credit-inventory-party-name').value.trim(); const p = e.target.querySelector('.particulars').value.trim(); const q = parseInt(e.target.querySelector('.quantity').value, 10); const r = parseFloat(e.target.querySelector('.rate').value); if (!partyName || !p || !q || isNaN(r)) { this.showToast("All fields are required.", "error"); return; } const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { this.showToast("Item not found or not enough stock.", "error"); return;} itemInStock.quantity -= q; const newTx = { id: Date.now(), type: 'Sale', saleType: 'Credit', partyName, date: new Date(), items: [{ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate }], total: r * q, paidAmount: 0 }; this.state.transactions.push(newTx); this.renderCreditorList(); this.triggerAutoSave(); e.target.reset(); this.showToast(`Credit sale to ${partyName} recorded!`, "success"); });
                 this.ui.creditorListContainer.addEventListener('click', e => { if (e.target.classList.contains('pay-btn')) { const name = e.target.dataset.creditorName; const payment = parseFloat(prompt(`Enter payment amount for ${name}:`)); if (!isNaN(payment) && payment > 0) { let rem = payment; const txs = this.state.transactions.filter(t => t.partyName === name && t.saleType === 'Credit' && (t.total - (t.paidAmount || 0)) > 0.01).sort((a,b) => a.date - b.date); for (const tx of txs) { if (rem <= 0) break; const due = tx.total - (tx.paidAmount || 0); const payForThis = Math.min(rem, due); tx.paidAmount = (tx.paidAmount || 0) + payForThis; rem -= payForThis; } this.showToast(`Payment of ₹${this.formatIndianNumber(payment)} recorded.`, "success"); this.renderCreditorList(); this.triggerAutoSave(); } } });
                 this.ui.settings.addHolidayBtn.addEventListener('click', () => { const dateStr = this.ui.settings.holidayDateInput.value; if (!dateStr) { this.showToast("Select a date.", "error"); return; } const dateObj = new Date(dateStr); if (dateObj.getUTCDay() !== 1) { this.showToast("Please select a Monday to make an exception.", "error"); return; } if (this.state.holidays.includes(dateStr)) { this.showToast("This date is already an exception.", "info"); return; } this.state.holidays.push(dateStr); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Working day exception added!", "success"); });
                 this.ui.settings.holidayList.addEventListener('click', (e) => { const icon = e.target.closest('.action-icon'); if(icon) { this.state.holidays = this.state.holidays.filter(d => d !== icon.dataset.date); this.renderHolidays(); this.triggerAutoSave(); this.showToast("Exception removed.", "success"); } });
             },
-// START: Add this new function here
+
             calculateRecentAverageSellPrice(particulars, count = 3) {
                 const recentRates = [];
-                // Create a copy and sort transactions from newest to oldest
                 const sortedTransactions = [...this.state.transactions]
                     .filter(tx => tx.type === 'Sale')
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 for (const tx of sortedTransactions) {
-                    // Find the item in the current transaction
                     const soldItem = tx.items.find(item => item.particulars === particulars);
                     
                     if (soldItem) {
                         recentRates.push(soldItem.sellingRate);
                     }
                     
-                    // Stop once we have enough rates (default is 3)
                     if (recentRates.length >= count) {
                         break;
                     }
                 }
 
                 if (recentRates.length === 0) {
-                    return null; // The item has never been sold
+                    return null;
                 }
 
-                // Calculate the average of the collected rates
                 const sumOfRates = recentRates.reduce((sum, rate) => sum + rate, 0);
                 return sumOfRates / recentRates.length;
             },
-            // END: New function
+            
             showToast(msg, type='success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = msg;
