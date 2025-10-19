@@ -1165,18 +1165,18 @@ this.ui.salesItemsContainer.addEventListener('input', e => {
         if(item) { 
             row.querySelector('.cost-rate').value = item.rate.toFixed(2);
 
-            // --- NEW: Set quantity placeholder with available stock ---
+            // --- Set quantity placeholder with available stock ---
             quantityInput.placeholder = `Available: ${item.quantity}`;
             
-            // --- NEW: Calculate and set average sell price placeholder ---
-            const avgSellPrice = this.calculateAverageSellPrice(itemName);
+            // --- NEW: Calculate and set RECENT average sell price placeholder ---
+            const avgSellPrice = this.calculateRecentAverageSellPrice(itemName); // Calling the new function
             if (avgSellPrice !== null) {
-                rateInput.placeholder = `Avg: ₹${this.formatIndianNumber(avgSellPrice)}`;
+                rateInput.placeholder = `Recent Avg: ₹${this.formatIndianNumber(avgSellPrice)}`;
             } else {
                 rateInput.placeholder = 'Sell Rate'; // Default placeholder
             }
             
-            // --- Existing: Set background color based on stock quantity ---
+            // --- Set background color based on stock quantity ---
             if (item.quantity === 0) {
                 particularsInput.style.backgroundColor = 'rgba(197, 48, 48, 0.5)'; // Dark Red
                 particularsInput.style.color = '#fff'; // White text for readability
