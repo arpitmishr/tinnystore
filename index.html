@@ -1190,16 +1190,74 @@
             
             addPurchaseItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.purchaseItemsContainer.appendChild(div); },
             
-            processMultiItemSale(form) {
-                const saleItems = [], errors = [];
-                for(const row of form.querySelectorAll('.item-row')) {
-                    const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(!p || !q || isNaN(r)) continue; const itemInStock = this.state.inventory.find(i => i.particulars === p); if (!itemInStock || itemInStock.quantity < q) { errors.push(`Not enough stock for ${p}.`); continue; } saleItems.push({ particulars: p, quantity: q, sellingRate: r, costRate: itemInStock.rate, itemInStock });
+processMultiItemSale(form) {
+    const saleItems = [], errors = [];
+    for (const row of form.querySelectorAll('.item-row')) {
+        const p = row.querySelector('.particulars').value.trim();
+        const q = parseInt(row.querySelector('.quantity').value, 10);
+        const r = parseFloat(row.querySelector('.rate').value);
+        if (!p || !q || isNaN(r)) continue;
+
+        let itemInStock = this.state.inventory.find(i => i.particulars === p);
+
+        // ✅ New feature: If item not in stock or insufficient quantity
+        if (!itemInStock || itemInStock.quantity < q) {
+            if (confirm(`${p} is not available or has insufficient stock. Do you want to add it to stock now?`)) {
+                const newQty = parseInt(prompt(`Enter initial quantity for ${p}:`), 10);
+                const newRate = parseFloat(prompt(`Enter cost rate for ${p}:`));
+                if (!isNaN(newQty) && newQty > 0 && !isNaN(newRate)) {
+                    itemInStock = { particulars: p, quantity: newQty, rate: newRate };
+                    this.state.inventory.push(itemInStock);
+                    this.showToast(`${p} added to stock with ${newQty} units.`, "success");
+                    this.triggerAutoSave();
+                } else {
+                    this.showToast("Invalid stock entry. Skipped item.", "error");
+                    errors.push(`Skipped ${p} (invalid stock entry).`);
+                    continue;
                 }
-                if (errors.length > 0) { this.showToast(errors.join('\n'), "error"); return; } if (saleItems.length === 0) { this.showToast("No valid items to record.", "error"); return; }
-                saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; }); const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
-                this.state.transactions.push({ id: Date.now(), type: 'Sale', saleType: 'Cash', date: new Date(), items: saleItems.map(({itemInStock, ...rest}) => rest), total, paidAmount: total });
-                this.ui.salesItemsContainer.innerHTML = ''; this.addSaleItemRow(); this.triggerAutoSave(); this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
-            },
+            } else {
+                errors.push(`Skipped ${p} (not available in stock).`);
+                continue;
+            }
+        }
+
+        saleItems.push({
+            particulars: p,
+            quantity: q,
+            sellingRate: r,
+            costRate: itemInStock.rate,
+            itemInStock
+        });
+    }
+
+    if (errors.length > 0) {
+        this.showToast(errors.join('\n'), "error");
+        return;
+    }
+    if (saleItems.length === 0) {
+        this.showToast("No valid items to record.", "error");
+        return;
+    }
+
+    saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; });
+    const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
+
+    this.state.transactions.push({
+        id: Date.now(),
+        type: 'Sale',
+        saleType: 'Cash',
+        date: new Date(),
+        items: saleItems.map(({ itemInStock, ...rest }) => rest),
+        total,
+        paidAmount: total
+    });
+
+    this.ui.salesItemsContainer.innerHTML = '';
+    this.addSaleItemRow();
+    this.triggerAutoSave();
+    this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
+},
+
             
             handleItemReturn(txId, itemParticulars) {
                 if (!confirm(`Return "${itemParticulars}" from this sale?`)) return;
