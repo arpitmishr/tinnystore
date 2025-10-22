@@ -1169,7 +1169,24 @@
                 } catch (error) { this.showToast('Failed to generate report.', 'error'); }
             },
             
-            addSaleItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" list="inventory-datalist" required></div><div><label>Cost Rate</label><input type="number" class="cost-rate" readonly></div><div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.salesItemsContainer.appendChild(div); },
+            addSaleItemRow() {
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                div.innerHTML = `
+                    <div>
+                        <label>Item Name</label>
+                        <input type="text" class="particulars" list="inventory-datalist" required>
+                        <div class="add-stock-prompt" style="display: none; font-size: 0.8rem; margin-top: 0.5rem; color: var(--warning-yellow);">
+                            Item not in stock. 
+                            <button type="button" class="btn-primary add-new-stock-btn" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;">Add Now</button>
+                        </div>
+                    </div>
+                    <div><label>Cost Rate</label><input type="number" class="cost-rate" readonly></div>
+                    <div><label>Sale Rate</label><input type="number" class="rate" min="0" step="0.01" required></div>
+                    <div><label>Quantity</label><input type="number" class="quantity" min="1" required></div>
+                    <div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`;
+                this.ui.salesItemsContainer.appendChild(div);
+            },
             
             addPurchaseItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.purchaseItemsContainer.appendChild(div); },
             
@@ -1211,16 +1228,18 @@
                 this.ui.salesItemsContainer.addEventListener('input', e => { 
                     if (e.target.classList.contains('particulars')) { 
                         const particularsInput = e.target;
-                        const itemName = particularsInput.value;
-                        const item = this.state.inventory.find(i => i.particulars === itemName); 
+                        const itemName = particularsInput.value.trim();
+                        // Case-insensitive search
+                        const item = this.state.inventory.find(i => i.particulars.toLowerCase() === itemName.toLowerCase()); 
                         const row = e.target.closest('.item-row'); 
-                        
                         if (!row) return;
                         
                         const quantityInput = row.querySelector('.quantity');
                         const rateInput = row.querySelector('.rate');
+                        const addStockPrompt = row.querySelector('.add-stock-prompt');
 
-                        if(item) { 
+                        if(item) {
+                            addStockPrompt.style.display = 'none'; // Hide prompt if item exists
                             row.querySelector('.cost-rate').value = item.rate.toFixed(2);
                             quantityInput.placeholder = `Available: ${item.quantity}`;
                             
@@ -1234,7 +1253,7 @@
                             if (item.quantity === 0) {
                                 particularsInput.style.backgroundColor = 'rgba(197, 48, 48, 0.5)';
                                 particularsInput.style.color = '#fff';
-                            } else if (item.quantity <= 2) {
+                            } else if (item.quantity <= 3) {
                                 particularsInput.style.backgroundColor = 'rgba(214, 158, 46, 0.4)';
                                 particularsInput.style.color = '';
                             } else {
@@ -1242,6 +1261,8 @@
                                 particularsInput.style.color = '';
                             }
                         } else {
+                            // Show prompt if item does not exist and the input is not empty
+                            addStockPrompt.style.display = itemName ? 'block' : 'none';
                             particularsInput.style.backgroundColor = '';
                             particularsInput.style.color = '';
                             row.querySelector('.cost-rate').value = '';
@@ -1249,6 +1270,64 @@
                             rateInput.placeholder = 'Sell Rate';
                         }
                     } 
+                });
+
+                this.ui.salesItemsContainer.addEventListener('click', e => {
+                    // Handle removing an item row
+                    if (e.target.classList.contains('remove-item-btn')) {
+                        e.target.closest('.item-row').remove();
+                        // If no rows are left, add a new one to start over
+                        if (this.ui.salesItemsContainer.children.length === 0) {
+                            this.addSaleItemRow();
+                        }
+                    }
+
+                    // Handle adding a new stock item directly from the sales form
+                    if (e.target.classList.contains('add-new-stock-btn')) {
+                        const row = e.target.closest('.item-row');
+                        const particularsInput = row.querySelector('.particulars');
+                        const particulars = particularsInput.value.trim();
+                        if (!particulars) {
+                            this.showToast('Please enter an item name first.', 'error');
+                            return;
+                        }
+
+                        const quantityStr = prompt(`Enter starting quantity for "${particulars}":`, "1");
+                        if (quantityStr === null) return; // User cancelled
+
+                        const rateStr = prompt(`Enter cost rate for "${particulars}":`, "0");
+                        if (rateStr === null) return; // User cancelled
+
+                        const quantity = parseInt(quantityStr, 10);
+                        const rate = parseFloat(rateStr);
+
+                        if (isNaN(quantity) || isNaN(rate) || quantity < 0 || rate < 0) {
+                            this.showToast('Invalid quantity or rate. Please enter valid numbers.', 'error');
+                            return;
+                        }
+
+                        // Add the new item to the main inventory state
+                        this.state.inventory.push({ particulars, quantity, rate });
+                        
+                        // Also record this as a "Purchase" transaction for historical accuracy
+                        const purchaseItem = { particulars, quantity, rate };
+                        this.state.transactions.push({
+                            id: Date.now(),
+                            type: 'Purchase',
+                            date: new Date(),
+                            items: [purchaseItem],
+                            total: purchaseItem.rate * purchaseItem.quantity
+                        });
+
+                        this.renderInventoryDatalist(); // Update the autocomplete datalist
+                        this.triggerAutoSave();
+                        this.showToast(`"${particulars}" added to stock!`, 'success');
+
+                        // Re-trigger the input event on the particulars field.
+                        // This makes the app re-evaluate the row, hiding the "Add Now" button,
+                        // applying the correct background color, and filling in the cost.
+                        particularsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
                 });
                 
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
