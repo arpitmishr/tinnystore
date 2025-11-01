@@ -338,6 +338,64 @@
         #toast.success { background-color: var(--success-green); }
         #toast.error { background-color: var(--danger-red); }
         #toast.info { background-color: var(--info-blue); }
+        
+        .ranked-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1.5rem;
+        }
+        .ranked-list li {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .ranked-list li:last-child {
+            border-bottom: none;
+        }
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .rank-gold {
+            background: linear-gradient(145deg, #FFD700, #F0C000);
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+            color: #4A2E04;
+        }
+        .rank-silver {
+            background: linear-gradient(145deg, #C0C0C0, #A9A9A9);
+            box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+            color: #2F353B;
+        }
+        .rank-bronze {
+            background: linear-gradient(145deg, #CD7F32, #B8732E);
+            box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+            color: #4A2E04;
+        }
+        .rank-other {
+            background-color: var(--accent-secondary);
+        }
+        .ranked-item-details {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+        .ranked-item-details .qty {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
 
         @media (max-width: 1024px) {
             #app-header { padding: 1rem; }
@@ -566,7 +624,7 @@
                 </div>
                 <div class="card" id="analytics-top-products">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <h2>Top Selling Products</h2>
+                        <h2>Top Selling Products (All Time)</h2>
                         <div style="max-width: 250px;">
                             <label>Filter by Type</label>
                             <select id="analytics-item-type-filter" style="padding: 0.75rem;">
@@ -577,6 +635,20 @@
                         </div>
                     </div>
                     <div class="table-container" style="margin-top: 1.5rem;"><table class="styled-table" id="top-products-table"><thead><tr><th>ITEM</th><th>SOLD QTY</th></tr></thead><tbody></tbody></table></div>
+                </div>
+                 <div class="card" id="analytics-top-monthly">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <h2>Top 7 Selling Items (This Month)</h2>
+                        <div style="max-width: 250px;">
+                            <label>Filter by Type</label>
+                            <select id="monthly-top-item-filter" style="padding: 0.75rem;">
+                                <option value="all">All Items</option>
+                                <option value="inventory">Inventory Only</option>
+                                <option value="cosmetic">Cosmetics Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ol class="ranked-list" id="top-7-monthly-list"></ol>
                 </div>
                 <div class="card" id="analytics-inventory-status">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -816,6 +888,8 @@
                         fsnHmvPriorityFilter: document.getElementById('fsn-hmv-priority-filter'),
                         abcChart: document.getElementById('abcAnalysisChart'),
                         fsnChart: document.getElementById('fsnAnalysisChart'),
+                        top7MonthlyList: document.getElementById('top-7-monthly-list'),
+                        monthlyTopItemFilter: document.getElementById('monthly-top-item-filter'),
                     },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
                     settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
@@ -919,6 +993,7 @@
                 this.renderInventoryStatusTable('all');
                 this.renderAbcAnalysis();
                 this.renderFsnHmvAnalysis();
+                this.renderTop7MonthlyItems();
             },
             
             renderMonthlyChart() {
@@ -1090,6 +1165,56 @@
                 const productSales = allSoldItems.reduce((acc, item) => { acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity; return acc; }, {});
                 const topProducts = Object.entries(productSales).sort(([,a],[,b]) => b - a);
                 this.ui.analytics.topProductsTableBody.innerHTML = topProducts.length > 0 ? topProducts.map(([name, qty]) => `<tr><td>${name}</td><td>${qty}</td></tr>`).join('') : `<tr><td colspan="2" style="text-align:center;">No sales data for this period.</td></tr>`;
+            },
+            
+            renderTop7MonthlyItems() {
+                const itemType = this.ui.analytics.monthlyTopItemFilter.value;
+                const listEl = this.ui.analytics.top7MonthlyList;
+
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                endOfMonth.setHours(23, 59, 59, 999);
+
+                const monthlySales = this.state.transactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return t.type === 'Sale' && transactionDate >= startOfMonth && transactionDate <= endOfMonth;
+                });
+
+                const allSoldItems = monthlySales.flatMap(t => t.items).filter(i => {
+                    const isCosmetic = i.particulars.includes('(Cosmetic)');
+                    if (itemType === 'inventory') return !isCosmetic;
+                    if (itemType === 'cosmetic') return isCosmetic;
+                    return true;
+                });
+
+                const productSales = allSoldItems.reduce((acc, item) => {
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
+                    return acc;
+                }, {});
+
+                const topProducts = Object.entries(productSales)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 7);
+
+                if (topProducts.length === 0) {
+                    listEl.innerHTML = `<li style="justify-content: center; color: var(--text-secondary);">No sales data for this month.</li>`;
+                    return;
+                }
+                
+                const rankClasses = ['rank-gold', 'rank-silver', 'rank-bronze'];
+                listEl.innerHTML = topProducts.map(([name, qty], index) => {
+                    const rankClass = rankClasses[index] || 'rank-other';
+                    return `
+                        <li>
+                            <span class="rank-badge ${rankClass}">${index + 1}</span>
+                            <div class="ranked-item-details">
+                                <span>${name}</span>
+                                <span class="qty">${qty} sold</span>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
             },
 
             renderInventoryStatusTable(filter = 'all') {
@@ -1420,6 +1545,7 @@ processMultiItemSale(form) {
                 };
                 this.ui.analytics.filterBtn.addEventListener('click', analyticsFilterHandler);
                 this.ui.analytics.itemTypeFilter.addEventListener('change', analyticsFilterHandler);
+                this.ui.analytics.monthlyTopItemFilter.addEventListener('change', () => this.renderTop7MonthlyItems());
                 this.ui.analytics.todayBtn.addEventListener('click', () => { const today = new Date(); this.ui.analytics.startDate.valueAsDate = today; this.ui.analytics.endDate.valueAsDate = today; analyticsFilterHandler(); });
                 this.ui.analytics.allStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('all'));
                 this.ui.analytics.lowStockBtn.addEventListener('click', () => this.renderInventoryStatusTable('low'));
