@@ -182,7 +182,7 @@
   width: 100%;
 }
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
-        input[type="text"], input[type="number"], input[type="date"], select {
+        input[type="text"], input[type="number"], input[type="date"], input[type="month"], select {
             width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
             background-color: var(--surface-card); color: var(--text-primary);
             border-radius: 8px; font-size: 1rem; font-family: 'Poppins', sans-serif;
@@ -486,6 +486,26 @@
                     </div>
                     <canvas id="salesTrendChart" style="max-height: 300px;"></canvas>
                 </div>
+                <!-- START: New Top Selling Items by Month Card -->
+                <div class="card">
+                    <h2>Top Selling Items by Month</h2>
+                    <div class="form-grid" style="align-items: flex-end; max-width: 600px; margin-bottom: 1.5rem;">
+                        <div>
+                            <label>Select Month</label>
+                            <input type="month" id="dashboard-top-item-month">
+                        </div>
+                        <div>
+                            <label>Filter by Type</label>
+                            <select id="dashboard-top-item-type-filter" style="padding: 0.75rem;">
+                                <option value="all">All Items</option>
+                                <option value="inventory">Inventory Only</option>
+                                <option value="cosmetic">Cosmetics Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <ol class="ranked-list" id="dashboard-top-monthly-list"></ol>
+                </div>
+                <!-- END: New Top Selling Items by Month Card -->
             </div>
 
             <div id="sales" class="page">
@@ -874,6 +894,9 @@
                     dashboard: { 
                         revenue: document.getElementById('dashboard-revenue'), profit: document.getElementById('dashboard-profit'), lowStock: document.getElementById('dashboard-low-stock'), invValue: document.getElementById('dashboard-inv-value'), salesChart: document.getElementById('salesTrendChart'), startDate: document.getElementById('dashboard-start-date'), endDate: document.getElementById('dashboard-end-date'), filterBtn: document.getElementById('dashboard-filter-btn'),
                         todaySales: document.getElementById('today-sales'), todayProfit: document.getElementById('today-profit'), todayMargin: document.getElementById('today-margin'), todayItemsSold: document.getElementById('today-items-sold'), todayTopItem: document.getElementById('today-top-item'),
+                        topItemMonth: document.getElementById('dashboard-top-item-month'),
+                        topItemTypeFilter: document.getElementById('dashboard-top-item-type-filter'),
+                        topMonthlyList: document.getElementById('dashboard-top-monthly-list'),
                     },
                     salesForm: document.getElementById('sales-form'), salesItemsContainer: document.getElementById('sales-items-container'), addSaleItemBtn: document.getElementById('add-sale-item-btn'), cosmeticSaleForm: document.getElementById('cosmetic-sale-form'), inventoryDatalist: document.getElementById('inventory-datalist'),
                     purchaseForm: document.getElementById('purchase-form'), purchaseItemsContainer: document.getElementById('purchase-items-container'), addPurchaseItemBtn: document.getElementById('add-purchase-item-btn'),
@@ -957,6 +980,65 @@
                 
                 const today = new Date(); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(today.getDate() - 6); this.ui.dashboard.startDate.valueAsDate = sevenDaysAgo; this.ui.dashboard.endDate.valueAsDate = today;
                 this.renderSalesChart(sevenDaysAgo, today);
+
+                // Set default for new month filter and render its content
+                this.ui.dashboard.topItemMonth.value = new Date().toISOString().slice(0, 7);
+                this.renderDashboardTopMonthlyItems();
+            },
+
+            renderDashboardTopMonthlyItems() {
+                const listEl = this.ui.dashboard.topMonthlyList;
+                const monthValue = this.ui.dashboard.topItemMonth.value;
+                const itemType = this.ui.dashboard.topItemTypeFilter.value;
+
+                if (!monthValue) {
+                    listEl.innerHTML = `<li style="justify-content: center; color: var(--text-secondary);">Please select a month.</li>`;
+                    return;
+                }
+
+                const [year, month] = monthValue.split('-').map(Number);
+                const startOfMonth = new Date(year, month - 1, 1);
+                const endOfMonth = new Date(year, month, 0); // Day 0 of next month gives last day of current month
+                endOfMonth.setHours(23, 59, 59, 999);
+
+                const monthlySales = this.state.transactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return t.type === 'Sale' && transactionDate >= startOfMonth && transactionDate <= endOfMonth;
+                });
+
+                const allSoldItems = monthlySales.flatMap(t => t.items).filter(i => {
+                    const isCosmetic = i.particulars.includes('(Cosmetic)');
+                    if (itemType === 'inventory') return !isCosmetic;
+                    if (itemType === 'cosmetic') return isCosmetic;
+                    return true;
+                });
+
+                const productSales = allSoldItems.reduce((acc, item) => {
+                    acc[item.particulars] = (acc[item.particulars] || 0) + item.quantity;
+                    return acc;
+                }, {});
+
+                const topProducts = Object.entries(productSales)
+                    .sort(([, a], [, b]) => b - a);
+
+                if (topProducts.length === 0) {
+                    listEl.innerHTML = `<li style="justify-content: center; color: var(--text-secondary);">No sales data for this month.</li>`;
+                    return;
+                }
+                
+                const rankClasses = ['rank-gold', 'rank-silver', 'rank-bronze'];
+                listEl.innerHTML = topProducts.map(([name, qty], index) => {
+                    const rankClass = rankClasses[index] || 'rank-other';
+                    return `
+                        <li>
+                            <span class="rank-badge ${rankClass}">${index + 1}</span>
+                            <div class="ranked-item-details">
+                                <span>${name}</span>
+                                <span class="qty">${qty} sold</span>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
             },
             
             renderSalesChart(startDate, endDate) {
@@ -1399,11 +1481,19 @@ processMultiItemSale(form) {
             addEventListeners() {
                 this.ui.navLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); this.renderPage(e.currentTarget.dataset.page); this.ui.topNav.classList.remove('active'); }); });
                 this.ui.mobileMenuBtn.addEventListener('click', () => this.ui.topNav.classList.toggle('active'));
+                
+                // Dashboard Listeners
                 this.ui.dashboard.filterBtn.addEventListener('click', () => { const start = new Date(this.ui.dashboard.startDate.value); const end = new Date(this.ui.dashboard.endDate.value); this.renderSalesChart(start, end); });
+                this.ui.dashboard.topItemMonth.addEventListener('change', () => this.renderDashboardTopMonthlyItems());
+                this.ui.dashboard.topItemTypeFilter.addEventListener('change', () => this.renderDashboardTopMonthlyItems());
+
+                // Settings Listeners
                 this.ui.settings.themeToggleBtn.addEventListener('click', this.toggleTheme.bind(this));
                 this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.settings.excelFile.click());
                 this.ui.settings.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
                 this.ui.settings.manualSyncBtn.addEventListener('click', () => this.saveData(true));
+                
+                // Sales Page Listeners
                 this.ui.addSaleItemBtn.addEventListener('click', () => this.addSaleItemRow());
                 this.ui.salesForm.addEventListener('submit', (e) => { e.preventDefault(); this.processMultiItemSale(e.target); });
                 this.ui.salesItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) { e.target.closest('.item-row').remove(); } });
