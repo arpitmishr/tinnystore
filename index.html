@@ -1556,55 +1556,127 @@ processMultiItemSale(form) {
                     }
 
                     // Handle adding a new stock item directly from the sales form
-                    if (e.target.classList.contains('add-new-stock-btn')) {
-                        const row = e.target.closest('.item-row');
-                        const particularsInput = row.querySelector('.particulars');
-                        const particulars = particularsInput.value.trim();
-                        if (!particulars) {
-                            this.showToast('Please enter an item name first.', 'error');
-                            return;
-                        }
+                    // Handle adding a new stock item directly from the sales form
+if (e.target.classList.contains('add-new-stock-btn')) {
+    const row = e.target.closest('.item-row');
+    const particularsInput = row.querySelector('.particulars');
+    // TRIM input to prevent "Shirt " vs "Shirt"
+    const particulars = particularsInput.value.trim(); 
+    
+    if (!particulars) {
+        this.showToast('Please enter an item name first.', 'error');
+        return;
+    }
 
-                        const quantityStr = prompt(`Enter starting quantity for "${particulars}":`, "1");
-                        if (quantityStr === null) return; // User cancelled
+    const quantityStr = prompt(`Enter starting quantity for "${particulars}":`, "1");
+    if (quantityStr === null) return; 
 
-                        const rateStr = prompt(`Enter cost rate for "${particulars}":`, "0");
-                        if (rateStr === null) return; // User cancelled
+    const rateStr = prompt(`Enter cost rate for "${particulars}":`, "0");
+    if (rateStr === null) return;
 
-                        const quantity = parseInt(quantityStr, 10);
-                        const rate = parseFloat(rateStr);
+    const quantity = parseInt(quantityStr, 10);
+    const rate = parseFloat(rateStr);
 
-                        if (isNaN(quantity) || isNaN(rate) || quantity < 0 || rate < 0) {
-                            this.showToast('Invalid quantity or rate. Please enter valid numbers.', 'error');
-                            return;
-                        }
+    if (isNaN(quantity) || isNaN(rate) || quantity < 0 || rate < 0) {
+        this.showToast('Invalid quantity or rate.', 'error');
+        return;
+    }
 
-                        // Add the new item to the main inventory state
-                        this.state.inventory.push({ particulars, quantity, rate });
-                        
-                        // Also record this as a "Purchase" transaction for historical accuracy
-                        const purchaseItem = { particulars, quantity, rate };
-                        this.state.transactions.push({
-                            id: Date.now(),
-                            type: 'Purchase',
-                            date: new Date(),
-                            items: [purchaseItem],
-                            total: purchaseItem.rate * purchaseItem.quantity
-                        });
+    // CHECK if item exists before pushing
+    const existingItem = this.state.inventory.find(i => i.particulars.toLowerCase() === particulars.toLowerCase());
 
-                        this.renderInventoryDatalist(); // Update the autocomplete datalist
-                        this.triggerAutoSave();
-                        this.showToast(`"${particulars}" added to stock!`, 'success');
+    if (existingItem) {
+        // Update existing item logic
+        const totalVal = (existingItem.rate * existingItem.quantity) + (rate * quantity);
+        const totalQty = existingItem.quantity + quantity;
+        existingItem.rate = totalVal / totalQty;
+        existingItem.quantity = totalQty;
+        this.showToast(`Updated stock for "${existingItem.particulars}"!`, 'success');
+    } else {
+        // Create new item
+        this.state.inventory.push({ particulars, quantity, rate });
+        this.showToast(`"${particulars}" added to stock!`, 'success');
+    }
+    
+    // Record as Purchase
+    const purchaseItem = { particulars, quantity, rate };
+    this.state.transactions.push({
+        id: Date.now(),
+        type: 'Purchase',
+        date: new Date(),
+        items: [purchaseItem],
+        total: purchaseItem.rate * purchaseItem.quantity
+    });
 
-                        // Re-trigger the input event on the particulars field.
-                        // This makes the app re-evaluate the row, hiding the "Add Now" button,
-                        // applying the correct background color, and filling in the cost.
-                        particularsInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
+    this.renderInventoryDatalist(); 
+    this.triggerAutoSave();
+
+    // Refresh the input row to pick up the new stock data
+    particularsInput.dispatchEvent(new Event('input', { bubbles: true }));
+}
                 });
                 
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
-                this.ui.purchaseForm.addEventListener('submit', e => { e.preventDefault(); const purchasedItems = []; for(const row of e.target.querySelectorAll('.item-row')) { const p = row.querySelector('.particulars').value.trim(); const q = parseInt(row.querySelector('.quantity').value, 10); const r = parseFloat(row.querySelector('.rate').value); if(p && q && !isNaN(r)) purchasedItems.push({particulars:p, quantity:q, rate:r}); } if(purchasedItems.length === 0) { this.showToast("No valid items.", "error"); return; } purchasedItems.forEach(newItem => { const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase()); if (existing) { const totalVal = existing.rate * existing.quantity + newItem.rate * newItem.quantity; const totalQty = existing.quantity + newItem.quantity; existing.rate = totalVal / totalQty; existing.quantity = totalQty; } else this.state.inventory.push(newItem); }); this.state.transactions.push({ id: Date.now(), type: 'Purchase', date: new Date(), items: purchasedItems, total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0) }); this.ui.purchaseItemsContainer.innerHTML = ''; this.addPurchaseItemRow(); this.triggerAutoSave(); this.showToast('Stock updated!', "success"); });
+                this.ui.purchaseForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const purchasedItems = [];
+    
+    // 1. Collect items from the form
+    for (const row of e.target.querySelectorAll('.item-row')) {
+        // TRIM removes spaces from start/end
+        const p = row.querySelector('.particulars').value.trim(); 
+        const q = parseInt(row.querySelector('.quantity').value, 10);
+        const r = parseFloat(row.querySelector('.rate').value);
+
+        if (p && q && !isNaN(r)) {
+            purchasedItems.push({
+                particulars: p,
+                quantity: q,
+                rate: r
+            });
+        }
+    }
+
+    if (purchasedItems.length === 0) {
+        this.showToast("No valid items.", "error");
+        return;
+    }
+
+    // 2. Merge with existing inventory
+    purchasedItems.forEach(newItem => {
+        // Check if item exists (Case insensitive matching)
+        const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+
+        if (existing) {
+            // Calculate Weighted Average Cost
+            const totalVal = (existing.rate * existing.quantity) + (newItem.rate * newItem.quantity);
+            const totalQty = existing.quantity + newItem.quantity;
+            
+            existing.rate = totalVal / totalQty;
+            existing.quantity = totalQty;
+            // Optional: Update the name to the capitalization user just typed, or keep original
+            // existing.particulars = newItem.particulars; 
+        } else {
+            this.state.inventory.push(newItem);
+        }
+    });
+
+    // 3. Record the transaction
+    this.state.transactions.push({
+        id: Date.now(),
+        type: 'Purchase',
+        date: new Date(),
+        items: purchasedItems,
+        total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0)
+    });
+
+    // 4. Cleanup
+    this.ui.purchaseItemsContainer.innerHTML = '';
+    this.addPurchaseItemRow();
+    this.renderInventoryDatalist(); // Update the autocomplete list immediately
+    this.triggerAutoSave();
+    this.showToast('Stock updated successfully!', "success");
+});
                 this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
                 this.ui.inventoryTableBody.addEventListener('click', (e) => {
                     const icon = e.target.closest('.action-icon'); if (!icon) return; const particulars = icon.dataset.particulars;
