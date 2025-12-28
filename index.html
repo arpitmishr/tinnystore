@@ -713,6 +713,7 @@
                     </div>
                     <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
                 </div>
+                <button class="btn btn-danger" id="fix-duplicates-btn">Merge Duplicates Entries</button>
                 <div class="card">
                     <h2>Holiday Exceptions</h2>
                     <p style="color: var(--text-secondary); margin-bottom: 1rem;">By default, all Mondays are considered holidays. Add a date here to mark a specific Monday as a working day.</p>
@@ -799,6 +800,51 @@
                     });
                 }
             },
+
+
+
+            // New function to clean duplicates
+            mergeDuplicateInventory() {
+                if (!confirm("This will merge items with similar names (e.g., 'Shirt' and 'shirt ') into one. Continue?")) return;
+
+                const map = new Map();
+                let duplicatesFound = 0;
+
+                // 1. Group items by lowercase name
+                this.state.inventory.forEach(item => {
+                    // Normalize name: lowercase and remove extra spaces
+                    const key = item.particulars.trim().toLowerCase();
+                    
+                    if (map.has(key)) {
+                        const existing = map.get(key);
+                        // Calculate Weighted Average Cost
+                        const totalVal = (existing.rate * existing.quantity) + (item.rate * item.quantity);
+                        const totalQty = existing.quantity + item.quantity;
+                        
+                        existing.quantity = totalQty;
+                        existing.rate = totalQty > 0 ? totalVal / totalQty : existing.rate;
+                        duplicatesFound++;
+                    } else {
+                        // Store a clean copy (using trim to fix spacing issues)
+                        map.set(key, { ...item, particulars: item.particulars.trim() });
+                    }
+                });
+
+                // 2. Replace inventory with clean list
+                this.state.inventory = Array.from(map.values());
+                
+                // 3. Save and Refresh
+                this.renderPage('stocks');
+                this.triggerAutoSave();
+                this.showToast(`Success! Merged ${duplicatesFound} duplicate items.`, 'success');
+            },
+
+
+
+
+
+
+            
 
             startAppLogic() {
                 this.updateChartDefaults();
@@ -915,7 +961,7 @@
                         monthlyTopItemFilter: document.getElementById('monthly-top-item-filter'),
                     },
                     creditSaleForm: document.getElementById('credit-inventory-sale-form'), creditorListContainer: document.querySelector('#creditor-list-container'),
-                    settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
+                    settings: { themeToggleBtn: document.getElementById('theme-toggle-btn'), importDataBtn: document.getElementById('import-data-btn'), excelFile: document.getElementById('excel-file'),  fixDuplicatesBtn: document.getElementById('fix-duplicates-btn'), manualSyncBtn: document.getElementById('manual-sync-btn'), holidayDateInput: document.getElementById('holiday-date'), addHolidayBtn: document.getElementById('add-holiday-btn'), holidayList: document.getElementById('holiday-list'), }
                 };
             },
 
@@ -1491,6 +1537,7 @@ processMultiItemSale(form) {
                 this.ui.settings.themeToggleBtn.addEventListener('click', this.toggleTheme.bind(this));
                 this.ui.settings.importDataBtn.addEventListener('click', () => this.ui.settings.excelFile.click());
                 this.ui.settings.excelFile.addEventListener('change', (e) => this.handleFileUpload(e));
+                this.ui.settings.fixDuplicatesBtn.addEventListener('click', () => this.mergeDuplicateInventory());
                 this.ui.settings.manualSyncBtn.addEventListener('click', () => this.saveData(true));
                 
                 // Sales Page Listeners
