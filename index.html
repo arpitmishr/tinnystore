@@ -850,7 +850,7 @@
                     // All Years
                     const allOpt = document.createElement('option');
                     allOpt.value = 'ALL';
-                    allOpt.text = '📅 All Years';
+                    allOpt.text = 'All Years';
                     selector.appendChild(allOpt);
 
                     // Past Years
@@ -858,7 +858,7 @@
                         if (year !== currentRealYear) {
                             const opt = document.createElement('option');
                             opt.value = year;
-                            opt.text = `Year ${year}`;
+                            opt.text = `${year}`;
                             selector.appendChild(opt);
                         }
                     });
