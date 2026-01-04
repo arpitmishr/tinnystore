@@ -57,10 +57,7 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-
-
-
-.recommendation-item {
+        .recommendation-item {
             padding: 0.75rem 1rem;
             cursor: pointer;
             border-radius: 8px;
@@ -79,10 +76,6 @@
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 0.5rem;
         }
-
-
-
-        
 
         #login-screen {
             display: flex; align-items: center; justify-content: center;
@@ -118,6 +111,22 @@
             z-index: 100;
         }
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--accent-primary); }
+        
+        /* New Year Selector Styling */
+        #year-select-container { margin-left: 1rem; margin-right: auto; }
+        #year-selector {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+        }
+        #year-selector:focus { border-color: var(--accent-primary); }
+
         #top-nav { display: flex; gap: 0.5rem; }
         .nav-link {
             padding: 0.5rem 1rem;
@@ -174,13 +183,13 @@
         .main-chart-card { grid-column: 1 / -1; }
         
        .form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  top: 0;            /* adjust as needed */
-  left: 0;
-  width: 100%;
-}
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.25rem;
+          top: 0;
+          left: 0;
+          width: 100%;
+        }
         label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
         input[type="text"], input[type="number"], input[type="date"], input[type="month"], select {
             width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
@@ -436,32 +445,32 @@
 
     <div id="app-wrapper">
         <header id="app-header">
-    <div class="logo">Tinny Fashion</div>
-    
-    <!-- NEW: Year Selector -->
-    <div style="margin-left: 1rem; margin-right: auto;">
-        <select id="year-selector" style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-card); color: var(--text-primary); cursor: pointer;">
-            <option value="current">Loading Years...</option>
-        </select>
-    </div>
+            <div class="logo">Tinny Fashion</div>
+            
+            <!-- Year Selector -->
+            <div id="year-select-container">
+                <select id="year-selector">
+                    <option value="current">Loading Years...</option>
+                </select>
+            </div>
 
-    <nav id="top-nav">
-        <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
-        <a href="#" class="nav-link" data-page="sales">Sales</a>
-        <a href="#" class="nav-link" data-page="purchase">Purchase</a>
-        <a href="#" class="nav-link" data-page="stocks">Stocks</a>
-        <a href="#" class="nav-link" data-page="transactions">Transactions</a>
-        <a href="#" class="nav-link" data-page="analytics">Analytics</a>
-        <a href="#" class="nav-link" data-page="credit">Credit</a>
-        <a href="#" class="nav-link" data-page="settings">Settings</a>
-    </nav>
-    <div class="header-actions">
-        <button id="signout-btn">Sign Out</button>
-        <button class="mobile-menu-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-        </button>
-    </div>
-</header>
+            <nav id="top-nav">
+                <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
+                <a href="#" class="nav-link" data-page="sales">Sales</a>
+                <a href="#" class="nav-link" data-page="purchase">Purchase</a>
+                <a href="#" class="nav-link" data-page="stocks">Stocks</a>
+                <a href="#" class="nav-link" data-page="transactions">Transactions</a>
+                <a href="#" class="nav-link" data-page="analytics">Analytics</a>
+                <a href="#" class="nav-link" data-page="credit">Credit</a>
+                <a href="#" class="nav-link" data-page="settings">Settings</a>
+            </nav>
+            <div class="header-actions">
+                <button id="signout-btn">Sign Out</button>
+                <button class="mobile-menu-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                </button>
+            </div>
+        </header>
         <main id="main-content">
             <div id="dashboard" class="page active">
                 <div class="page-header"><h1>Dashboard</h1><p>A quick overview of your store's performance.</p></div>
@@ -749,7 +758,11 @@
             
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
-            DATA_FILE_NAME: `fashion_store_data_${new Date().getFullYear()}.json`,
+            
+            // Year-Wise Configuration
+            DATA_FILE_PREFIX: 'fashion_store_data_',
+            DATA_FILE_NAME: '', // Set dynamically
+            viewingYear: null,  // Tracks current year view
             
             tokenClient: null,
             driveFileId: null,
@@ -786,23 +799,188 @@
                 }
             },
 
-async handleAuthResponse(response) {
-    if (response.error) {
-        this.showToast(`Authentication Error: ${response.error}`, 'error');
-        return;
-    }
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-wrapper').classList.add('visible');
-    
-    // NEW: Load the year list first
-    await this.populateYearSelect();
-    
-    // Load data for the default (current) year
-    await this.loadData(this.viewingYear);
-    
-    this.startAppLogic();
-},
-            
+            async handleAuthResponse(response) {
+                if (response.error) {
+                    this.showToast(`Authentication Error: ${response.error}`, 'error');
+                    return;
+                }
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-wrapper').classList.add('visible');
+                
+                // Load year list first
+                await this.populateYearSelect();
+                // Then load data for the default view
+                await this.loadData(this.viewingYear);
+                
+                this.startAppLogic();
+            },
+
+            async populateYearSelect() {
+                const selector = document.getElementById('year-selector');
+                const currentRealYear = new Date().getFullYear();
+                
+                try {
+                    // Find all files matching the prefix
+                    const response = await gapi.client.drive.files.list({
+                        q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
+                        spaces: 'drive',
+                        fields: 'files(name)'
+                    });
+
+                    const files = response.result.files || [];
+                    const years = files.map(f => {
+                        const match = f.name.match(/(\d{4})/);
+                        return match ? parseInt(match[0]) : null;
+                    }).filter(y => y !== null).sort((a, b) => b - a);
+
+                    if (!years.includes(currentRealYear)) {
+                        years.unshift(currentRealYear);
+                    }
+                    
+                    const uniqueYears = [...new Set(years)];
+
+                    selector.innerHTML = '';
+                    
+                    // Current Year
+                    const currentOpt = document.createElement('option');
+                    currentOpt.value = currentRealYear;
+                    currentOpt.text = `Current Year (${currentRealYear})`;
+                    selector.appendChild(currentOpt);
+
+                    // All Years
+                    const allOpt = document.createElement('option');
+                    allOpt.value = 'ALL';
+                    allOpt.text = '📅 All Years (Consolidated)';
+                    selector.appendChild(allOpt);
+
+                    // Past Years
+                    uniqueYears.forEach(year => {
+                        if (year !== currentRealYear) {
+                            const opt = document.createElement('option');
+                            opt.value = year;
+                            opt.text = `Year ${year}`;
+                            selector.appendChild(opt);
+                        }
+                    });
+
+                    // Event Listener
+                    selector.onchange = (e) => {
+                        this.viewingYear = e.target.value;
+                        this.loadData(this.viewingYear);
+                    };
+                    
+                    // Set default
+                    this.viewingYear = currentRealYear.toString();
+
+                } catch (e) {
+                    console.error("Error fetching year list", e);
+                }
+            },
+
+            async loadData(yearToLoad) {
+                this.showToast(`Loading data for ${yearToLoad === 'ALL' ? 'All Years' : yearToLoad}...`, 'info');
+                const currentRealYear = new Date().getFullYear().toString();
+                const isEditable = (yearToLoad.toString() === currentRealYear);
+                this.driveFileId = null; // Reset file ID when switching years
+
+                try {
+                    if (yearToLoad === 'ALL') {
+                        // --- ALL YEARS VIEW ---
+                        const response = await gapi.client.drive.files.list({
+                            q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
+                            spaces: 'drive',
+                            fields: 'files(id)'
+                        });
+                        
+                        let allTransactions = [];
+                        let latestInventory = []; 
+                        
+                        if (response.result.files) {
+                            const promises = response.result.files.map(f => 
+                                gapi.client.drive.files.get({ fileId: f.id, alt: 'media' })
+                                    .then(res => JSON.parse(res.body))
+                            );
+                            const results = await Promise.all(promises);
+                            results.forEach(data => {
+                                if(data.transactions) allTransactions = allTransactions.concat(data.transactions);
+                                if(data.inventory) latestInventory = data.inventory; 
+                            });
+                        }
+
+                        allTransactions.forEach(t => { t.date = new Date(t.date); });
+                        allTransactions.sort((a,b) => b.date - a.date);
+
+                        this.state = {
+                            inventory: latestInventory,
+                            transactions: allTransactions,
+                            holidays: [] 
+                        };
+                        this.showToast("Loaded All Years (Read-Only Mode)", "success");
+
+                    } else {
+                        // --- SPECIFIC YEAR VIEW ---
+                        const fileName = `${this.DATA_FILE_PREFIX}${yearToLoad}.json`;
+                        this.DATA_FILE_NAME = fileName;
+
+                        let response = await gapi.client.drive.files.list({
+                            q: `name='${fileName}' and trashed=false`,
+                            spaces: 'drive',
+                            fields: 'files(id)'
+                        });
+
+                        if (response.result.files && response.result.files.length > 0) {
+                            // File exists
+                            this.driveFileId = response.result.files[0].id;
+                            const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
+                            const loadedState = JSON.parse(fileContentResponse.body);
+                            
+                            if (loadedState.transactions) loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
+
+                            this.state = {
+                                inventory: loadedState.inventory || [],
+                                transactions: loadedState.transactions || [],
+                                holidays: loadedState.holidays || []
+                            };
+                        } else {
+                            // File missing (New Year Scenario)
+                            if (isEditable) {
+                                // Try rollover from previous year
+                                const prevYear = parseInt(yearToLoad) - 1;
+                                const prevFileName = `${this.DATA_FILE_PREFIX}${prevYear}.json`;
+                                
+                                let prevResponse = await gapi.client.drive.files.list({
+                                    q: `name='${prevFileName}' and trashed=false`,
+                                    fields: 'files(id)'
+                                });
+
+                                if (prevResponse.result.files && prevResponse.result.files.length > 0) {
+                                    const prevId = prevResponse.result.files[0].id;
+                                    const prevContent = await gapi.client.drive.files.get({ fileId: prevId, alt: 'media' });
+                                    const prevState = JSON.parse(prevContent.body);
+
+                                    this.state = {
+                                        inventory: prevState.inventory || [], // Keep stock
+                                        holidays: prevState.holidays || [],   // Keep settings
+                                        transactions: []                      // Reset sales
+                                    };
+                                    this.showToast(`Welcome to ${yearToLoad}! Inventory carried forward.`, "success");
+                                    await this.saveData(); // Save immediately to create new file
+                                } else {
+                                    // New user or no previous data
+                                    this.state = { inventory: [], transactions: [], holidays: [] };
+                                }
+                            } else {
+                                this.state = { inventory: [], transactions: [], holidays: [] };
+                                this.showToast(`No data found for ${yearToLoad}`, "error");
+                            }
+                        }
+                    }
+                    this.renderPage(document.querySelector('.page.active').id);
+                } catch (e) {
+                    console.error("Error loading data:", e);
+                    this.showToast("Error loading data.", "error");
+                }
+            },
 
             signOut() {
                 const token = gapi.client.getToken();
@@ -816,50 +994,31 @@ async handleAuthResponse(response) {
                 }
             },
 
-
-
-            // New function to clean duplicates
             mergeDuplicateInventory() {
                 if (!confirm("This will merge items with similar names (e.g., 'Shirt' and 'shirt ') into one. Continue?")) return;
 
                 const map = new Map();
                 let duplicatesFound = 0;
 
-                // 1. Group items by lowercase name
                 this.state.inventory.forEach(item => {
-                    // Normalize name: lowercase and remove extra spaces
                     const key = item.particulars.trim().toLowerCase();
-                    
                     if (map.has(key)) {
                         const existing = map.get(key);
-                        // Calculate Weighted Average Cost
                         const totalVal = (existing.rate * existing.quantity) + (item.rate * item.quantity);
                         const totalQty = existing.quantity + item.quantity;
-                        
                         existing.quantity = totalQty;
                         existing.rate = totalQty > 0 ? totalVal / totalQty : existing.rate;
                         duplicatesFound++;
                     } else {
-                        // Store a clean copy (using trim to fix spacing issues)
                         map.set(key, { ...item, particulars: item.particulars.trim() });
                     }
                 });
 
-                // 2. Replace inventory with clean list
                 this.state.inventory = Array.from(map.values());
-                
-                // 3. Save and Refresh
                 this.renderPage('stocks');
                 this.triggerAutoSave();
                 this.showToast(`Success! Merged ${duplicatesFound} duplicate items.`, 'success');
             },
-
-
-
-
-
-
-            
 
             startAppLogic() {
                 this.updateChartDefaults();
@@ -867,209 +1026,65 @@ async handleAuthResponse(response) {
                 this.renderPage('dashboard');
             },
 
-
-async populateYearSelect() {
-    const selector = document.getElementById('year-selector');
-    const currentRealYear = new Date().getFullYear();
-    
-    try {
-        // 1. Find all files that start with 'fashion_store_data_'
-        const response = await gapi.client.drive.files.list({
-            q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
-            spaces: 'drive',
-            fields: 'files(name)'
-        });
-
-        const files = response.result.files || [];
-        // Extract years from filenames like "fashion_store_data_2025.json"
-        const years = files.map(f => {
-            const match = f.name.match(/(\d{4})/);
-            return match ? parseInt(match[0]) : null;
-        }).filter(y => y !== null).sort((a, b) => b - a); // Sort newest first
-
-        // Always ensure current real year is in the list (even if file doesn't exist yet)
-        if (!years.includes(currentRealYear)) {
-            years.unshift(currentRealYear);
-        }
-        
-        // Remove duplicates
-        const uniqueYears = [...new Set(years)];
-
-        // 2. Build Options
-        selector.innerHTML = '';
-        
-        // Option: Current Year (Default)
-        const currentOpt = document.createElement('option');
-        currentOpt.value = currentRealYear;
-        currentOpt.text = `Current Year (${currentRealYear})`;
-        selector.appendChild(currentOpt);
-
-        // Option: All Years
-        const allOpt = document.createElement('option');
-        allOpt.value = 'ALL';
-        allOpt.text = '📅 All Years (Consolidated)';
-        selector.appendChild(allOpt);
-
-        // Option: Specific Past Years
-        uniqueYears.forEach(year => {
-            if (year !== currentRealYear) {
-                const opt = document.createElement('option');
-                opt.value = year;
-                opt.text = `Year ${year}`;
-                selector.appendChild(opt);
-            }
-        });
-
-        // 3. Set Event Listener
-        selector.onchange = (e) => {
-            this.viewingYear = e.target.value;
-            this.loadData(this.viewingYear);
-        };
-        
-        // Set initial view
-        this.viewingYear = currentRealYear.toString();
-
-    } catch (e) {
-        console.error("Error fetching year list", e);
-    }
-},
-
-            
-
-async loadData(yearToLoad) {
-    this.showToast(`Loading data for ${yearToLoad === 'ALL' ? 'All Years' : yearToLoad}...`, 'info');
-    
-    // Disable saving if viewing "ALL" or a past year (Read-Only Mode)
-    const currentRealYear = new Date().getFullYear().toString();
-    const isEditable = (yearToLoad.toString() === currentRealYear);
-    this.driveFileId = null; // Reset ID
-
-    try {
-        if (yearToLoad === 'ALL') {
-            // --- ALL YEARS LOGIC ---
-            const response = await gapi.client.drive.files.list({
-                q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
-                spaces: 'drive',
-                fields: 'files(id)'
-            });
-            
-            let allTransactions = [];
-            // For inventory in "All Years" view, we use the LATEST year's inventory
-            let latestInventory = []; 
-            
-            if (response.result.files) {
-                // Fetch all files in parallel
-                const promises = response.result.files.map(f => 
-                    gapi.client.drive.files.get({ fileId: f.id, alt: 'media' })
-                        .then(res => JSON.parse(res.body))
-                );
-                
-                const results = await Promise.all(promises);
-                
-                results.forEach(data => {
-                    if(data.transactions) allTransactions = allTransactions.concat(data.transactions);
-                    // Simply taking the last loaded inventory as the 'current' one for display
-                    if(data.inventory) latestInventory = data.inventory; 
-                });
-            }
-
-            // Clean up dates
-            allTransactions.forEach(t => { t.date = new Date(t.date); });
-            allTransactions.sort((a,b) => b.date - a.date); // Sort new to old
-
-            this.state = {
-                inventory: latestInventory,
-                transactions: allTransactions,
-                holidays: [] // Holidays irrelevant in aggregate view
-            };
-            
-            // Disable Save features in UI visually
-            this.showToast("Loaded All Years (Read-Only Mode)", "success");
-
-        } else {
-            // --- SPECIFIC YEAR LOGIC (2025, 2026, etc) ---
-            const fileName = `${this.DATA_FILE_PREFIX}${yearToLoad}.json`;
-            this.DATA_FILE_NAME = fileName; // Set current target filename
-
-            let response = await gapi.client.drive.files.list({
-                q: `name='${fileName}' and trashed=false`,
-                spaces: 'drive',
-                fields: 'files(id)'
-            });
-
-            if (response.result.files && response.result.files.length > 0) {
-                // File Exists - Load it
-                this.driveFileId = response.result.files[0].id;
-                const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
-                const loadedState = JSON.parse(fileContentResponse.body);
-                
-                if (loadedState.transactions) loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
-
-                this.state = {
-                    inventory: loadedState.inventory || [],
-                    transactions: loadedState.transactions || [],
-                    holidays: loadedState.holidays || []
-                };
-            } else {
-                // File Does NOT Exist
-                if (isEditable) {
-                    // It's the current year, but file is missing. CHECK PREVIOUS YEAR (Rollover)
-                    const prevYear = parseInt(yearToLoad) - 1;
-                    const prevFileName = `${this.DATA_FILE_PREFIX}${prevYear}.json`;
-                    
-                    let prevResponse = await gapi.client.drive.files.list({
-                        q: `name='${prevFileName}' and trashed=false`,
-                        fields: 'files(id)'
-                    });
-
-                    if (prevResponse.result.files && prevResponse.result.files.length > 0) {
-                        // Import Opening Stock from last year
-                        const prevId = prevResponse.result.files[0].id;
-                        const prevContent = await gapi.client.drive.files.get({ fileId: prevId, alt: 'media' });
-                        const prevState = JSON.parse(prevContent.body);
-
-                        this.state = {
-                            inventory: prevState.inventory || [], // Keep Stock
-                            holidays: prevState.holidays || [],   // Keep Holidays
-                            transactions: []                      // Reset Sales
-                        };
-                        this.showToast(`Started Year ${yearToLoad} using Opening Stock from ${prevYear}`, "success");
-                        // Save immediately to create the new file
-                        await this.saveData(); 
-                    } else {
-                        // Brand new setup
-                        this.state = { inventory: [], transactions: [], holidays: [] };
-                    }
-                } else {
-                    // User selected a past year (e.g., 2020) that doesn't exist.
-                    this.state = { inventory: [], transactions: [], holidays: [] };
-                    this.showToast(`No data found for Year ${yearToLoad}`, "error");
-                }
-            }
-        }
-        
-        // Refresh UI
-        this.renderPage(document.querySelector('.page.active').id);
-        
-    } catch (e) {
-        console.error("Error loading data:", e);
-        this.showToast("Error loading data.", "error");
-    }
-},
-
+            triggerAutoSave() {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => this.saveData(), 2000);
+            },
 
             async saveData(isManual = false) {
-    // 1. Check if saving is allowed
-    const currentRealYear = new Date().getFullYear().toString();
-    if (this.viewingYear !== currentRealYear && this.viewingYear !== 'current') {
-        if(isManual) this.showToast("Cannot save changes in Read-Only mode (Past/All Years).", "error");
-        return;
-    }
+                // Read-Only Check
+                const currentRealYear = new Date().getFullYear().toString();
+                if (this.viewingYear !== currentRealYear && this.viewingYear !== 'current') {
+                    if(isManual) this.showToast("Cannot save changes in Read-Only mode (Past/All Years).", "error");
+                    return;
+                }
 
-    if (this.isSaving) return;
-    this.isSaving = true;
+                if (this.isSaving) return;
+                this.isSaving = true;
+                if (isManual) this.showToast("Syncing data to Drive...", "info");
+                try {
+                    const dataToSave = JSON.stringify(this.state, null, 2);
+                    const boundary = '-------314159265358979323846';
+                    const delimiter = "\r\n--" + boundary + "\r\n";
+                    const close_delim = "\r\n--" + boundary + "--";
+                    let request;
 
-            
+                    if (this.driveFileId) {
+                        const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify({}) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                        request = gapi.client.request({
+                            'path': `https://www.googleapis.com/upload/drive/v3/files/${this.driveFileId}`,
+                            'method': 'PATCH',
+                            'params': { 'uploadType': 'multipart' },
+                            'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                            'body': multipartRequestBody
+                        });
+                    } else {
+                        let res = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, spaces: 'drive', fields: 'files(id)' });
+                        let folderId = res.result.files?.[0]?.id;
+                        if (!folderId) {
+                            res = await gapi.client.drive.files.create({ resource: { 'name': this.APP_FOLDER_NAME, 'mimeType': 'application/vnd.google-apps.folder' }, fields: 'id' });
+                            folderId = res.result.id;
+                        }
+                        const metadata = { 'name': this.DATA_FILE_NAME, 'parents': [folderId], 'mimeType': 'application/json' };
+                        const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + dataToSave + close_delim;
+                        request = gapi.client.request({
+                            'path': 'https://www.googleapis.com/upload/drive/v3/files',
+                            'method': 'POST',
+                            'params': { 'uploadType': 'multipart' },
+                            'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                            'body': multipartRequestBody
+                        });
+                    }
+                    const response = await request;
+                    if (!this.driveFileId) { this.driveFileId = response.result.id; }
+                    if (isManual) this.showToast("Data synced successfully!", "success");
+                } catch (e) {
+                    console.error("Error saving data to Google Drive:", e);
+                    if (isManual) this.showToast("Failed to sync data.", "error");
+                } finally {
+                    this.isSaving = false;
+                }
+            },
 
             cacheDOMElements() {
                 this.ui = {
@@ -1580,75 +1595,73 @@ async loadData(yearToLoad) {
             
             addPurchaseItemRow() { const div = document.createElement('div'); div.className = 'item-row'; div.innerHTML = `<div><label>Item Name</label><input type="text" class="particulars" required></div><div><label>Quantity</label><input type="number" class="quantity" min="1" required></div><div><label>Cost Rate</label><input type="number" class="rate" min="0" step="0.01" required></div><div class="actions"><button type="button" class="btn btn-danger remove-item-btn">Remove</button></div>`; this.ui.purchaseItemsContainer.appendChild(div); },
             
-processMultiItemSale(form) {
-    const saleItems = [], errors = [];
-    for (const row of form.querySelectorAll('.item-row')) {
-        const p = row.querySelector('.particulars').value.trim();
-        const q = parseInt(row.querySelector('.quantity').value, 10);
-        const r = parseFloat(row.querySelector('.rate').value);
-        if (!p || !q || isNaN(r)) continue;
+            processMultiItemSale(form) {
+                const saleItems = [], errors = [];
+                for (const row of form.querySelectorAll('.item-row')) {
+                    const p = row.querySelector('.particulars').value.trim();
+                    const q = parseInt(row.querySelector('.quantity').value, 10);
+                    const r = parseFloat(row.querySelector('.rate').value);
+                    if (!p || !q || isNaN(r)) continue;
 
-        let itemInStock = this.state.inventory.find(i => i.particulars === p);
+                    let itemInStock = this.state.inventory.find(i => i.particulars === p);
 
-        // ✅ New feature: If item not in stock or insufficient quantity
-        if (!itemInStock || itemInStock.quantity < q) {
-            if (confirm(`${p} is not available or has insufficient stock. Do you want to add it to stock now?`)) {
-                const newQty = parseInt(prompt(`Enter initial quantity for ${p}:`), 10);
-                const newRate = parseFloat(prompt(`Enter cost rate for ${p}:`));
-                if (!isNaN(newQty) && newQty > 0 && !isNaN(newRate)) {
-                    itemInStock = { particulars: p, quantity: newQty, rate: newRate };
-                    this.state.inventory.push(itemInStock);
-                    this.showToast(`${p} added to stock with ${newQty} units.`, "success");
-                    this.triggerAutoSave();
-                } else {
-                    this.showToast("Invalid stock entry. Skipped item.", "error");
-                    errors.push(`Skipped ${p} (invalid stock entry).`);
-                    continue;
+                    if (!itemInStock || itemInStock.quantity < q) {
+                        if (confirm(`${p} is not available or has insufficient stock. Do you want to add it to stock now?`)) {
+                            const newQty = parseInt(prompt(`Enter initial quantity for ${p}:`), 10);
+                            const newRate = parseFloat(prompt(`Enter cost rate for ${p}:`));
+                            if (!isNaN(newQty) && newQty > 0 && !isNaN(newRate)) {
+                                itemInStock = { particulars: p, quantity: newQty, rate: newRate };
+                                this.state.inventory.push(itemInStock);
+                                this.showToast(`${p} added to stock with ${newQty} units.`, "success");
+                                this.triggerAutoSave();
+                            } else {
+                                this.showToast("Invalid stock entry. Skipped item.", "error");
+                                errors.push(`Skipped ${p} (invalid stock entry).`);
+                                continue;
+                            }
+                        } else {
+                            errors.push(`Skipped ${p} (not available in stock).`);
+                            continue;
+                        }
+                    }
+
+                    saleItems.push({
+                        particulars: p,
+                        quantity: q,
+                        sellingRate: r,
+                        costRate: itemInStock.rate,
+                        itemInStock
+                    });
                 }
-            } else {
-                errors.push(`Skipped ${p} (not available in stock).`);
-                continue;
-            }
-        }
 
-        saleItems.push({
-            particulars: p,
-            quantity: q,
-            sellingRate: r,
-            costRate: itemInStock.rate,
-            itemInStock
-        });
-    }
+                if (errors.length > 0) {
+                    this.showToast(errors.join('\n'), "error");
+                    return;
+                }
+                if (saleItems.length === 0) {
+                    this.showToast("No valid items to record.", "error");
+                    return;
+                }
 
-    if (errors.length > 0) {
-        this.showToast(errors.join('\n'), "error");
-        return;
-    }
-    if (saleItems.length === 0) {
-        this.showToast("No valid items to record.", "error");
-        return;
-    }
+                saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; });
+                const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
 
-    saleItems.forEach(item => { item.itemInStock.quantity -= item.quantity; });
-    const total = saleItems.reduce((sum, i) => sum + (i.sellingRate * i.quantity), 0);
+                this.state.transactions.push({
+                    id: Date.now(),
+                    type: 'Sale',
+                    saleType: 'Cash',
+                    date: new Date(),
+                    items: saleItems.map(({ itemInStock, ...rest }) => rest),
+                    total,
+                    paidAmount: total
+                });
 
-    this.state.transactions.push({
-        id: Date.now(),
-        type: 'Sale',
-        saleType: 'Cash',
-        date: new Date(),
-        items: saleItems.map(({ itemInStock, ...rest }) => rest),
-        total,
-        paidAmount: total
-    });
+                this.ui.salesItemsContainer.innerHTML = '';
+                this.addSaleItemRow();
+                this.triggerAutoSave();
+                this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
+            },
 
-    this.ui.salesItemsContainer.innerHTML = '';
-    this.addSaleItemRow();
-    this.triggerAutoSave();
-    this.showToast(`Sale recorded! Total: ₹${this.formatIndianNumber(total)}`, "success");
-},
-
-            
             handleItemReturn(txId, itemParticulars) {
                 if (!confirm(`Return "${itemParticulars}" from this sale?`)) return;
                 const tx = this.state.transactions.find(t => t.id === txId); if (!tx) return;
@@ -1740,127 +1753,106 @@ processMultiItemSale(form) {
                     }
 
                     // Handle adding a new stock item directly from the sales form
-                    // Handle adding a new stock item directly from the sales form
-if (e.target.classList.contains('add-new-stock-btn')) {
-    const row = e.target.closest('.item-row');
-    const particularsInput = row.querySelector('.particulars');
-    // TRIM input to prevent "Shirt " vs "Shirt"
-    const particulars = particularsInput.value.trim(); 
-    
-    if (!particulars) {
-        this.showToast('Please enter an item name first.', 'error');
-        return;
-    }
+                    if (e.target.classList.contains('add-new-stock-btn')) {
+                        const row = e.target.closest('.item-row');
+                        const particularsInput = row.querySelector('.particulars');
+                        const particulars = particularsInput.value.trim(); 
+                        
+                        if (!particulars) {
+                            this.showToast('Please enter an item name first.', 'error');
+                            return;
+                        }
 
-    const quantityStr = prompt(`Enter starting quantity for "${particulars}":`, "1");
-    if (quantityStr === null) return; 
+                        const quantityStr = prompt(`Enter starting quantity for "${particulars}":`, "1");
+                        if (quantityStr === null) return; 
 
-    const rateStr = prompt(`Enter cost rate for "${particulars}":`, "0");
-    if (rateStr === null) return;
+                        const rateStr = prompt(`Enter cost rate for "${particulars}":`, "0");
+                        if (rateStr === null) return;
 
-    const quantity = parseInt(quantityStr, 10);
-    const rate = parseFloat(rateStr);
+                        const quantity = parseInt(quantityStr, 10);
+                        const rate = parseFloat(rateStr);
 
-    if (isNaN(quantity) || isNaN(rate) || quantity < 0 || rate < 0) {
-        this.showToast('Invalid quantity or rate.', 'error');
-        return;
-    }
+                        if (isNaN(quantity) || isNaN(rate) || quantity < 0 || rate < 0) {
+                            this.showToast('Invalid quantity or rate.', 'error');
+                            return;
+                        }
 
-    // CHECK if item exists before pushing
-    const existingItem = this.state.inventory.find(i => i.particulars.toLowerCase() === particulars.toLowerCase());
+                        // CHECK if item exists before pushing
+                        const existingItem = this.state.inventory.find(i => i.particulars.toLowerCase() === particulars.toLowerCase());
 
-    if (existingItem) {
-        // Update existing item logic
-        const totalVal = (existingItem.rate * existingItem.quantity) + (rate * quantity);
-        const totalQty = existingItem.quantity + quantity;
-        existingItem.rate = totalVal / totalQty;
-        existingItem.quantity = totalQty;
-        this.showToast(`Updated stock for "${existingItem.particulars}"!`, 'success');
-    } else {
-        // Create new item
-        this.state.inventory.push({ particulars, quantity, rate });
-        this.showToast(`"${particulars}" added to stock!`, 'success');
-    }
-    
-    // Record as Purchase
-    const purchaseItem = { particulars, quantity, rate };
-    this.state.transactions.push({
-        id: Date.now(),
-        type: 'Purchase',
-        date: new Date(),
-        items: [purchaseItem],
-        total: purchaseItem.rate * purchaseItem.quantity
-    });
+                        if (existingItem) {
+                            // Update existing item logic
+                            const totalVal = (existingItem.rate * existingItem.quantity) + (rate * quantity);
+                            const totalQty = existingItem.quantity + quantity;
+                            existingItem.rate = totalVal / totalQty;
+                            existingItem.quantity = totalQty;
+                            this.showToast(`Updated stock for "${existingItem.particulars}"!`, 'success');
+                        } else {
+                            // Create new item
+                            this.state.inventory.push({ particulars, quantity, rate });
+                            this.showToast(`"${particulars}" added to stock!`, 'success');
+                        }
+                        
+                        // Record as Purchase
+                        const purchaseItem = { particulars, quantity, rate };
+                        this.state.transactions.push({
+                            id: Date.now(),
+                            type: 'Purchase',
+                            date: new Date(),
+                            items: [purchaseItem],
+                            total: purchaseItem.rate * purchaseItem.quantity
+                        });
 
-    this.renderInventoryDatalist(); 
-    this.triggerAutoSave();
-
-    // Refresh the input row to pick up the new stock data
-    particularsInput.dispatchEvent(new Event('input', { bubbles: true }));
-}
+                        this.renderInventoryDatalist(); 
+                        this.triggerAutoSave();
+                        particularsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
                 });
                 
                 this.ui.addPurchaseItemBtn.addEventListener('click', () => this.addPurchaseItemRow());
                 this.ui.purchaseForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const purchasedItems = [];
-    
-    // 1. Collect items from the form
-    for (const row of e.target.querySelectorAll('.item-row')) {
-        // TRIM removes spaces from start/end
-        const p = row.querySelector('.particulars').value.trim(); 
-        const q = parseInt(row.querySelector('.quantity').value, 10);
-        const r = parseFloat(row.querySelector('.rate').value);
+                    e.preventDefault();
+                    const purchasedItems = [];
+                    for (const row of e.target.querySelectorAll('.item-row')) {
+                        const p = row.querySelector('.particulars').value.trim(); 
+                        const q = parseInt(row.querySelector('.quantity').value, 10);
+                        const r = parseFloat(row.querySelector('.rate').value);
+                        if (p && q && !isNaN(r)) {
+                            purchasedItems.push({ particulars: p, quantity: q, rate: r });
+                        }
+                    }
 
-        if (p && q && !isNaN(r)) {
-            purchasedItems.push({
-                particulars: p,
-                quantity: q,
-                rate: r
-            });
-        }
-    }
+                    if (purchasedItems.length === 0) {
+                        this.showToast("No valid items.", "error");
+                        return;
+                    }
 
-    if (purchasedItems.length === 0) {
-        this.showToast("No valid items.", "error");
-        return;
-    }
+                    purchasedItems.forEach(newItem => {
+                        const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+                        if (existing) {
+                            const totalVal = (existing.rate * existing.quantity) + (newItem.rate * newItem.quantity);
+                            const totalQty = existing.quantity + newItem.quantity;
+                            existing.rate = totalVal / totalQty;
+                            existing.quantity = totalQty;
+                        } else {
+                            this.state.inventory.push(newItem);
+                        }
+                    });
 
-    // 2. Merge with existing inventory
-    purchasedItems.forEach(newItem => {
-        // Check if item exists (Case insensitive matching)
-        const existing = this.state.inventory.find(i => i.particulars.toLowerCase() === newItem.particulars.toLowerCase());
+                    this.state.transactions.push({
+                        id: Date.now(),
+                        type: 'Purchase',
+                        date: new Date(),
+                        items: purchasedItems,
+                        total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0)
+                    });
 
-        if (existing) {
-            // Calculate Weighted Average Cost
-            const totalVal = (existing.rate * existing.quantity) + (newItem.rate * newItem.quantity);
-            const totalQty = existing.quantity + newItem.quantity;
-            
-            existing.rate = totalVal / totalQty;
-            existing.quantity = totalQty;
-            // Optional: Update the name to the capitalization user just typed, or keep original
-            // existing.particulars = newItem.particulars; 
-        } else {
-            this.state.inventory.push(newItem);
-        }
-    });
-
-    // 3. Record the transaction
-    this.state.transactions.push({
-        id: Date.now(),
-        type: 'Purchase',
-        date: new Date(),
-        items: purchasedItems,
-        total: purchasedItems.reduce((s, i) => s + (i.rate * i.quantity), 0)
-    });
-
-    // 4. Cleanup
-    this.ui.purchaseItemsContainer.innerHTML = '';
-    this.addPurchaseItemRow();
-    this.renderInventoryDatalist(); // Update the autocomplete list immediately
-    this.triggerAutoSave();
-    this.showToast('Stock updated successfully!', "success");
-});
+                    this.ui.purchaseItemsContainer.innerHTML = '';
+                    this.addPurchaseItemRow();
+                    this.renderInventoryDatalist(); 
+                    this.triggerAutoSave();
+                    this.showToast('Stock updated successfully!', "success");
+                });
                 this.ui.purchaseItemsContainer.addEventListener('click', e => { if(e.target.classList.contains('remove-item-btn')) e.target.closest('.item-row').remove(); });
                 this.ui.inventoryTableBody.addEventListener('click', (e) => {
                     const icon = e.target.closest('.action-icon'); if (!icon) return; const particulars = icon.dataset.particulars;
