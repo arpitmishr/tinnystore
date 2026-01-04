@@ -741,7 +741,7 @@
             
             SCOPES: 'https://www.googleapis.com/auth/drive.file',
             APP_FOLDER_NAME: 'TinnyFashionStore_Data',
-            DATA_FILE_NAME: 'fashion_store_data.json',
+            DATA_FILE_NAME: `fashion_store_data_${new Date().getFullYear()}.json`,
             
             tokenClient: null,
             driveFileId: null,
