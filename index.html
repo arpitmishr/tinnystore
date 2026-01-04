@@ -877,121 +877,139 @@
                 }
             },
 
-            async loadData(yearToLoad) {
-                this.showToast(`Loading data for ${yearToLoad === 'ALL' ? 'All Years' : yearToLoad}...`, 'info');
-                const currentRealYear = new Date().getFullYear().toString();
-                // If yearToLoad is null or undefined, default to current year
-                if (!yearToLoad) yearToLoad = currentRealYear;
-                
-                this.viewingYear = yearToLoad.toString();
-                const isEditable = (this.viewingYear === currentRealYear);
-                this.driveFileId = null; 
+// --- PASTE STARTS HERE ---
+            yearFileMap: {}, 
 
+            async loadData(yearToLoad) {
+                this.showToast(`Loading ${yearToLoad === 'ALL' ? 'Complete History' : yearToLoad}...`, 'info');
+                const currentRealYear = new Date().getFullYear().toString();
+                this.viewingYear = yearToLoad.toString();
+                this.yearFileMap = {}; 
+                
                 try {
+                    const response = await gapi.client.drive.files.list({
+                        q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
+                        spaces: 'drive',
+                        fields: 'files(id, name)'
+                    });
+                    
+                    const files = response.result.files || [];
+                    let combinedTransactions = [];
+                    let latestInventory = [];
+                    let latestHolidays = [];
+
                     if (this.viewingYear === 'ALL') {
-                        // --- ALL YEARS VIEW ---
-                        const response = await gapi.client.drive.files.list({
-                            q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
-                            spaces: 'drive',
-                            fields: 'files(id, name)'
-                        });
-                        
-                        let allTransactions = [];
-                        let latestInventory = []; 
-                        
-                        if (response.result.files && response.result.files.length > 0) {
-                            for (const file of response.result.files) {
-                                try {
-                                    const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
-                                    const data = typeof res.body === 'string' ? JSON.parse(res.body) : res.result;
-                                    
-                                    if (data.transactions) {
-                                        const processedTx = data.transactions.map(t => ({...t, date: new Date(t.date)}));
-                                        allTransactions = allTransactions.concat(processedTx);
-                                    }
-                                    // Keep inventory from the most recent year file found
-                                    if (data.inventory && data.inventory.length > 0) {
-                                        latestInventory = data.inventory;
-                                    }
-                                } catch (e) {
-                                    console.warn(`Skipping file ${file.name} due to error`, e);
-                                }
+                        for (const file of files) {
+                            const match = file.name.match(/(\d{4})/);
+                            if (!match) continue;
+                            const fileYear = match[0];
+                            this.yearFileMap[fileYear] = file.id;
+
+                            const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
+                            const data = typeof res.body === 'string' ? JSON.parse(res.body) : res.result;
+
+                            if (data.transactions) {
+                                combinedTransactions = combinedTransactions.concat(
+                                    data.transactions.map(t => ({...t, date: new Date(t.date)}))
+                                );
+                            }
+                            if (fileYear === currentRealYear || !latestInventory.length) {
+                                latestInventory = data.inventory || latestInventory;
+                                latestHolidays = data.holidays || latestHolidays;
                             }
                         }
-
-                        allTransactions.sort((a, b) => b.date - a.date);
-
-                        this.state = {
-                            inventory: latestInventory,
-                            transactions: allTransactions,
-                            holidays: [] 
-                        };
-                        this.showToast("Loaded All Years (Read-Only Mode)", "success");
-
+                        this.state = { inventory: latestInventory, transactions: combinedTransactions, holidays: latestHolidays };
+                        this.showToast("All Years Loaded (Editing Enabled)", "success");
                     } else {
-                        // --- SPECIFIC YEAR VIEW ---
                         const fileName = `${this.DATA_FILE_PREFIX}${this.viewingYear}.json`;
-                        this.DATA_FILE_NAME = fileName;
+                        let file = files.find(f => f.name === fileName);
 
-                        let response = await gapi.client.drive.files.list({
-                            q: `name='${fileName}' and trashed=false`,
-                            spaces: 'drive',
-                            fields: 'files(id)'
-                        });
-
-                        if (response.result.files && response.result.files.length > 0) {
-                            this.driveFileId = response.result.files[0].id;
-                            const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
-                            const loadedState = typeof fileContentResponse.body === 'string' ? JSON.parse(fileContentResponse.body) : fileContentResponse.result;
-                            
-                            if (loadedState.transactions) {
-                                loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
-                            }
-
+                        if (file) {
+                            this.driveFileId = file.id;
+                            this.yearFileMap[this.viewingYear] = file.id;
+                            const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
+                            const data = typeof res.body === 'string' ? JSON.parse(res.body) : res.result;
                             this.state = {
-                                inventory: loadedState.inventory || [],
-                                transactions: loadedState.transactions || [],
-                                holidays: loadedState.holidays || []
+                                inventory: data.inventory || [],
+                                transactions: (data.transactions || []).map(t => ({...t, date: new Date(t.date)})),
+                                holidays: data.holidays || []
                             };
                         } else {
-                            // File missing (New Year Scenario)
-                            if (isEditable) {
-                                const prevYear = parseInt(this.viewingYear) - 1;
-                                const prevFileName = `${this.DATA_FILE_PREFIX}${prevYear}.json`;
-                                
-                                let prevResponse = await gapi.client.drive.files.list({
-                                    q: `name='${prevFileName}' and trashed=false`,
-                                    fields: 'files(id)'
-                                });
-
-                                if (prevResponse.result.files && prevResponse.result.files.length > 0) {
-                                    const prevId = prevResponse.result.files[0].id;
-                                    const prevContent = await gapi.client.drive.files.get({ fileId: prevId, alt: 'media' });
-                                    const prevState = JSON.parse(prevContent.body);
-
-                                    this.state = {
-                                        inventory: prevState.inventory || [], 
-                                        holidays: prevState.holidays || [],   
-                                        transactions: []                      
-                                    };
-                                    this.showToast(`Welcome to ${this.viewingYear}! Inventory carried forward.`, "success");
-                                    await this.saveData(); 
-                                } else {
-                                    this.state = { inventory: [], transactions: [], holidays: [] };
-                                }
-                            } else {
-                                this.state = { inventory: [], transactions: [], holidays: [] };
-                                this.showToast(`No data found for ${this.viewingYear}`, "error");
-                            }
+                            this.state = { inventory: [], transactions: [], holidays: [] };
                         }
                     }
                     this.renderPage(document.querySelector('.page.active').id);
                 } catch (e) {
-                    console.error("Error loading data:", e);
-                    this.showToast("Error loading data from Drive.", "error");
+                    console.error("Load Error:", e);
+                    this.showToast("Failed to load data.", "error");
                 }
             },
 
+            async saveData(isManual = false) {
+                if (this.isSaving) return;
+                this.isSaving = true;
+                if (isManual) this.showToast("Force syncing all changes...", "info");
+                const currentRealYear = new Date().getFullYear().toString();
+
+                try {
+                    const txByYear = this.state.transactions.reduce((acc, tx) => {
+                        const y = new Date(tx.date).getFullYear().toString();
+                        if (!acc[y]) acc[y] = [];
+                        acc[y].push(tx);
+                        return acc;
+                    }, {});
+
+                    const yearsToUpdate = this.viewingYear === 'ALL' ? Object.keys(txByYear) : [this.viewingYear];
+                    if (!yearsToUpdate.includes(currentRealYear)) yearsToUpdate.push(currentRealYear);
+
+                    for (const year of yearsToUpdate) {
+                        const yearData = {
+                            inventory: (year === currentRealYear) ? this.state.inventory : [],
+                            holidays: (year === currentRealYear) ? this.state.holidays : [],
+                            transactions: txByYear[year] || []
+                        };
+                        await this.uploadFileToDrive(year, yearData);
+                    }
+                    if (isManual) this.showToast("Drive Sync Complete!", "success");
+                } catch (e) {
+                    console.error("Save Error:", e);
+                    this.showToast("Sync Failed!", "error");
+                } finally {
+                    this.isSaving = false;
+                }
+            },
+
+            async uploadFileToDrive(year, data) {
+                const fileName = `${this.DATA_FILE_PREFIX}${year}.json`;
+                const content = JSON.stringify(data, null, 2);
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+                
+                let fileId = this.yearFileMap[year];
+                let method = fileId ? 'PATCH' : 'POST';
+                let path = fileId ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}` : 'https://www.googleapis.com/upload/drive/v3/files';
+
+                const metadata = { 'name': fileName, 'mimeType': 'application/json' };
+                if (!fileId) {
+                    const folderRes = await gapi.client.drive.files.list({ q: `name='${this.APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder'`, fields: 'files(id)' });
+                    if (folderRes.result.files[0]) metadata.parents = [folderRes.result.files[0].id];
+                }
+
+                const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + content + close_delim;
+
+                const response = await gapi.client.request({
+                    'path': path, 'method': method,
+                    'params': { 'uploadType': 'multipart' },
+                    'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+                    'body': multipartRequestBody
+                });
+
+                if (!fileId) this.yearFileMap[year] = response.result.id;
+            },
+            // --- PASTE ENDS HERE ---
+
+            
             signOut() {
                 const token = gapi.client.getToken();
                 if (token !== null) {
