@@ -880,35 +880,46 @@
             async loadData(yearToLoad) {
                 this.showToast(`Loading data for ${yearToLoad === 'ALL' ? 'All Years' : yearToLoad}...`, 'info');
                 const currentRealYear = new Date().getFullYear().toString();
-                const isEditable = (yearToLoad.toString() === currentRealYear);
-                this.driveFileId = null; // Reset file ID when switching years
+                // If yearToLoad is null or undefined, default to current year
+                if (!yearToLoad) yearToLoad = currentRealYear;
+                
+                this.viewingYear = yearToLoad.toString();
+                const isEditable = (this.viewingYear === currentRealYear);
+                this.driveFileId = null; 
 
                 try {
-                    if (yearToLoad === 'ALL') {
+                    if (this.viewingYear === 'ALL') {
                         // --- ALL YEARS VIEW ---
                         const response = await gapi.client.drive.files.list({
                             q: `name contains '${this.DATA_FILE_PREFIX}' and trashed=false`,
                             spaces: 'drive',
-                            fields: 'files(id)'
+                            fields: 'files(id, name)'
                         });
                         
                         let allTransactions = [];
                         let latestInventory = []; 
                         
-                        if (response.result.files) {
-                            const promises = response.result.files.map(f => 
-                                gapi.client.drive.files.get({ fileId: f.id, alt: 'media' })
-                                    .then(res => JSON.parse(res.body))
-                            );
-                            const results = await Promise.all(promises);
-                            results.forEach(data => {
-                                if(data.transactions) allTransactions = allTransactions.concat(data.transactions);
-                                if(data.inventory) latestInventory = data.inventory; 
-                            });
+                        if (response.result.files && response.result.files.length > 0) {
+                            for (const file of response.result.files) {
+                                try {
+                                    const res = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
+                                    const data = typeof res.body === 'string' ? JSON.parse(res.body) : res.result;
+                                    
+                                    if (data.transactions) {
+                                        const processedTx = data.transactions.map(t => ({...t, date: new Date(t.date)}));
+                                        allTransactions = allTransactions.concat(processedTx);
+                                    }
+                                    // Keep inventory from the most recent year file found
+                                    if (data.inventory && data.inventory.length > 0) {
+                                        latestInventory = data.inventory;
+                                    }
+                                } catch (e) {
+                                    console.warn(`Skipping file ${file.name} due to error`, e);
+                                }
+                            }
                         }
 
-                        allTransactions.forEach(t => { t.date = new Date(t.date); });
-                        allTransactions.sort((a,b) => b.date - a.date);
+                        allTransactions.sort((a, b) => b.date - a.date);
 
                         this.state = {
                             inventory: latestInventory,
@@ -919,7 +930,7 @@
 
                     } else {
                         // --- SPECIFIC YEAR VIEW ---
-                        const fileName = `${this.DATA_FILE_PREFIX}${yearToLoad}.json`;
+                        const fileName = `${this.DATA_FILE_PREFIX}${this.viewingYear}.json`;
                         this.DATA_FILE_NAME = fileName;
 
                         let response = await gapi.client.drive.files.list({
@@ -929,12 +940,13 @@
                         });
 
                         if (response.result.files && response.result.files.length > 0) {
-                            // File exists
                             this.driveFileId = response.result.files[0].id;
                             const fileContentResponse = await gapi.client.drive.files.get({ fileId: this.driveFileId, alt: 'media' });
-                            const loadedState = JSON.parse(fileContentResponse.body);
+                            const loadedState = typeof fileContentResponse.body === 'string' ? JSON.parse(fileContentResponse.body) : fileContentResponse.result;
                             
-                            if (loadedState.transactions) loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
+                            if (loadedState.transactions) {
+                                loadedState.transactions.forEach(t => { t.date = new Date(t.date); });
+                            }
 
                             this.state = {
                                 inventory: loadedState.inventory || [],
@@ -944,8 +956,7 @@
                         } else {
                             // File missing (New Year Scenario)
                             if (isEditable) {
-                                // Try rollover from previous year
-                                const prevYear = parseInt(yearToLoad) - 1;
+                                const prevYear = parseInt(this.viewingYear) - 1;
                                 const prevFileName = `${this.DATA_FILE_PREFIX}${prevYear}.json`;
                                 
                                 let prevResponse = await gapi.client.drive.files.list({
@@ -959,26 +970,25 @@
                                     const prevState = JSON.parse(prevContent.body);
 
                                     this.state = {
-                                        inventory: prevState.inventory || [], // Keep stock
-                                        holidays: prevState.holidays || [],   // Keep settings
-                                        transactions: []                      // Reset sales
+                                        inventory: prevState.inventory || [], 
+                                        holidays: prevState.holidays || [],   
+                                        transactions: []                      
                                     };
-                                    this.showToast(`Welcome to ${yearToLoad}! Inventory carried forward.`, "success");
-                                    await this.saveData(); // Save immediately to create new file
+                                    this.showToast(`Welcome to ${this.viewingYear}! Inventory carried forward.`, "success");
+                                    await this.saveData(); 
                                 } else {
-                                    // New user or no previous data
                                     this.state = { inventory: [], transactions: [], holidays: [] };
                                 }
                             } else {
                                 this.state = { inventory: [], transactions: [], holidays: [] };
-                                this.showToast(`No data found for ${yearToLoad}`, "error");
+                                this.showToast(`No data found for ${this.viewingYear}`, "error");
                             }
                         }
                     }
                     this.renderPage(document.querySelector('.page.active').id);
                 } catch (e) {
                     console.error("Error loading data:", e);
-                    this.showToast("Error loading data.", "error");
+                    this.showToast("Error loading data from Drive.", "error");
                 }
             },
 
